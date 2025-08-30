@@ -1,0 +1,22 @@
+FROM node:18-alpine as development
+
+# Set working directory
+WORKDIR /app
+
+# Install dependencies for node-gyp and native modules
+RUN apk add --no-cache python3 make g++
+
+# Copy package files
+COPY package.json package-lock.json ./
+
+# Install all dependencies (including dev)
+RUN npm install
+
+# Copy source code
+COPY . .
+
+# Expose development port
+EXPOSE 5173
+
+# Development command
+CMD ["npm", "run", "dev"]

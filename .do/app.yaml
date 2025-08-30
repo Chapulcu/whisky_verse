@@ -1,0 +1,43 @@
+name: whiskyverse-app
+region: fra
+services:
+- name: frontend
+  source_dir: /
+  github:
+    repo: your-username/whisky-community
+    branch: main
+  run_command: nginx -g "daemon off;"
+  environment_slug: docker
+  instance_count: 1
+  instance_size_slug: basic-xxs
+  dockerfile_path: Dockerfile
+  http_port: 80
+  health_check:
+    http_path: /health
+    initial_delay_seconds: 30
+    period_seconds: 10
+    timeout_seconds: 5
+    success_threshold: 1
+    failure_threshold: 3
+  envs:
+  - key: NODE_ENV
+    value: production
+  - key: VITE_SUPABASE_URL
+    value: YOUR_SUPABASE_URL
+    type: SECRET
+  - key: VITE_SUPABASE_ANON_KEY
+    value: YOUR_SUPABASE_ANON_KEY
+    type: SECRET
+alerts:
+- rule: CPU_UTILIZATION
+  disabled: false
+  value: 80
+  operator: GREATER_THAN
+  window: FIVE_MINUTES
+  emails: ["your@email.com"]
+- rule: MEM_UTILIZATION
+  disabled: false
+  value: 80
+  operator: GREATER_THAN
+  window: FIVE_MINUTES
+  emails: ["your@email.com"]

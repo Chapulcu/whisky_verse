@@ -1,0 +1,41 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd:*)",
+      "Bash(npm run lint)",
+      "Bash(cd:*)",
+      "Bash(cd:*)",
+      "Bash(cd:*)",
+      "Bash(cd:*)",
+      "Bash(cd:*)",
+      "Bash(cd:*)",
+      "Bash(cd:*)",
+      "Bash(cd:*)",
+      "Bash(cd:*)",
+      "Bash(cd:*)",
+      "Bash(npm start)",
+      "Bash(npm run:*)",
+      "Bash(pkill:*)",
+      "Bash(chmod:*)",
+      "Bash(docker:*)",
+      "Bash(docker-compose:*)",
+      "Bash(./scripts/deploy.sh deploy:*)",
+      "Bash(curl:*)",
+      "Bash(./scripts/setup-network-access.sh:*)",
+      "Bash(npx tsc:*)",
+      "Bash(supabase functions deploy:*)",
+      "Bash(npm install:*)",
+      "Bash(brew install:*)",
+      "Bash(supabase:*)",
+      "Bash(ping:*)",
+      "Bash(nslookup:*)",
+      "WebFetch(domain:status.supabase.com)",
+      "Bash(git clone:*)",
+      "Read(//Users/takhan/Desktop/agent_workspace 3/**)",
+      "Bash(unzip:*)",
+      "Bash(lsof:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

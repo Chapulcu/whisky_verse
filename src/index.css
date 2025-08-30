@@ -1,0 +1,563 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap');
+
+@layer base {
+  :root {
+    /* Light theme variables */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8fafc;
+    --bg-tertiary: #f1f5f9;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --text-accent: #0ea5e9;
+    --border-color: #e2e8f0;
+    --glass-bg: rgba(255, 255, 255, 0.1);
+    --glass-border: rgba(255, 255, 255, 0.2);
+    --shadow-color: rgba(0, 0, 0, 0.1);
+  }
+
+  .dark {
+    /* Dark theme variables - Darker background */
+    --bg-primary: #020617;
+    --bg-secondary: #0f172a;
+    --bg-tertiary: #1e293b;
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5e1;
+    --text-accent: #38bdf8;
+    --border-color: #475569;
+    --glass-bg: rgba(0, 0, 0, 0.3);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --shadow-color: rgba(0, 0, 0, 0.4);
+  }
+
+  * {
+    @apply border-slate-200 dark:border-slate-800;
+  }
+
+  body {
+    @apply bg-gradient-to-br from-whiskey-amber-light/5 via-whiskey-caramel-light/5 to-whiskey-bronze/5;
+    @apply dark:from-slate-950 dark:via-gray-950 dark:to-slate-950;
+    @apply text-slate-900 dark:text-slate-100;
+    @apply transition-colors duration-300;
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+
+  /* Cyber Grid Background */
+  .cyber-bg {
+    background-image: 
+      linear-gradient(rgba(6, 182, 212, 0.05) 1px, transparent 1px), 
+      linear-gradient(90deg, rgba(6, 182, 212, 0.05) 1px, transparent 1px);
+    background-size: 50px 50px;
+  }
+
+  .dark .cyber-bg {
+    background-image: 
+      linear-gradient(rgba(6, 182, 212, 0.1) 1px, transparent 1px), 
+      linear-gradient(90deg, rgba(6, 182, 212, 0.1) 1px, transparent 1px);
+  }
+}
+
+@layer components {
+  /* Enhanced Glass Morphism with Whiskey Tones */
+  .glass {
+    @apply backdrop-blur-lg;
+    @apply bg-white/70 dark:bg-slate-800/80;
+    @apply border border-whiskey-amber-light/30 dark:border-slate-600/50;
+    @apply shadow-xl;
+  }
+
+  .glass-strong {
+    @apply backdrop-blur-xl;
+    @apply bg-white/85 dark:bg-slate-800/90;
+    @apply border border-whiskey-amber/40 dark:border-slate-500/60;
+    @apply shadow-2xl;
+  }
+
+  /* Soft pastel button variations */
+  .btn-soft-purple {
+    @apply bg-gradient-to-r from-purple-400/80 to-pink-400/80;
+    @apply hover:from-purple-500/90 hover:to-pink-500/90;
+    @apply text-white font-medium px-6 py-3 rounded-lg;
+    @apply transition-all duration-300 transform hover:scale-105;
+    @apply shadow-lg hover:shadow-xl;
+  }
+
+  .btn-soft-cyan {
+    @apply bg-gradient-to-r from-cyan-400/80 to-blue-400/80;
+    @apply hover:from-cyan-500/90 hover:to-blue-500/90;
+    @apply text-white font-medium px-6 py-3 rounded-lg;
+    @apply transition-all duration-300 transform hover:scale-105;
+    @apply shadow-lg hover:shadow-xl;
+  }
+
+  /* Gradient Buttons */
+  .btn-primary {
+    @apply bg-gradient-to-r from-primary-500 to-secondary-500;
+    @apply hover:from-primary-600 hover:to-secondary-600;
+    @apply text-white font-medium px-6 py-3 rounded-lg;
+    @apply transition-all duration-300 transform hover:scale-105;
+    @apply shadow-lg hover:shadow-xl;
+  }
+
+  .btn-secondary {
+    @apply bg-gradient-to-r from-accent-500 to-primary-500;
+    @apply hover:from-accent-600 hover:to-primary-600;
+    @apply text-white font-medium px-6 py-3 rounded-lg;
+    @apply transition-all duration-300 transform hover:scale-105;
+    @apply shadow-lg hover:shadow-xl;
+  }
+
+  .btn-glass {
+    @apply glass;
+    @apply text-slate-800 dark:text-slate-200;
+    @apply hover:bg-white/20 dark:hover:bg-white/10;
+    @apply font-medium px-6 py-3 rounded-lg;
+    @apply transition-all duration-300 transform hover:scale-105;
+  }
+
+  /* Card Styles */
+  .card {
+    @apply glass rounded-xl p-6;
+    @apply transition-all duration-300 hover:shadow-2xl;
+    @apply hover:scale-[1.02];
+  }
+
+  .card-strong {
+    @apply glass-strong rounded-xl p-6;
+    @apply transition-all duration-300 hover:shadow-2xl;
+    @apply hover:scale-[1.02];
+  }
+
+  /* Neon Glow Effects */
+  .neon-blue {
+    @apply shadow-lg shadow-primary-500/50;
+    @apply hover:shadow-xl hover:shadow-primary-500/70;
+    @apply transition-all duration-300;
+  }
+
+  .neon-purple {
+    @apply shadow-lg shadow-secondary-500/50;
+    @apply hover:shadow-xl hover:shadow-secondary-500/70;
+    @apply transition-all duration-300;
+  }
+
+  .neon-cyan {
+    @apply shadow-lg shadow-accent-500/50;
+    @apply hover:shadow-xl hover:shadow-accent-500/70;
+    @apply transition-all duration-300;
+  }
+
+  /* Text Gradients */
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary-600 via-secondary-600 to-accent-600;
+    @apply bg-clip-text text-transparent;
+  }
+
+  .text-gradient-reverse {
+    @apply bg-gradient-to-r from-accent-600 via-secondary-600 to-primary-600;
+    @apply bg-clip-text text-transparent;
+  }
+
+  /* Whiskey-inspired form inputs with better spacing and contrast */
+  .input-field {
+    @apply w-full px-6 py-4 mb-2 rounded-xl;
+    @apply bg-white/90 dark:bg-whiskey-bronze-dark/20;
+    @apply border-2 border-whiskey-amber/30 dark:border-whiskey-bronze/50;
+    @apply text-slate-800 dark:text-whiskey-amber-light;
+    @apply placeholder:text-slate-500 dark:placeholder:text-whiskey-caramel/70;
+    @apply focus:outline-none focus:ring-2;
+    @apply focus:ring-whiskey-gold/50 dark:focus:ring-whiskey-amber/60;
+    @apply focus:border-whiskey-gold dark:focus:border-whiskey-amber;
+    @apply transition-all duration-300;
+    @apply shadow-md focus:shadow-lg;
+    @apply hover:shadow-lg hover:border-whiskey-caramel dark:hover:border-whiskey-amber-light;
+  }
+
+  /* Textarea specific dark mode fixes */
+  textarea.input-field {
+    @apply dark:bg-gray-800 dark:text-white;
+    @apply dark:border-gray-600 dark:placeholder-gray-400;
+    @apply resize-y;
+  }
+
+  .input-glass {
+    @apply glass;
+    @apply w-full px-4 py-3 rounded-lg;
+    @apply text-slate-800 dark:text-slate-100;
+    @apply placeholder:text-slate-500 dark:placeholder:text-slate-300;
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-500/50;
+    @apply transition-all duration-300;
+  }
+
+  /* Enhanced form styling with whiskey tones and better spacing */
+  .form-group {
+    @apply space-y-4;
+  }
+
+  /* Mobile Touch Targets - Glassmorphism Collection Buttons */
+  .touch-target-large {
+    @apply min-h-[44px] min-w-[44px]; /* Apple HIG minimum touch target */
+    @apply active:scale-95; /* Haptic feedback on touch */
+  }
+
+  /* Enhanced glass button for mobile */
+  .btn-glass-mobile {
+    @apply backdrop-blur-md;
+    @apply bg-white/20 hover:bg-white/30;
+    @apply dark:bg-slate-800/20 dark:hover:bg-slate-800/30;
+    @apply border border-white/30 hover:border-white/40;
+    @apply dark:border-slate-700/30 dark:hover:border-slate-700/40;
+    @apply rounded-xl px-4 py-2;
+    @apply transition-all duration-200;
+    @apply shadow-lg hover:shadow-xl;
+    @apply active:scale-95;
+    @apply touch-target-large;
+  }
+
+  /* Mobile specific improvements */
+  @media (max-width: 768px) {
+    .touch-target-large {
+      @apply min-h-[48px] min-w-[48px]; /* Larger on mobile */
+      @apply text-base; /* Slightly larger text on mobile */
+    }
+  }
+
+  .form-label {
+    @apply block text-base font-semibold mb-3;
+    @apply text-whiskey-bronze-dark dark:text-whiskey-amber-light;
+  }
+
+  .form-error {
+    @apply text-red-600 dark:text-red-400 text-sm mt-2;
+  }
+
+  /* Form container spacing */
+  .form-container {
+    @apply space-y-8;
+  }
+
+  .form-section {
+    @apply space-y-6;
+  }
+
+  /* Select dropdown styling with whiskey theme */
+  .select-field {
+    @apply input-field;
+    @apply appearance-none;
+    @apply bg-no-repeat bg-right;
+    @apply pr-12;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23a0522d' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  }
+
+  .dark .select-field {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23FFC066' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  }
+
+  /* Navigation */
+  .nav-item {
+    @apply relative px-4 py-2 rounded-lg;
+    @apply text-slate-700 dark:text-slate-300;
+    @apply hover:text-primary-600 dark:hover:text-primary-400;
+    @apply hover:bg-white/10 dark:hover:bg-white/5;
+    @apply transition-all duration-300;
+  }
+
+  .nav-item.active {
+    @apply text-primary-600 dark:text-primary-400;
+    @apply bg-white/20 dark:bg-white/10;
+  }
+
+  .nav-item.active::before {
+    content: '';
+    @apply absolute inset-0 rounded-lg;
+    @apply bg-gradient-to-r from-primary-500/20 to-secondary-500/20;
+    @apply -z-10;
+  }
+}
+
+/* Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-slate-100 dark:bg-slate-800;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gradient-to-b from-primary-500 to-secondary-500;
+  @apply rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply from-primary-600 to-secondary-600;
+}
+
+/* Loading Animation */
+.loading-spinner {
+  @apply inline-block w-6 h-6 border-2 border-current border-t-transparent;
+  @apply rounded-full animate-spin;
+}
+
+/* Floating Animation */
+.floating {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Responsive Text */
+.text-responsive {
+  @apply text-sm sm:text-base md:text-lg lg:text-xl;
+}
+
+/* Mobile-first responsive utilities */
+.mobile-padding {
+  @apply px-4 sm:px-6 lg:px-8;
+}
+
+.mobile-margin {
+  @apply mx-4 sm:mx-6 lg:mx-8;
+}
+
+/* Mobile-specific improvements */
+.mobile-touch-target {
+  @apply min-h-[44px] min-w-[44px];
+}
+
+.mobile-text-size {
+  @apply text-base sm:text-lg;
+}
+
+.mobile-button {
+  @apply py-3 px-6 text-base font-medium;
+}
+
+.mobile-card-spacing {
+  @apply p-4 sm:p-6;
+}
+
+.mobile-grid {
+  @apply grid-cols-1 sm:grid-cols-2 lg:grid-cols-3;
+}
+
+.mobile-modal {
+  @apply mx-4 my-8 max-h-[calc(100vh-4rem)];
+}
+
+/* Improved touch interactions */
+.touch-friendly {
+  @apply transition-all duration-200 active:scale-95;
+}
+
+/* Better mobile typography */
+.mobile-heading {
+  @apply text-2xl sm:text-3xl md:text-4xl;
+}
+
+.mobile-subheading {
+  @apply text-lg sm:text-xl md:text-2xl;
+}
+
+/* Mobile-optimized form elements */
+.mobile-input {
+  @apply py-4 px-4 text-base;
+}
+
+/* Improved mobile navigation */
+.mobile-nav-item {
+  @apply py-4 px-4 text-base font-medium;
+}
+
+/* Mobile-specific spacing */
+.mobile-section-spacing {
+  @apply space-y-6 sm:space-y-8 lg:space-y-12;
+}
+
+.mobile-element-spacing {
+  @apply space-y-4 sm:space-y-6;
+}
+
+/* Extra small breakpoint utilities */
+@media (min-width: 475px) {
+  .xs\:block {
+    display: block;
+  }
+  
+  .xs\:hidden {
+    display: none;
+  }
+}
+
+/* Landscape orientation utilities */
+@media (orientation: landscape) and (max-height: 500px) {
+  .landscape\:py-1 {
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+  }
+  
+  .landscape\:p-1\.5 {
+    padding: 0.375rem;
+  }
+  
+  .landscape\:p-3 {
+    padding: 0.75rem;
+  }
+  
+  .landscape\:mx-2 {
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+  }
+  
+  .landscape\:w-6 {
+    width: 1.5rem;
+  }
+  
+  .landscape\:h-6 {
+    height: 1.5rem;
+  }
+  
+  .landscape\:w-4 {
+    width: 1rem;
+  }
+  
+  .landscape\:h-4 {
+    height: 1rem;
+  }
+  
+  .landscape\:w-3 {
+    width: 0.75rem;
+  }
+  
+  .landscape\:h-3 {
+    height: 0.75rem;
+  }
+  
+  .landscape\:h-10 {
+    height: 2.5rem;
+  }
+  
+  .landscape\:top-12 {
+    top: 3rem;
+  }
+  
+  .landscape\:text-sm {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+  
+  .landscape\:text-xs {
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+  
+  .landscape\:hidden {
+    display: none;
+  }
+  
+  .landscape\:block {
+    display: block;
+  }
+  
+  .landscape\:flex {
+    display: flex;
+  }
+  
+  .landscape\:max-h-\[calc\(100vh-3rem\)\] {
+    max-height: calc(100vh - 3rem);
+  }
+}
+
+/* Landscape mobile navigation improvements */
+@media (orientation: landscape) and (max-height: 500px) and (max-width: 768px) {
+  .mobile-nav-landscape {
+    padding: 0.5rem;
+  }
+  
+  .mobile-nav-landscape .mobile-nav-item {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+  }
+  
+  .mobile-nav-landscape .mobile-button {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* Focus styles for accessibility */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:ring-offset-2;
+  @apply dark:focus:ring-offset-slate-900;
+}
+/* Additional utility classes */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.btn-success {
+  @apply bg-green-500 hover:bg-green-600 text-white font-medium px-4 py-2 rounded-lg transition-colors;
+}
+
+/* Glass effect improvements */
+.glass-strong {
+  @apply backdrop-blur-xl bg-white/80 dark:bg-slate-800/85 border border-white/20 dark:border-slate-600/40 shadow-xl;
+}
+
+.glass-light {
+  @apply backdrop-blur-md bg-white/60 dark:bg-slate-800/75 border border-white/20 dark:border-slate-600/30 shadow-lg;
+}
+
+/* Modal specific styles for better readability */
+.modal-content {
+  @apply bg-white/95 dark:bg-slate-800/95;
+  @apply border border-slate-200/50 dark:border-slate-600/50;
+  @apply backdrop-blur-xl;
+  @apply shadow-2xl;
+}
+
+.modal-text-primary {
+  @apply text-slate-900 dark:text-slate-100;
+}
+
+.modal-text-secondary {
+  @apply text-slate-700 dark:text-slate-300;
+}
+
+.modal-text-muted {
+  @apply text-slate-600 dark:text-slate-400;
+}
+
+.modal-bg-section {
+  @apply bg-slate-100/80 dark:bg-slate-700/40;
+  @apply border border-slate-200/50 dark:border-slate-600/30;
+}
+
+.modal-input {
+  @apply bg-slate-50/90 dark:bg-slate-800/50;
+  @apply border border-slate-300/50 dark:border-slate-600/50;
+  @apply text-slate-900 dark:text-slate-100;
+  @apply placeholder:text-slate-500 dark:placeholder:text-slate-400;
+  @apply focus:bg-white dark:focus:bg-slate-800;
+  @apply focus:border-amber-500 dark:focus:border-amber-400;
+}
+
+.modal-select {
+  @apply bg-slate-50/90 dark:bg-slate-800/50;
+  @apply border border-slate-300/50 dark:border-slate-600/50;
+  @apply text-slate-900 dark:text-slate-100;
+}
+
+.modal-textarea {
+  @apply bg-slate-50/90 dark:bg-slate-800/50;
+  @apply border border-slate-300/50 dark:border-slate-600/50;
+  @apply text-slate-900 dark:text-slate-100;
+  @apply placeholder:text-slate-500 dark:placeholder:text-slate-400;
+  @apply focus:bg-white dark:focus:bg-slate-800;
+  @apply focus:border-amber-500 dark:focus:border-amber-400;
+}

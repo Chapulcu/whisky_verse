@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supabase Connection Test</title>
+</head>
+<body>
+  <h1>Supabase Connection Test</h1>
+  <div id="output"></div>
+  
+  <script type="module">
+    import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js'
+    
+    const output = document.getElementById('output')
+    
+    function log(message) {
+      output.innerHTML += `<p>${message}</p>`
+      console.log(message)
+    }
+    
+    async function testConnection() {
+      log('🔗 Starting Supabase connection test...')
+      
+      const supabaseUrl = 'https://pznuleevpgklxuuojcpy.supabase.co'
+      const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6bnVsZWV2cGdrbHh1dW9qY3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1ODAzNDEsImV4cCI6MjA3MTE1NjM0MX0.YU6bUsKYOrMlmlRtb-Wafr6em9DEaEY9tZEyyApXNUM'
+      
+      try {
+        const supabase = createClient(supabaseUrl, supabaseKey)
+        
+        log('✅ Supabase client created')
+        
+        // Test basic query
+        const { data, error } = await supabase
+          .from('whiskies')
+          .select('id, name')
+          .limit(3)
+        
+        if (error) {
+          log(`❌ Query failed: ${error.message}`)
+          log(`Error details: ${JSON.stringify(error, null, 2)}`)
+        } else {
+          log(`✅ Query successful: ${data.length} records found`)
+          data.forEach(item => log(`  - ${item.name}`))
+        }
+        
+        // Test auth
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        
+        if (sessionError) {
+          log(`❌ Session check failed: ${sessionError.message}`)
+        } else {
+          log(`✅ Session check: ${session ? 'Authenticated' : 'Not authenticated'}`)
+        }
+        
+        // Test network directly
+        log('🌐 Testing direct network connection...')
+        const response = await fetch(`${supabaseUrl}/rest/v1/whiskies?select=id,name&limit=3`, {
+          headers: {
+            'apikey': supabaseKey,
+            'Authorization': `Bearer ${supabaseKey}`,
+            'Content-Type': 'application/json'
+          }
+        })
+        
+        if (response.ok) {
+          const networkData = await response.json()
+          log(`✅ Direct network call successful: ${networkData.length} records`)
+        } else {
+          log(`❌ Direct network call failed: ${response.status} ${response.statusText}`)
+        }
+        
+      } catch (error) {
+        log(`❌ Unexpected error: ${error.message}`)
+        console.error('Full error:', error)
+      }
+    }
+    
+    testConnection()
+  </script>
+</body>
+</html>

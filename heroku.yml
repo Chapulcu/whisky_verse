@@ -1,0 +1,10 @@
+build:
+  docker:
+    web: Dockerfile
+run:
+  web: nginx -g "daemon off;"
+addons:
+  - plan: heroku-postgresql:mini
+    as: DATABASE
+formation:
+  web: 1

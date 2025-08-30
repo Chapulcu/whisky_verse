@@ -1,0 +1,169 @@
+{
+  "name": "Whisky Auto Translation",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whisky-translation",
+        "options": {}
+      },
+      "name": "Webhook - Translation Request",
+      "type": "n8n-nodes-base.webhook",
+      "position": [240, 300],
+      "webhookId": "whisky-translation-webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json[\"target_language\"]}}",
+              "operation": "isNotEmpty"
+            },
+            {
+              "value1": "={{$json[\"source_text\"]}}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "name": "Validate Input",
+      "type": "n8n-nodes-base.if",
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4",
+        "options": {
+          "temperature": 0.3
+        },
+        "prompt": "=Translate the following whisky information from {{$json[\"source_language\"]}} to {{$json[\"target_language\"]}}. Maintain the whisky terminology accuracy and cultural context.\n\nSource data:\nName: {{$json[\"source_text\"][\"name\"]}}\nType: {{$json[\"source_text\"][\"type\"]}}\nDescription: {{$json[\"source_text\"][\"description\"]}}\nAroma: {{$json[\"source_text\"][\"aroma\"]}}\nTaste: {{$json[\"source_text\"][\"taste\"]}}\nFinish: {{$json[\"source_text\"][\"finish\"]}}\nColor: {{$json[\"source_text\"][\"color\"]}}\n\nRespond with a valid JSON object containing the translated fields:\n{\n  \"name\": \"translated name\",\n  \"type\": \"translated type\",\n  \"description\": \"translated description\",\n  \"aroma\": \"translated aroma\",\n  \"taste\": \"translated taste\",\n  \"finish\": \"translated finish\",\n  \"color\": \"translated color\"\n}"
+      },
+      "name": "OpenAI Translation",
+      "type": "n8n-nodes-base.openAi",
+      "position": [680, 200]
+    },
+    {
+      "parameters": {
+        "model": "text-davinci-003",
+        "options": {
+          "temperature": 0.2,
+          "maxTokens": 1000
+        },
+        "prompt": "=Alternative translation using Google Translate API for {{$json[\"target_language\"]}}:\n\n{{JSON.stringify($json[\"source_text\"])}}"
+      },
+      "name": "Google Translate Backup",
+      "type": "n8n-nodes-base.googleTranslate",
+      "position": [680, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse translation response\nconst openaiResult = $input.first()?.json;\nconst googleResult = $input.last()?.json;\n\nlet translation;\ntry {\n  // Try parsing OpenAI response\n  translation = typeof openaiResult.choices[0].message.content === 'string' \n    ? JSON.parse(openaiResult.choices[0].message.content)\n    : openaiResult.choices[0].message.content;\n} catch (error) {\n  console.log('OpenAI parsing failed, using Google Translate');\n  translation = googleResult;\n}\n\n// Quality check and cleanup\nconst cleanTranslation = {\n  name: translation.name || '',\n  type: translation.type || '',\n  description: translation.description || '',\n  aroma: translation.aroma || '',\n  taste: translation.taste || '',\n  finish: translation.finish || '',\n  color: translation.color || ''\n};\n\n// Calculate quality score\nconst qualityScore = Object.values(cleanTranslation)\n  .filter(v => v && v.length > 0).length / 7;\n\nreturn [{\n  json: {\n    ...cleanTranslation,\n    translation_quality: Math.round(qualityScore * 100) / 100,\n    provider: qualityScore > 0.7 ? 'openai' : 'google',\n    whisky_id: $json.whisky_id,\n    target_language: $json.target_language,\n    job_id: $json.job_id\n  }\n}];"
+      },
+      "name": "Process Translation",
+      "type": "n8n-nodes-base.code",
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "url": "={{$json[\"supabase_url\"]}}/rest/v1/rpc/upsert_whisky_translation",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$json[\"supabase_key\"]}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "p_whisky_id",
+              "value": "={{$json[\"whisky_id\"]}}"
+            },
+            {
+              "name": "p_language_code",
+              "value": "={{$json[\"target_language\"]}}"
+            },
+            {
+              "name": "p_name",
+              "value": "={{$json[\"name\"]}}"
+            },
+            {
+              "name": "p_type",
+              "value": "={{$json[\"type\"]}}"
+            },
+            {
+              "name": "p_description",
+              "value": "={{$json[\"description\"]}}"
+            },
+            {
+              "name": "p_aroma",
+              "value": "={{$json[\"aroma\"]}}"
+            },
+            {
+              "name": "p_taste",
+              "value": "={{$json[\"taste\"]}}"
+            },
+            {
+              "name": "p_finish",
+              "value": "={{$json[\"finish\"]}}"
+            },
+            {
+              "name": "p_color",
+              "value": "={{$json[\"color\"]}}"
+            },
+            {
+              "name": "p_translated_by",
+              "value": "n8n-auto"
+            }
+          ]
+        }
+      },
+      "name": "Save to Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{$json[\"supabase_url\"]}}/rest/v1/translation_jobs?id=eq.{{$json[\"job_id\"]}}",
+        "method": "PATCH",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{$json[\"supabase_key\"]}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "completed"
+            },
+            {
+              "name": "translated_text",
+              "value": "={{JSON.stringify({\n  name: $json.name,\n  type: $json.type,\n  description: $json.description,\n  aroma: $json.aroma,\n  taste: $json.taste,\n  finish: $json.finish,\n  color: $json.color\n})}}"
+            },
+            {
+              "name": "provider",
+              "value": "={{$json[\"provider\"]}}"
+            },
+            {
+              "name": \"n8n_execution_id\",\n              \"value\": \"={{$execution.id}}\"\n            },\n            {\n              \"name\": \"updated_at\",\n              \"value\": \"={{$now}}\"\n            }\n          ]\n        }\n      },\n      \"name\": \"Update Job Status\",\n      \"type\": \"n8n-nodes-base.httpRequest\",\n      \"position\": [1340, 300]\n    },\n    {\n      \"parameters\": {\n        \"url\": \"={{$json[\\\"webhook_callback_url\\\"]}}\",\n        \"method\": \"POST\",\n        \"sendBody\": true,\n        \"bodyParameters\": {\n          \"parameters\": [\n            {\n              \"name\": \"whisky_id\",\n              \"value\": \"={{$json[\\\"whisky_id\\\"]}}\"\n            },\n            {\n              \"name\": \"language\",\n              \"value\": \"={{$json[\\\"target_language\\\"]}}\"\n            },\n            {\n              \"name\": \"status\",\n              \"value\": \"completed\"\n            },\n            {\n              \"name\": \"quality\",\n              \"value\": \"={{$json[\\\"translation_quality\\\"]}}\"\n            }\n          ]\n        }\n      },\n      \"name\": \"Notify Frontend\",\n      \"type\": \"n8n-nodes-base.httpRequest\",\n      \"position\": [1560, 300]\n    },\n    {\n      \"parameters\": {\n        \"url\": \"={{$json[\\\"supabase_url\\\"]}}/rest/v1/translation_jobs?id=eq.{{$json[\\\"job_id\\\"]}}\",\n        \"method\": \"PATCH\",\n        \"sendHeaders\": true,\n        \"headerParameters\": {\n          \"parameters\": [\n            {\n              \"name\": \"Authorization\",\n              \"value\": \"Bearer {{$json[\\\"supabase_key\\\"]}}\"\n            }\n          ]\n        },\n        \"sendBody\": true,\n        \"bodyParameters\": {\n          \"parameters\": [\n            {\n              \"name\": \"status\",\n              \"value\": \"failed\"\n            },\n            {\n              \"name\": \"error_message\",\n              \"value\": \"={{$json[\\\"error\\\"]}}\"\n            }\n          ]\n        }\n      },\n      \"name\": \"Mark Job Failed\",\n      \"type\": \"n8n-nodes-base.httpRequest\",\n      \"position\": [680, 500]\n    }\n  ],\n  \"connections\": {\n    \"Webhook - Translation Request\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"Validate Input\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    },\n    \"Validate Input\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"OpenAI Translation\",\n            \"type\": \"main\",\n            \"index\": 0\n          },\n          {\n            \"node\": \"Google Translate Backup\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ],\n        [\n          {\n            \"node\": \"Mark Job Failed\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    },\n    \"OpenAI Translation\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"Process Translation\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    },\n    \"Google Translate Backup\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"Process Translation\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    },\n    \"Process Translation\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"Save to Supabase\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    },\n    \"Save to Supabase\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"Update Job Status\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    },\n    \"Update Job Status\": {\n      \"main\": [\n        [\n          {\n            \"node\": \"Notify Frontend\",\n            \"type\": \"main\",\n            \"index\": 0\n          }\n        ]\n      ]\n    }\n  },\n  \"settings\": {\n    \"saveManualExecutions\": true,\n    \"callerPolicy\": \"workflowsFromSameOwner\",\n    \"executionTimeout\": 300\n  },\n  \"staticData\": null,\n  \"meta\": {\n    \"instanceId\": \"whisky-community-translations\"\n  },\n  \"tags\": [\"whisky\", \"translation\", \"automation\"]\n}"

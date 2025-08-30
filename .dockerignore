@@ -1,0 +1,85 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build artifacts
+dist/
+build/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.example
+
+# Development files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Logs
+logs/
+*.log
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage
+coverage/
+.nyc_output
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Documentation (keep important ones)
+*.md
+!DOCKER_DEPLOYMENT_GUIDE.md
+!README.md
+
+# Test and debug files
+__tests__/
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+test_*
+debug_*
+check_*
+*.backup
+*.bak
+
+# Development Docker files
+Dockerfile.dev
+docker-compose.dev.yml
+docker-compose.supabase.yml
+
+# Database and scripts
+database/
+supabase-local/
+scripts/
+n8n/
+*.sql
+
+# Temporary files
+*.tmp
+tmp/
+temp/
+.cache/

@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  # Development Frontend with Hot Reload
+  whiskyverse-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      target: development
+    ports:
+      - "5173:5173"
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=http://localhost:3001
+    volumes:
+      - .:/app
+      - /app/node_modules
+    restart: unless-stopped
+    networks:
+      - whiskyverse-dev
+    command: npm run dev
+
+  # PostgreSQL for Development
+  postgres-dev:
+    image: postgres:15-alpine
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_DB=whiskyverse_dev
+      - POSTGRES_USER=dev
+      - POSTGRES_PASSWORD=dev123
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./database/init-dev.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    restart: unless-stopped
+    networks:
+      - whiskyverse-dev
+
+  # Redis for Development
+  redis-dev:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_dev_data:/data
+    restart: unless-stopped
+    networks:
+      - whiskyverse-dev
+
+  # Adminer Database UI
+  adminer:
+    image: adminer:latest
+    ports:
+      - "8080:8080"
+    environment:
+      - ADMINER_DEFAULT_SERVER=postgres-dev
+    depends_on:
+      - postgres-dev
+    restart: unless-stopped
+    networks:
+      - whiskyverse-dev
+
+volumes:
+  postgres_dev_data:
+  redis_dev_data:
+
+networks:
+  whiskyverse-dev:
+    driver: bridge
