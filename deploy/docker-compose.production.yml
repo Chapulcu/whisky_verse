@@ -1,11 +1,13 @@
-version: '3.8'
-
 services:
   # WhiskyVerse Frontend Application
   whiskyverse-app:
     build:
-      context: .
+      context: ..
       dockerfile: Dockerfile
+      args:
+        - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+        - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
+        - VITE_APP_ENV=production
     container_name: whiskyverse-frontend
     ports:
       - "${FRONTEND_PORT:-3001}:80"
