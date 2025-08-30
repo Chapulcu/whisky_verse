@@ -6,6 +6,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+        - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
+        - VITE_APP_ENV=production
     container_name: whiskyverse-frontend
     ports:
       - "${FRONTEND_PORT:-3001}:80"
@@ -142,5 +146,5 @@ networks:
     ipam:
       driver: default
       config:
-        - subnet: 172.20.0.0/16
-          gateway: 172.20.0.1
+        - subnet: 172.21.0.0/16
+          gateway: 172.21.0.1
