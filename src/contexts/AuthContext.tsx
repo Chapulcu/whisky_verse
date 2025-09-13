@@ -207,32 +207,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Sign out method
   const signOut = async () => {
+    console.log('🔥 AuthContext: signOut called')
+    
+    // Force clear state immediately, regardless of Supabase response
+    console.log('🔥 AuthContext: Force clearing state immediately')
+    setUser(null)
+    setProfile(null)
+    setLoading(false)
+    
+    // Clear storage immediately
+    console.log('🔥 AuthContext: Clearing localStorage and sessionStorage')
+    localStorage.clear()
+    sessionStorage.clear()
+    
     try {
-      const { error } = await supabase.auth.signOut()
-      if (error) {
-        console.error('Error signing out:', error.message)
-        throw error
-      }
-      
-      // Force clear state immediately
-      setUser(null)
-      setProfile(null)
-      setLoading(false)
-      
-      // Clear local storage and redirect
-      localStorage.clear()
-      sessionStorage.clear()
-      window.location.href = '/'
+      console.log('🔥 AuthContext: Calling supabase.auth.signOut()')
+      // Try to sign out from Supabase but don't wait for it
+      supabase.auth.signOut().catch(err => {
+        console.warn('🔥 AuthContext: Supabase signOut failed but continuing:', err)
+      })
     } catch (error) {
-      console.error('Error during sign out:', error)
-      // Force clear state even on error
-      setUser(null)
-      setProfile(null)
-      setLoading(false)
-      localStorage.clear()
-      sessionStorage.clear()
-      window.location.href = '/'
+      console.warn('🔥 AuthContext: Supabase signOut error, but continuing:', error)
     }
+    
+    // Force reload to clear everything
+    console.log('🔥 AuthContext: Force reloading page')
+    setTimeout(() => {
+      window.location.href = '/'
+    }, 100)
   }
 
   // Reset password method

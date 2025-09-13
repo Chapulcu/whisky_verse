@@ -2,7 +2,25 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAvatarUpload } from '@/hooks/useAvatarUpload'
-import { User, Mail, Calendar, Crown, Settings, Camera, Upload, X } from 'lucide-react'
+import { 
+  User, 
+  Mail, 
+  Calendar, 
+  Crown, 
+  Settings, 
+  Camera, 
+  Upload, 
+  X, 
+  Edit3, 
+  Save, 
+  MapPin, 
+  Phone, 
+  Globe, 
+  Info,
+  Bell,
+  Lock,
+  Palette
+} from 'lucide-react'
 import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
 
@@ -102,21 +120,25 @@ export function ProfilePage() {
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) {
-      try {
-        await uploadAvatar(file)
-      } catch (error) {
-        // Error already handled in hook
-      }
-    }
-    // Reset file input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
+    if (!file) return
+
+    try {
+      const avatarUrl = await uploadAvatar(file)
+      await updateProfile({ avatar_url: avatarUrl } as any)
+      toast.success('Profil fotoğrafı güncellendi!')
+    } catch (error: any) {
+      console.error('Error uploading avatar:', error)
+      toast.error('Fotoğraf yüklenirken hata oluştu')
     }
   }
 
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'Belirtilmemiş'
+    return new Date(dateString).toLocaleDateString('tr-TR')
+  }
+
   const getRoleBadge = () => {
-    if (!profile) return null
+    if (!profile?.role) return null
     
     switch (profile.role) {
       case 'vip':
@@ -144,9 +166,9 @@ export function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
           <p className="mt-4 text-lg font-medium">Profil yükleniyor...</p>
         </div>
       </div>
@@ -155,7 +177,7 @@ export function ProfilePage() {
 
   if (!user) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Lütfen giriş yapın</h1>
         </div>
@@ -164,352 +186,328 @@ export function ProfilePage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-2xl mx-auto"
-      >
-        {/* Profile Header */}
-        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 mb-6 shadow-xl">
-          <div className="flex items-center gap-6 mb-6">
-            <div className="relative group">
-              <div 
-                className={`w-24 h-24 rounded-full overflow-hidden bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center cursor-pointer transition-all duration-200 ${
-                  isUploading ? 'opacity-50' : 'group-hover:scale-105'
-                }`}
-                onClick={handleAvatarClick}
-              >
-                {profile?.avatar_url ? (
-                  <img 
-                    src={profile.avatar_url} 
-                    alt="Avatar" 
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <User className="w-12 h-12 text-white" />
-                )}
-              </div>
-              
-              <button 
-                className={`absolute bottom-0 right-0 bg-white/20 backdrop-blur-sm border border-white/30 p-2 rounded-full transition-all duration-200 ${
-                  isUploading 
-                    ? 'cursor-not-allowed opacity-50' 
-                    : 'hover:bg-white/30 hover:scale-110'
-                }`}
-                onClick={handleAvatarClick}
-                disabled={isUploading}
-              >
-                {isUploading ? (
-                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
-                ) : (
-                  <Camera className="w-4 h-4 text-white" />
-                )}
-              </button>
-              
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleAvatarChange}
-                className="hidden"
-              />
-            </div>
-            
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent mb-2">
-                {profile?.full_name || 'Kullanıcı'}
-              </h1>
-              
-              <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 mb-2">
-                <Mail className="w-4 h-4" />
-                <span>{user.email}</span>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                {getRoleBadge()}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Profile Information */}
-        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-xl">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold">Kişisel Bilgiler</h2>
-            
-            <div className="flex items-center gap-2">
-              {isEditing && (
-                <button
-                  onClick={handleCancel}
-                  className="flex items-center gap-2 px-4 py-2 text-sm bg-slate-500/20 hover:bg-slate-500/30 text-slate-600 dark:text-slate-400 rounded-lg transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                  İptal
-                </button>
-              )}
-              
-              <button
-                onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-                disabled={isSaving}
-                className="flex items-center gap-2 px-4 py-2 text-sm bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSaving ? (
-                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
-                ) : isEditing ? (
-                  <Upload className="w-4 h-4" />
-                ) : (
-                  <Settings className="w-4 h-4" />
-                )}
-                {isSaving ? 'Kaydediliyor...' : isEditing ? 'Kaydet' : 'Düzenle'}
-              </button>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 py-8">
+      <div className="container mx-auto px-4 max-w-4xl">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-6"
+        >
+          {/* Header Section */}
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-gradient bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent">
+              Profil Ayarları
+            </h1>
+            <p className="text-slate-600 dark:text-slate-400 mt-2">
+              Kişisel bilgilerinizi yönetin ve güncelleyin
+            </p>
           </div>
 
-          <div className="space-y-6">
-            {/* Full Name */}
-            <div>
-              <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                Ad Soyad
-              </label>
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={formData.full_name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
-                  placeholder="Adınızı ve soyadınızı girin"
-                />
-              ) : (
-                <p className="text-slate-800 dark:text-slate-200 py-3">
-                  {profile?.full_name || 'Belirtilmemiş'}
-                </p>
-              )}
-            </div>
-
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                E-posta Adresi
-              </label>
-              <p className="text-slate-800 dark:text-slate-200 py-3">{user.email}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-500">
-                E-posta adresi değiştirilemez
-              </p>
-            </div>
-
-            {/* Language */}
-            <div>
-              <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                Dil Tercihi
-              </label>
-              {isEditing ? (
-                <select
-                  value={formData.language}
-                  onChange={(e) => setFormData(prev => ({ ...prev, language: e.target.value as 'tr' | 'en' }))}
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
-                >
-                  <option value="tr">Türkçe</option>
-                  <option value="en">English</option>
-                </select>
-              ) : (
-                <p className="text-slate-800 dark:text-slate-200 py-3">
-                  {profile?.language === 'tr' ? 'Türkçe' : 'English'}
-                </p>
-              )}
-            </div>
-
-            {/* Bio */}
-            <div>
-              <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                Hakkımda
-              </label>
-              {isEditing ? (
-                <textarea
-                  value={formData.bio}
-                  onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 min-h-[100px] resize-none"
-                  placeholder="Kendiniz hakkında birkaç cümle yazın..."
-                  rows={4}
-                />
-              ) : (
-                <p className="text-slate-800 dark:text-slate-200 py-3">
-                  {(profile as any)?.bio || 'Belirtilmemiş'}
-                </p>
-              )}
-            </div>
-
-            {/* Location */}
-            <div>
-              <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                Konum
-              </label>
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={formData.location}
-                  onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
-                  placeholder="Şehir, ülke"
-                />
-              ) : (
-                <p className="text-slate-800 dark:text-slate-200 py-3">
-                  {(profile as any)?.location || 'Belirtilmemiş'}
-                </p>
-              )}
-            </div>
-
-            {/* Birth Date */}
-            <div>
-              <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                Doğum Tarihi
-              </label>
-              {isEditing ? (
-                <input
-                  type="date"
-                  value={formData.birth_date}
-                  onChange={(e) => setFormData(prev => ({ ...prev, birth_date: e.target.value }))}
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
-                  max={new Date().toISOString().split('T')[0]}
-                />
-              ) : (
-                <p className="text-slate-800 dark:text-slate-200 py-3">
-                  {(profile as any)?.birth_date 
-                    ? new Date((profile as any).birth_date).toLocaleDateString('tr-TR') 
-                    : 'Belirtilmemiş'
-                  }
-                </p>
-              )}
-            </div>
-
-            {/* Phone */}
-            <div>
-              <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                Telefon
-              </label>
-              {isEditing ? (
-                <input
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
-                  placeholder="+90 5XX XXX XX XX"
-                />
-              ) : (
-                <p className="text-slate-800 dark:text-slate-200 py-3">
-                  {(profile as any)?.phone || 'Belirtilmemiş'}
-                </p>
-              )}
-            </div>
-
-            {/* Website */}
-            <div>
-              <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                Website
-              </label>
-              {isEditing ? (
-                <input
-                  type="url"
-                  value={formData.website}
-                  onChange={(e) => setFormData(prev => ({ ...prev, website: e.target.value }))}
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
-                  placeholder="https://example.com"
-                />
-              ) : (
-                <p className="text-slate-800 dark:text-slate-200 py-3">
-                  {(profile as any)?.website ? (
-                    <a 
-                      href={(profile as any).website} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-amber-500 hover:text-amber-600 underline"
-                    >
-                      {(profile as any).website}
-                    </a>
-                  ) : (
-                    'Belirtilmemiş'
-                  )}
-                </p>
-              )}
-            </div>
-
-            {/* Privacy Settings */}
-            {isEditing && (
-              <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                  Gizlilik Ayarları
-                </label>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-700 dark:text-slate-300">Bildirimler</span>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.preferences.notifications}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          preferences: {
-                            ...prev.preferences,
-                            notifications: e.target.checked
-                          }
-                        }))}
-                        className="sr-only peer"
+          {/* Profile Card */}
+          <div className="glass rounded-2xl p-6 shadow-xl">
+            <div className="flex flex-col lg:flex-row lg:items-center gap-6">
+              {/* Avatar Section */}
+              <div className="flex-shrink-0 text-center lg:text-left">
+                <div className="relative inline-block group">
+                  <div 
+                    className={`w-24 h-24 lg:w-32 lg:h-32 rounded-full overflow-hidden bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center cursor-pointer transition-all duration-300 ${
+                      isUploading ? 'opacity-50' : 'group-hover:scale-105 group-hover:shadow-lg'
+                    }`}
+                    onClick={handleAvatarClick}
+                  >
+                    {profile?.avatar_url ? (
+                      <img 
+                        src={profile.avatar_url} 
+                        alt="Avatar" 
+                        className="w-full h-full object-cover"
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-amber-300 dark:peer-focus:ring-amber-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-amber-600"></div>
-                    </label>
+                    ) : (
+                      <User className="w-12 h-12 lg:w-16 lg:h-16 text-white" />
+                    )}
                   </div>
                   
+                  <button 
+                    className={`absolute -bottom-2 -right-2 bg-white dark:bg-slate-800 shadow-lg border border-slate-200 dark:border-slate-700 p-2 rounded-full transition-all duration-300 ${
+                      isUploading 
+                        ? 'cursor-not-allowed opacity-50' 
+                        : 'hover:bg-slate-50 dark:hover:bg-slate-700 hover:scale-110'
+                    }`}
+                    onClick={handleAvatarClick}
+                    disabled={isUploading}
+                  >
+                    {isUploading ? (
+                      <div className="animate-spin w-4 h-4 border-2 border-primary-500 border-t-transparent rounded-full" />
+                    ) : (
+                      <Camera className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+                    )}
+                  </button>
+                  
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    className="hidden"
+                  />
+                </div>
+              </div>
+
+              {/* Profile Info */}
+              <div className="flex-1">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
-                    <span className="block text-slate-700 dark:text-slate-300 mb-2">Profil Görünürlüğü</span>
-                    <select
-                      value={formData.preferences.privacy}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        preferences: {
-                          ...prev.preferences,
-                          privacy: e.target.value
-                        }
-                      }))}
-                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
+                    <h2 className="text-2xl font-bold text-slate-800 dark:text-white">
+                      {profile?.full_name || 'İsimsiz Kullanıcı'}
+                    </h2>
+                    <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 mt-1">
+                      <Mail className="w-4 h-4" />
+                      <span>{user.email}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 mt-1">
+                      <Calendar className="w-4 h-4" />
+                      <span>Üye olma: {formatDate(profile?.created_at || null)}</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col sm:items-end gap-2">
+                    {getRoleBadge()}
+                    <button
+                      onClick={() => setIsEditing(!isEditing)}
+                      className="flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors text-sm font-medium"
                     >
-                      <option value="public">Herkese Açık</option>
-                      <option value="friends">Sadece Arkadaşlar</option>
-                      <option value="private">Özel</option>
-                    </select>
+                      <Edit3 className="w-4 h-4" />
+                      {isEditing ? 'Düzenlemeyi Kapat' : 'Profili Düzenle'}
+                    </button>
                   </div>
                 </div>
               </div>
-            )}
+            </div>
+          </div>
 
-            {/* Role */}
-            <div>
-              <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                Üyelik Durumu
-              </label>
-              <div className="py-3">
-                {getRoleBadge()}
+          {/* Content Grid */}
+          <div className="grid lg:grid-cols-2 gap-6">
+            {/* Personal Information */}
+            <div className="glass rounded-xl p-6">
+              <h3 className="text-xl font-semibold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+                <User className="w-5 h-5 text-primary-500" />
+                Kişisel Bilgiler
+              </h3>
+              
+              <div className="space-y-4">
+                {/* Full Name */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Ad Soyad
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={formData.full_name}
+                      onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
+                      className="input-glass w-full"
+                      placeholder="Adınızı ve soyadınızı girin"
+                    />
+                  ) : (
+                    <p className="text-slate-600 dark:text-slate-400">
+                      {profile?.full_name || 'Belirtilmemiş'}
+                    </p>
+                  )}
+                </div>
+
+                {/* Bio */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Biyografi
+                  </label>
+                  {isEditing ? (
+                    <textarea
+                      value={formData.bio}
+                      onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
+                      className="input-glass w-full h-20 resize-none"
+                      placeholder="Kendiniz hakkında birkaç kelime..."
+                    />
+                  ) : (
+                    <p className="text-slate-600 dark:text-slate-400">
+                      {(profile as any)?.bio || 'Biyografi eklenmemiş'}
+                    </p>
+                  )}
+                </div>
+
+                {/* Location */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-2">
+                    <MapPin className="w-4 h-4" />
+                    Konum
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={formData.location}
+                      onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
+                      className="input-glass w-full"
+                      placeholder="Şehir, Ülke"
+                    />
+                  ) : (
+                    <p className="text-slate-600 dark:text-slate-400">
+                      {(profile as any)?.location || 'Belirtilmemiş'}
+                    </p>
+                  )}
+                </div>
+
+                {/* Birth Date */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Doğum Tarihi
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="date"
+                      value={formData.birth_date}
+                      onChange={(e) => setFormData(prev => ({ ...prev, birth_date: e.target.value }))}
+                      className="input-glass w-full"
+                    />
+                  ) : (
+                    <p className="text-slate-600 dark:text-slate-400">
+                      {formatDate((profile as any)?.birth_date)}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Registration Date */}
-            <div>
-              <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                Üyelik Tarihi
-              </label>
-              <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200 py-3">
-                <Calendar className="w-4 h-4" />
-                <span>
-                  {new Date(user.created_at).toLocaleDateString('tr-TR', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
-                </span>
+            {/* Contact Information */}
+            <div className="glass rounded-xl p-6">
+              <h3 className="text-xl font-semibold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+                <Mail className="w-5 h-5 text-primary-500" />
+                İletişim Bilgileri
+              </h3>
+              
+              <div className="space-y-4">
+                {/* Email (read-only) */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    E-posta Adresi
+                  </label>
+                  <p className="text-slate-600 dark:text-slate-400">
+                    {user.email}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    E-posta adresi değiştirilemez
+                  </p>
+                </div>
+
+                {/* Phone */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-2">
+                    <Phone className="w-4 h-4" />
+                    Telefon
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                      className="input-glass w-full"
+                      placeholder="+90 555 123 45 67"
+                    />
+                  ) : (
+                    <p className="text-slate-600 dark:text-slate-400">
+                      {(profile as any)?.phone || 'Belirtilmemiş'}
+                    </p>
+                  )}
+                </div>
+
+                {/* Website */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-2">
+                    <Globe className="w-4 h-4" />
+                    Web Sitesi
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="url"
+                      value={formData.website}
+                      onChange={(e) => setFormData(prev => ({ ...prev, website: e.target.value }))}
+                      className="input-glass w-full"
+                      placeholder="https://example.com"
+                    />
+                  ) : (
+                    <div>
+                      {(profile as any)?.website ? (
+                        <a 
+                          href={(profile as any).website} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-primary-500 hover:text-primary-600 underline"
+                        >
+                          {(profile as any).website}
+                        </a>
+                      ) : (
+                        <p className="text-slate-600 dark:text-slate-400">Belirtilmemiş</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Language */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Tercih Edilen Dil
+                  </label>
+                  {isEditing ? (
+                    <select
+                      value={formData.language}
+                      onChange={(e) => setFormData(prev => ({ ...prev, language: e.target.value as 'tr' | 'en' }))}
+                      className="input-glass w-full"
+                    >
+                      <option value="tr">Türkçe</option>
+                      <option value="en">English</option>
+                    </select>
+                  ) : (
+                    <p className="text-slate-600 dark:text-slate-400">
+                      {profile?.language === 'tr' ? 'Türkçe' : 'English'}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </motion.div>
+
+          {/* Action Buttons */}
+          {isEditing && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-col sm:flex-row gap-3 justify-center"
+            >
+              <button
+                onClick={handleCancel}
+                disabled={isSaving}
+                className="flex items-center justify-center gap-2 px-6 py-3 bg-slate-500 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium"
+              >
+                <X className="w-4 h-4" />
+                İptal
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-500 to-secondary-500 hover:from-primary-600 hover:to-secondary-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-all font-medium"
+              >
+                {isSaving ? (
+                  <>
+                    <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                    Kaydediliyor...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    Değişiklikleri Kaydet
+                  </>
+                )}
+              </button>
+            </motion.div>
+          )}
+        </motion.div>
+      </div>
     </div>
   )
 }

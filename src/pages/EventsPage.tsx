@@ -27,11 +27,11 @@ interface Event {
   group_id: number
   title: string
   description: string | null
-  event_date: string
+  start_date: string
   location: string | null
   max_participants: number
   created_by: string
-  is_public: boolean
+  is_active: boolean
   created_at: string
   group_name?: string
   creator_name?: string
@@ -59,10 +59,10 @@ export function EventsPage() {
     group_id: '',
     title: '',
     description: '',
-    event_date: '',
+    start_date: '',
     location: '',
     max_participants: 20,
-    is_public: true
+    is_active: true
   })
 
   const loadMyGroups = async () => {
@@ -95,9 +95,9 @@ export function EventsPage() {
       const { data: eventsData, error } = await supabase
         .from('events')
         .select('*')
-        .eq('is_public', true)
-        .gte('event_date', new Date().toISOString())
-        .order('event_date')
+        .eq('is_active', true)
+        .gte('start_date', new Date().toISOString())
+        .order('start_date')
 
       if (error) throw error
 
@@ -161,7 +161,7 @@ export function EventsPage() {
         .from('events')
         .select('*')
         .eq('created_by', user.id)
-        .order('event_date')
+        .order('start_date')
 
       if (error) throw error
 
@@ -220,11 +220,11 @@ export function EventsPage() {
           group_id: parseInt(createForm.group_id),
           title: createForm.title,
           description: createForm.description || null,
-          event_date: createForm.event_date,
+          start_date: createForm.start_date,
           location: createForm.location || null,
           max_participants: createForm.max_participants,
           created_by: user.id,
-          is_public: createForm.is_public
+          is_active: createForm.is_active
         })
         .select()
         .single()
@@ -248,10 +248,10 @@ export function EventsPage() {
         group_id: '',
         title: '',
         description: '',
-        event_date: '',
+        start_date: '',
         location: '',
         max_participants: 20,
-        is_public: true
+        is_active: true
       })
       loadEvents()
       loadMyEvents()
@@ -447,8 +447,8 @@ export function EventsPage() {
       {/* Events Grid */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {(activeTab === 'discover' ? filteredEvents : myEvents).map((event, index) => {
-          const { date, time } = formatDateTime(event.event_date)
-          const isPast = isEventPast(event.event_date)
+          const { date, time } = formatDateTime(event.start_date)
+          const isPast = isEventPast(event.start_date)
           
           return (
             <motion.div
@@ -475,7 +475,7 @@ export function EventsPage() {
                 </div>
                 
                 <div className="flex items-center gap-2 ml-2">
-                  {event.is_public ? (
+                  {event.is_active ? (
                     <div title="Herkese Açık">
                       <Eye className="w-4 h-4 text-green-500" />
                     </div>
@@ -662,8 +662,8 @@ export function EventsPage() {
                 </label>
                 <input
                   type="datetime-local"
-                  value={createForm.event_date}
-                  onChange={(e) => setCreateForm(prev => ({ ...prev, event_date: e.target.value }))}
+                  value={createForm.start_date}
+                  onChange={(e) => setCreateForm(prev => ({ ...prev, start_date: e.target.value }))}
                   className="input-glass"
                   required
                   min={new Date().toISOString().slice(0, 16)}
@@ -700,12 +700,12 @@ export function EventsPage() {
               <div className="flex items-center gap-3">
                 <input
                   type="checkbox"
-                  id="event_is_public"
-                  checked={createForm.is_public}
-                  onChange={(e) => setCreateForm(prev => ({ ...prev, is_public: e.target.checked }))}
+                  id="event_is_active"
+                  checked={createForm.is_active}
+                  onChange={(e) => setCreateForm(prev => ({ ...prev, is_active: e.target.checked }))}
                   className="w-4 h-4 text-primary-600 border-slate-300 rounded focus:ring-primary-500"
                 />
-                <label htmlFor="event_is_public" className="text-sm text-slate-700 dark:text-slate-300">
+                <label htmlFor="event_is_active" className="text-sm text-slate-700 dark:text-slate-300">
                   Herkese açık etkinlik (Diğer kullanıcılar etkinliği görebilir ve katılabilir)
                 </label>
               </div>
@@ -721,7 +721,7 @@ export function EventsPage() {
                 <button
                   type="submit"
                   className="btn-primary flex-1"
-                  disabled={!createForm.title.trim() || !createForm.group_id || !createForm.event_date}
+                  disabled={!createForm.title.trim() || !createForm.group_id || !createForm.start_date}
                 >
                   Oluştur
                 </button>

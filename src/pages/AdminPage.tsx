@@ -26,7 +26,13 @@ import {
   FileText,
   Image,
   MapPin,
-  Percent
+  Percent,
+  Users2,
+  CalendarDays,
+  Clock,
+  MapPin as LocationIcon,
+  Globe,
+  Lock
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
@@ -62,12 +68,54 @@ interface Whisky {
   updated_at: string
 }
 
+interface Group {
+  id: string | number // Support both string and numeric IDs
+  name: string
+  description: string | null
+  image_url: string | null
+  category?: string | null // Optional - may not exist in all records
+  privacy: 'public' | 'private' | 'members_only'
+  max_members: number
+  created_by: string | null
+  created_at: string
+  updated_at: string
+  is_active: boolean
+  member_count?: number
+}
+
+interface Event {
+  id: string | number // Support both string and numeric IDs
+  title: string
+  description: string | null
+  image_url: string | null
+  event_type: string | null
+  location: string | null
+  virtual_link: string | null
+  start_date: string
+  end_date: string | null
+  max_participants: number
+  // price and currency temporarily removed until database schema is fixed
+  // price: number
+  // currency: string
+  group_id: string | null
+  created_by: string | null
+  created_at: string
+  updated_at: string
+  is_active: boolean
+  status: 'upcoming' | 'ongoing' | 'completed' | 'cancelled'
+  participant_count?: number
+  group_name?: string
+}
+
 export function AdminPage() {
   const { user, profile } = useAuth()
   const { getAllUsers, updateUser, deleteUser, createAdmin, createUser, isLoading } = useAdminOperations()
+  // CRITICAL FIX: Always start with empty state - no cache
   const [users, setUsers] = useState<User[]>([])
   const [whiskies, setWhiskies] = useState<Whisky[]>([])
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'whiskies'>('overview')
+  const [groups, setGroups] = useState<Group[]>([])
+  const [events, setEvents] = useState<Event[]>([])
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'whiskies' | 'groups' | 'events'>('overview')
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCountry, setSelectedCountry] = useState('')
   const [selectedType, setSelectedType] = useState('')
@@ -80,6 +128,12 @@ export function AdminPage() {
   const [editingWhisky, setEditingWhisky] = useState<Whisky | null>(null)
   const [viewingWhisky, setViewingWhisky] = useState<Whisky | null>(null)
   const [isCreatingWhisky, setIsCreatingWhisky] = useState(false)
+  const [editingGroup, setEditingGroup] = useState<Group | null>(null)
+  const [viewingGroup, setViewingGroup] = useState<Group | null>(null)
+  const [isCreatingGroup, setIsCreatingGroup] = useState(false)
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null)
+  const [viewingEvent, setViewingEvent] = useState<Event | null>(null)
+  const [isCreatingEvent, setIsCreatingEvent] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
@@ -139,12 +193,43 @@ export function AdminPage() {
     selectedImageFile: null
   })
 
+  const [groupForm, setGroupForm] = useState({
+    name: '',
+    description: '',
+    category: '',
+    privacy: 'public' as 'public' | 'private' | 'members_only',
+    max_members: 50,
+    image_url: '',
+    selectedImageFile: null as File | null
+  })
+
+  const [eventForm, setEventForm] = useState({
+    title: '',
+    description: '',
+    event_type: '',
+    location: '',
+    virtual_link: '',
+    start_date: '',
+    end_date: '',
+    max_participants: 30,
+    // price: 0,
+    // currency: 'TRY',
+    group_id: '',
+    image_url: '',
+    selectedImageFile: null as File | null
+  })
+
   const loadUsers = async () => {
     try {
+      console.log('Loading users...')
       const userData = await getAllUsers()
       setUsers(userData)
+      // Cache the data
+      // No caching - removed localStorage.setItem
+      console.log(`Loaded and cached ${userData.length} users`)
     } catch (error) {
-      // Error already handled in hook
+      console.error('Error loading users:', error)
+      // Don't clear cache on error, keep existing data
     }
   }
 
@@ -204,8 +289,9 @@ export function AdminPage() {
         console.warn(`AdminPage: Loaded count (${allWhiskies.length}) doesn't match expected count (${totalRecords})`)
       }
       
-      toast.success(`${allWhiskies.length} viski başarıyla yüklendi!`)
       setWhiskies(allWhiskies)
+      // Cache the data
+      localStorage.setItem('admin_whiskies_cache', JSON.stringify(allWhiskies))
       
     } catch (error) {
       console.error('AdminPage: Error loading whiskies:', error)
@@ -213,10 +299,191 @@ export function AdminPage() {
     }
   }
 
+  const loadGroups = async () => {
+    try {
+      console.log('AdminPage: Loading groups...')
+      
+      const { data, error } = await supabase
+        .from('groups')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.error('AdminPage: Error loading groups:', error)
+        throw error
+      }
+
+      // Get member counts for each group
+      const groupsWithCounts = await Promise.all(
+        (data || []).map(async (group) => {
+          const { count } = await supabase
+            .from('group_members')
+            .select('*', { count: 'exact', head: true })
+            .eq('group_id', group.id)
+          
+          return { ...group, member_count: count || 0 }
+        })
+      )
+
+      console.log(`AdminPage: Successfully loaded ${groupsWithCounts.length} groups`)
+      setGroups(groupsWithCounts)
+      // Cache the data
+      localStorage.setItem('admin_groups_cache', JSON.stringify(groupsWithCounts))
+      
+    } catch (error) {
+      console.error('AdminPage: Error loading groups:', error)
+      toast.error('Gruplar yüklenemedi: ' + (error as any).message)
+    }
+  }
+
+  const loadEvents = async () => {
+    try {
+      console.log('AdminPage: Loading events...')
+      
+      // First check if events table exists
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .order('created_at', { ascending: false }) // Use created_at instead of start_date initially
+
+      if (error) {
+        console.error('AdminPage: Error loading events:', error)
+        
+        // If table doesn't exist, show a helpful message
+        if (error.message.includes('relation "events" does not exist')) {
+          console.warn('Events table does not exist - creating empty array')
+          setEvents([])
+          localStorage.setItem('admin_events_cache', JSON.stringify([]))
+          toast.info('Events tablosu henüz oluşturulmamış')
+          return
+        }
+        
+        throw error
+      }
+
+      // Get participant counts and group names for each event
+      const eventsWithCounts = await Promise.all(
+        (data || []).map(async (event) => {
+          const { count } = await supabase
+            .from('event_participants')
+            .select('*', { count: 'exact', head: true })
+            .eq('event_id', event.id)
+          
+          // Get group name if group_id exists
+          let groupName = null
+          if (event.group_id) {
+            const { data: groupData } = await supabase
+              .from('groups')
+              .select('name')
+              .eq('id', event.group_id)
+              .single()
+            groupName = groupData?.name || null
+          }
+          
+          // Calculate event status based on dates
+          const now = new Date()
+          const startDate = new Date(event.start_date)
+          const endDate = event.end_date ? new Date(event.end_date) : startDate
+          
+          let status: 'upcoming' | 'ongoing' | 'completed' | 'cancelled'
+          if (now < startDate) {
+            status = 'upcoming'
+          } else if (now >= startDate && now <= endDate) {
+            status = 'ongoing'
+          } else {
+            status = 'completed'
+          }
+          
+          return { 
+            ...event, 
+            participant_count: count || 0,
+            group_name: groupName,
+            status
+          }
+        })
+      )
+
+      console.log(`AdminPage: Successfully loaded ${eventsWithCounts.length} events`)
+      setEvents(eventsWithCounts)
+      // Cache the data
+      localStorage.setItem('admin_events_cache', JSON.stringify(eventsWithCounts))
+      
+    } catch (error) {
+      console.error('AdminPage: Error loading events:', error)
+      toast.error('Etkinlikler yüklenemedi: ' + (error as any).message)
+    }
+  }
+
+  // Clear all cached data
+  const clearAllCache = () => {
+    localStorage.removeItem('admin_users_cache')
+    localStorage.removeItem('admin_whiskies_cache')
+    localStorage.removeItem('admin_groups_cache')
+    localStorage.removeItem('admin_events_cache')
+    setHasLoadedData(false) // Allow data to be reloaded
+    console.log('All admin cache cleared')
+    toast.success('Cache temizlendi! Sayfa yenileyin.')
+  }
+
+  // Test database connection (simplified)
+  const testDatabaseConnection = async () => {
+    try {
+      // Just test basic connection, don't show toast errors
+      await supabase.from('groups').select('*', { count: 'exact', head: true })
+      await supabase.from('events').select('*', { count: 'exact', head: true })
+      console.log('Database connection: OK')
+    } catch (error) {
+      console.warn('Database connection issue:', error)
+    }
+  }
+
+  // CRITICAL FIX: Always reload fresh data - disable cache temporarily
+  const [hasLoadedData, setHasLoadedData] = useState(false)
+  
+  // Clear corrupted cache on mount
   useEffect(() => {
-    loadUsers()
-    loadWhiskies()
+    localStorage.removeItem('admin_groups_cache')
+    localStorage.removeItem('admin_events_cache')
+    localStorage.removeItem('admin_users_cache')
+    localStorage.removeItem('admin_whiskies_cache')
+    localStorage.removeItem('admin_data_loaded')
   }, [])
+  
+  // Load data when user and profile are available (only once)
+  useEffect(() => {
+    console.log('AdminPage: Auth state changed:', { 
+      user: user?.email, 
+      profile: profile?.role, 
+      loading: isLoading,
+      hasLoadedData
+    })
+    
+    // Only load data when we have a user, not loading, and haven't loaded yet
+    // For admin@whiskyverse.com, we don't require profile to be loaded
+    if (user && !isLoading && !hasLoadedData && (profile || user.email === 'admin@whiskyverse.com')) {
+      console.log('AdminPage: Auth ready, loading data for the first time...')
+      
+      setHasLoadedData(true)
+      // No caching - removed localStorage.setItem
+      
+      // Load data without delay to prevent multiple calls
+      const loadData = async () => {
+        try {
+          await Promise.all([
+            loadUsers(),
+            loadWhiskies(), 
+            loadGroups(),
+            loadEvents()
+          ])
+          console.log('AdminPage: All data loaded successfully')
+        } catch (error) {
+          console.error('AdminPage: Error loading data:', error)
+        }
+      }
+      
+      loadData()
+    }
+  }, [user?.email, profile?.role, isLoading, hasLoadedData])
 
   // Reset to first page when filters change
   useEffect(() => {
@@ -585,6 +852,367 @@ export function AdminPage() {
     const totalWhiskies = whiskies.length
     
     return { totalUsers, adminCount, vipCount, regularCount, totalWhiskies }
+  }
+
+  // Group CRUD Functions
+  const handleCreateGroup = async () => {
+    if (!groupForm.name.trim()) {
+      toast.error('Grup adı gereklidir')
+      return
+    }
+
+    try {
+      console.log('Creating group with data:', groupForm)
+      
+      // Build insert object with minimal fields - only what definitely exists
+      const insertData: any = {
+        name: groupForm.name.trim(),
+        description: groupForm.description.trim() || null,
+        created_by: user?.id
+        // Skip privacy, max_members for now - might not exist in DB
+      }
+      
+      // Category column doesn't exist in database - skip it for now
+      // TODO: Add category column to groups table if needed
+      
+      console.log('Final insert data:', insertData)
+      console.log('🔄 Starting Supabase insert directly...')
+      
+      // Direct insert without timeout - it's working now!
+      console.log('🚀 Attempting direct insert...')
+      const { data, error } = await supabase
+        .from('groups')
+        .insert(insertData)
+        .select()
+
+      console.log('📊 Supabase insert result:', { data, error })
+
+      if (error) {
+        console.error('❌ Supabase insert error:', error)
+        throw error
+      }
+
+      console.log('Group created successfully:', data)
+      toast.success('Grup başarıyla oluşturuldu!')
+      
+      // Add new group to state immediately instead of reloading
+      if (data && data.length > 0) {
+        const newGroupWithCount = { ...data[0], member_count: 0 }
+        setGroups(prev => {
+          const updated = [newGroupWithCount, ...prev]
+          localStorage.setItem('admin_groups_cache', JSON.stringify(updated))
+          return updated
+        })
+      }
+      
+      setIsCreatingGroup(false)
+      setGroupForm({
+        name: '',
+        description: '',
+        category: '',
+        privacy: 'public',
+        max_members: 50,
+        image_url: '',
+        selectedImageFile: null
+      })
+    } catch (error) {
+      console.error('Error creating group:', error)
+      toast.error('Grup oluşturulurken hata: ' + (error as any).message)
+      // Always close modal and reset form even on error
+      setIsCreatingGroup(false)
+      setGroupForm({
+        name: '',
+        description: '',
+        category: '',
+        privacy: 'public',
+        max_members: 50,
+        image_url: '',
+        selectedImageFile: null
+      })
+    }
+  }
+
+  const handleEditGroup = (group: Group) => {
+    setEditingGroup(group)
+    setGroupForm({
+      name: group.name,
+      description: group.description || '',
+      category: group.category || '',
+      privacy: group.privacy,
+      max_members: group.max_members,
+      image_url: group.image_url || '',
+      selectedImageFile: null
+    })
+  }
+
+  const handleSaveGroup = async () => {
+    if (!editingGroup) return
+    
+    if (!groupForm.name.trim()) {
+      toast.error('Grup adı boş bırakılamaz')
+      return
+    }
+
+    try {
+      console.log('Updating group:', editingGroup.id, 'with data:', groupForm)
+      
+      // Build update object with only basic required fields first
+      const updateData: any = {
+        name: groupForm.name.trim(),
+        description: groupForm.description.trim() || null,
+        privacy: groupForm.privacy,
+        max_members: groupForm.max_members,
+        updated_at: new Date().toISOString()
+      }
+      
+      // Only add category if it's provided and not empty
+      if (groupForm.category && groupForm.category.trim()) {
+        updateData.category = groupForm.category.trim()
+      }
+      
+      console.log('Final update data:', updateData)
+      
+      const { error } = await supabase
+        .from('groups')
+        .update(updateData)
+        .eq('id', editingGroup.id)
+
+      if (error) {
+        console.error('Supabase update error:', error)
+        throw error
+      }
+
+      console.log('Group updated successfully')
+      toast.success('Grup başarıyla güncellendi!')
+      setEditingGroup(null)
+      await loadGroups()
+    } catch (error) {
+      console.error('Error updating group:', error)
+      toast.error('Grup güncellenirken hata: ' + (error as any).message)
+    }
+  }
+
+  const handleDeleteGroup = async (groupId: string, groupName: string) => {
+    if (!confirm(`"${groupName}" grubunu silmek istediğinizden emin misiniz? Tüm üyeler ve etkinlikler de silinecektir. Bu işlem geri alınamaz.`)) {
+      return
+    }
+
+    try {
+      console.log('Deleting group with ID:', groupId, 'Type:', typeof groupId, 'Length:', groupId?.length)
+      console.log('Group name:', groupName)
+      
+      // SAFETY: Very basic validation - just check if ID exists
+      if (!groupId) {
+        throw new Error('Grup ID bulunamadı')
+      }
+      
+      // Convert to string if it's a number (some DBs use numeric IDs)
+      const safeGroupId = String(groupId)
+      
+      const { error } = await supabase
+        .from('groups')
+        .delete()
+        .eq('id', safeGroupId)
+        .eq('name', groupName) // Extra safety check
+
+      if (error) {
+        console.error('Delete error:', error)
+        throw error
+      }
+
+      console.log('Group deleted successfully')
+      
+      // Update local state immediately, don't reload from DB
+      setGroups(prevGroups => {
+        const filteredGroups = prevGroups.filter(g => String(g.id) !== safeGroupId)
+        // Update cache with filtered data
+        localStorage.setItem('admin_groups_cache', JSON.stringify(filteredGroups))
+        return filteredGroups
+      })
+      
+      toast.success('Grup başarıyla silindi!')
+      
+    } catch (error) {
+      console.error('Error deleting group:', error)
+      toast.error('Grup silinirken hata: ' + (error as any).message)
+    }
+  }
+
+  // Event CRUD Functions
+  const handleCreateEvent = async () => {
+    if (!eventForm.title.trim() || !eventForm.start_date) {
+      toast.error('Etkinlik adı ve başlangıç tarihi gereklidir')
+      return
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('events')
+        .insert([{
+          title: eventForm.title.trim(),
+          description: eventForm.description.trim() || null,
+          event_type: eventForm.event_type.trim() || null,
+          location: eventForm.location.trim() || null,
+          virtual_link: eventForm.virtual_link.trim() || null,
+          start_date: eventForm.start_date,
+          end_date: eventForm.end_date || null,
+          max_participants: eventForm.max_participants,
+          // Temporarily commented out until database schema is updated
+          // price: eventForm.price,
+          // currency: eventForm.currency,
+          group_id: eventForm.group_id || null,
+          created_by: user?.id
+        }])
+        .select()
+
+      if (error) throw error
+
+      toast.success('Etkinlik başarıyla oluşturuldu!')
+      
+      // Add new event to state immediately instead of reloading
+      if (data && data.length > 0) {
+        const newEventWithCount = { ...data[0], participant_count: 0, group_name: null }
+        setEvents(prev => {
+          const updated = [newEventWithCount, ...prev]
+          localStorage.setItem('admin_events_cache', JSON.stringify(updated))
+          return updated
+        })
+      }
+      
+      setIsCreatingEvent(false)
+      setEventForm({
+        title: '',
+        description: '',
+        event_type: '',
+        location: '',
+        virtual_link: '',
+        start_date: '',
+        end_date: '',
+        max_participants: 30,
+        // price: 0,
+        // currency: 'TRY',
+        group_id: '',
+        image_url: '',
+        selectedImageFile: null
+      })
+      // No need to reload from DB
+    } catch (error) {
+      console.error('Error creating event:', error)
+      toast.error('Etkinlik oluşturulurken hata: ' + (error as any).message)
+    }
+  }
+
+  const handleEditEvent = (event: Event) => {
+    setEditingEvent(event)
+    setEventForm({
+      title: event.title,
+      description: event.description || '',
+      event_type: event.event_type || '',
+      location: event.location || '',
+      virtual_link: event.virtual_link || '',
+      start_date: event.start_date.slice(0, 16), // Format for datetime-local input
+      end_date: event.end_date ? event.end_date.slice(0, 16) : '',
+      max_participants: event.max_participants,
+      // price: event.price,
+      // currency: event.currency,
+      group_id: event.group_id || '',
+      image_url: event.image_url || '',
+      selectedImageFile: null
+    })
+  }
+
+  const handleSaveEvent = async () => {
+    if (!editingEvent) return
+    
+    if (!eventForm.title.trim() || !eventForm.start_date) {
+      toast.error('Etkinlik adı ve başlangıç tarihi boş bırakılamaz')
+      return
+    }
+
+    try {
+      const { error } = await supabase
+        .from('events')
+        .update({
+          title: eventForm.title.trim(),
+          description: eventForm.description.trim() || null,
+          event_type: eventForm.event_type.trim() || null,
+          location: eventForm.location.trim() || null,
+          virtual_link: eventForm.virtual_link.trim() || null,
+          start_date: eventForm.start_date,
+          end_date: eventForm.end_date || null,
+          max_participants: eventForm.max_participants,
+          // Temporarily commented out until database schema is updated
+          // price: eventForm.price,
+          // currency: eventForm.currency,
+          group_id: eventForm.group_id || null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', editingEvent.id)
+
+      if (error) throw error
+
+      toast.success('Etkinlik başarıyla güncellendi!')
+      setEditingEvent(null)
+      // Update local state instead of reloading
+      setEvents(prev => {
+        const updated = prev.map(e => 
+          String(e.id) === String(editingEvent.id) 
+            ? { ...e, ...eventForm, participant_count: e.participant_count || 0 }
+            : e
+        )
+        localStorage.setItem('admin_events_cache', JSON.stringify(updated))
+        return updated
+      })
+    } catch (error) {
+      console.error('Error updating event:', error)
+      toast.error('Etkinlik güncellenirken hata: ' + (error as any).message)
+    }
+  }
+
+  const handleDeleteEvent = async (eventId: string, eventTitle: string) => {
+    if (!confirm(`"${eventTitle}" etkinliğini silmek istediğinizden emin misiniz? Tüm katılımcılar da silinecektir. Bu işlem geri alınamaz.`)) {
+      return
+    }
+
+    try {
+      console.log('Deleting event with ID:', eventId, 'Type:', typeof eventId, 'Length:', eventId?.length)
+      console.log('Event title:', eventTitle)
+      
+      // SAFETY: Very basic validation - just check if ID exists
+      if (!eventId) {
+        throw new Error('Etkinlik ID bulunamadı')
+      }
+      
+      // Convert to string if it's a number (some DBs use numeric IDs)
+      const safeEventId = String(eventId)
+      
+      const { error } = await supabase
+        .from('events')
+        .delete()
+        .eq('id', safeEventId)
+        .eq('title', eventTitle) // Extra safety check
+
+      if (error) {
+        console.error('Delete error:', error)
+        throw error
+      }
+
+      console.log('Event deleted successfully')
+      
+      // Update local state immediately, don't reload from DB
+      setEvents(prevEvents => {
+        const filteredEvents = prevEvents.filter(e => String(e.id) !== safeEventId)
+        // Update cache with filtered data
+        localStorage.setItem('admin_events_cache', JSON.stringify(filteredEvents))
+        return filteredEvents
+      })
+      
+      toast.success('Etkinlik başarıyla silindi!')
+      
+    } catch (error) {
+      console.error('Error deleting event:', error)
+      toast.error('Etkinlik silinirken hata: ' + (error as any).message)
+    }
   }
 
   // Filter whiskies based on search and filters
@@ -978,6 +1606,28 @@ export function AdminPage() {
             >
               <Wine className="w-4 h-4" />
               Viski Yönetimi
+            </button>
+            <button
+              onClick={() => setActiveTab('groups')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'groups'
+                  ? 'bg-white/20 text-slate-800 dark:text-white'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
+              }`}
+            >
+              <Users2 className="w-4 h-4" />
+              Grup Yönetimi
+            </button>
+            <button
+              onClick={() => setActiveTab('events')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'events'
+                  ? 'bg-white/20 text-slate-800 dark:text-white'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
+              }`}
+            >
+              <CalendarDays className="w-4 h-4" />
+              Etkinlik Yönetimi
             </button>
           </div>
         </div>
@@ -2698,6 +3348,787 @@ export function AdminPage() {
             </div>
           )}
         </AnimatePresence>
+
+        {/* Groups Tab */}
+        {activeTab === 'groups' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            {/* Groups Header */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Grup Yönetimi</h2>
+                <p className="text-slate-600 dark:text-slate-400">Topluluk gruplarını yönetin ({groups.length} grup yüklü)</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    console.log('Manual groups reload requested')
+                    loadGroups()
+                  }}
+                  className="flex items-center gap-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all duration-200"
+                  title="Grupları Yenile"
+                >
+                  <Search className="w-4 h-4" />
+                  Yenile
+                </button>
+                <button
+                  onClick={() => setIsCreatingGroup(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-lg transition-all duration-200"
+                >
+                  <Plus className="w-4 h-4" />
+                  Yeni Grup
+                </button>
+              </div>
+            </div>
+
+            {/* Groups List */}
+            <div className="glass-strong rounded-xl p-6">
+              {isLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-pulse">
+                    <div className="w-16 h-16 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mb-4"></div>
+                    <div className="h-4 bg-slate-300 dark:bg-slate-600 rounded w-32 mx-auto mb-2"></div>
+                    <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-48 mx-auto"></div>
+                  </div>
+                  <p className="text-slate-500 mt-4">Gruplar yüklenmeyor...</p>
+                </div>
+              ) : groups.length === 0 ? (
+                <div className="text-center py-8">
+                  <Users2 className="w-16 h-16 mx-auto mb-4 text-slate-400" />
+                  <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400 mb-2">Henüz grup yok</h3>
+                  <p className="text-slate-500">İlk grubu oluşturmak için "Yeni Grup" butonuna tıklayın</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {groups.map((group) => (
+                    <div key={group.id} className="bg-white/5 border border-white/10 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="text-lg font-semibold text-slate-800 dark:text-white">{group.name}</h3>
+                            <span className={`px-2 py-1 text-xs rounded-full ${
+                              group.privacy === 'public' ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' :
+                              group.privacy === 'private' ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400' :
+                              'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
+                            }`}>
+                              {group.privacy === 'public' ? 'Herkese Açık' :
+                               group.privacy === 'private' ? 'Özel' : 'Sadece Üyeler'}
+                            </span>
+                          </div>
+                          <p className="text-slate-600 dark:text-slate-400 mb-2">{group.description}</p>
+                          <div className="flex items-center gap-4 text-sm text-slate-500">
+                            <span>📊 {group.member_count} üye</span>
+                            <span>📋 {group.category || 'Kategori yok'}</span>
+                            <span>👥 Max: {group.max_members}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleEditGroup(group)}
+                            className="p-2 text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                            title="Grubu Düzenle"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteGroup(group.id, group.name)}
+                            className="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                            title="Grubu Sil"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Create Group Modal */}
+            <AnimatePresence>
+              {isCreatingGroup && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="glass-strong rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+                  >
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-xl font-bold text-slate-800 dark:text-white">Yeni Grup Oluştur</h3>
+                      <button
+                        onClick={() => {
+                          setIsCreatingGroup(false)
+                          setGroupForm({
+                            name: '',
+                            description: '',
+                            category: '',
+                            privacy: 'public',
+                            max_members: 50,
+                            image_url: '',
+                            selectedImageFile: null
+                          })
+                        }}
+                        className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-500 hover:text-red-500 rounded-lg transition-colors"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Grup Adı *</label>
+                        <input
+                          type="text"
+                          value={groupForm.name}
+                          onChange={(e) => setGroupForm(prev => ({ ...prev, name: e.target.value }))}
+                          className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                          placeholder="Grup adını girin"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Açıklama</label>
+                        <textarea
+                          value={groupForm.description}
+                          onChange={(e) => setGroupForm(prev => ({ ...prev, description: e.target.value }))}
+                          className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                          rows={3}
+                          placeholder="Grup hakkında kısa bir açıklama"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Kategori</label>
+                          <select
+                            value={groupForm.category}
+                            onChange={(e) => setGroupForm(prev => ({ ...prev, category: e.target.value }))}
+                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                          >
+                            <option value="">Kategori seçin</option>
+                            <option value="whisky_tasting">Viski Tadımı</option>
+                            <option value="social">Sosyal</option>
+                            <option value="educational">Eğitim</option>
+                            <option value="competition">Yarışma</option>
+                            <option value="networking">Networking</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Gizlilik</label>
+                          <select
+                            value={groupForm.privacy}
+                            onChange={(e) => setGroupForm(prev => ({ ...prev, privacy: e.target.value as 'public' | 'private' | 'members_only' }))}
+                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                          >
+                            <option value="public">Herkese Açık</option>
+                            <option value="members_only">Sadece Üyeler</option>
+                            <option value="private">Özel</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Maksimum Üye Sayısı</label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="1000"
+                          value={groupForm.max_members}
+                          onChange={(e) => setGroupForm(prev => ({ ...prev, max_members: parseInt(e.target.value) || 50 }))}
+                          className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-3 pt-4">
+                        <button
+                          onClick={handleCreateGroup}
+                          className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white py-2 px-4 rounded-lg transition-all duration-200"
+                        >
+                          Grup Oluştur
+                        </button>
+                        <button
+                          onClick={() => {
+                            setIsCreatingGroup(false)
+                            setGroupForm({
+                              name: '',
+                              description: '',
+                              category: '',
+                              privacy: 'public',
+                              max_members: 50,
+                              image_url: '',
+                              selectedImageFile: null
+                            })
+                          }}
+                          className="px-4 py-2 bg-slate-500/20 hover:bg-slate-500/30 text-slate-600 dark:text-slate-400 rounded-lg transition-colors"
+                        >
+                          İptal
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                </div>
+              )}
+            </AnimatePresence>
+
+            {/* Edit Group Modal */}
+            <AnimatePresence>
+              {editingGroup && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="glass-strong rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+                  >
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-xl font-bold text-slate-800 dark:text-white">Grubu Düzenle</h3>
+                      <button
+                        onClick={() => setEditingGroup(null)}
+                        className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-500 hover:text-red-500 rounded-lg transition-colors"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Grup Adı *</label>
+                        <input
+                          type="text"
+                          value={groupForm.name}
+                          onChange={(e) => setGroupForm(prev => ({ ...prev, name: e.target.value }))}
+                          className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Açıklama</label>
+                        <textarea
+                          value={groupForm.description}
+                          onChange={(e) => setGroupForm(prev => ({ ...prev, description: e.target.value }))}
+                          className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                          rows={3}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Kategori</label>
+                          <select
+                            value={groupForm.category}
+                            onChange={(e) => setGroupForm(prev => ({ ...prev, category: e.target.value }))}
+                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                          >
+                            <option value="">Kategori seçin</option>
+                            <option value="whisky_tasting">Viski Tadımı</option>
+                            <option value="social">Sosyal</option>
+                            <option value="educational">Eğitim</option>
+                            <option value="competition">Yarışma</option>
+                            <option value="networking">Networking</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Gizlilik</label>
+                          <select
+                            value={groupForm.privacy}
+                            onChange={(e) => setGroupForm(prev => ({ ...prev, privacy: e.target.value as 'public' | 'private' | 'members_only' }))}
+                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                          >
+                            <option value="public">Herkese Açık</option>
+                            <option value="members_only">Sadece Üyeler</option>
+                            <option value="private">Özel</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Maksimum Üye Sayısı</label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="1000"
+                          value={groupForm.max_members}
+                          onChange={(e) => setGroupForm(prev => ({ ...prev, max_members: parseInt(e.target.value) || 50 }))}
+                          className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-3 pt-4">
+                        <button
+                          onClick={handleSaveGroup}
+                          className="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white py-2 px-4 rounded-lg transition-all duration-200"
+                        >
+                          Kaydet
+                        </button>
+                        <button
+                          onClick={() => setEditingGroup(null)}
+                          className="px-4 py-2 bg-slate-500/20 hover:bg-slate-500/30 text-slate-600 dark:text-slate-400 rounded-lg transition-colors"
+                        >
+                          İptal
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                </div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        )}
+
+        {/* Events Tab */}
+        {activeTab === 'events' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            {/* Events Header */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Etkinlik Yönetimi</h2>
+                <p className="text-slate-600 dark:text-slate-400">Topluluk etkinliklerini yönetin ({events.length} etkinlik yüklü)</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    console.log('Manual events reload requested')
+                    loadEvents()
+                  }}
+                  className="flex items-center gap-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all duration-200"
+                  title="Etkinlikleri Yenile"
+                >
+                  <Search className="w-4 h-4" />
+                  Yenile
+                </button>
+                <button
+                  onClick={() => setIsCreatingEvent(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-lg transition-all duration-200"
+                >
+                  <Plus className="w-4 h-4" />
+                  Yeni Etkinlik
+                </button>
+              </div>
+            </div>
+
+            {/* Events List */}
+            <div className="glass-strong rounded-xl p-6">
+              {isLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-pulse">
+                    <div className="w-16 h-16 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mb-4"></div>
+                    <div className="h-4 bg-slate-300 dark:bg-slate-600 rounded w-32 mx-auto mb-2"></div>
+                    <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-48 mx-auto"></div>
+                  </div>
+                  <p className="text-slate-500 mt-4">Etkinlikler yüklenmeyor...</p>
+                </div>
+              ) : events.length === 0 ? (
+                <div className="text-center py-8">
+                  <CalendarDays className="w-16 h-16 mx-auto mb-4 text-slate-400" />
+                  <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400 mb-2">Henüz etkinlik yok</h3>
+                  <p className="text-slate-500">İlk etkinliği oluşturmak için "Yeni Etkinlik" butonuna tıklayın</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {events.map((event) => (
+                    <div key={event.id} className="bg-white/5 border border-white/10 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="text-lg font-semibold text-slate-800 dark:text-white">{event.title}</h3>
+                            <span className={`px-2 py-1 text-xs rounded-full ${
+                              event.status === 'upcoming' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400' :
+                              event.status === 'ongoing' ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' :
+                              event.status === 'completed' ? 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400' :
+                              'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+                            }`}>
+                              {event.status === 'upcoming' ? 'Yaklaşan' :
+                               event.status === 'ongoing' ? 'Devam Ediyor' :
+                               event.status === 'completed' ? 'Tamamlandı' : 'İptal'}
+                            </span>
+                          </div>
+                          <p className="text-slate-600 dark:text-slate-400 mb-2">{event.description}</p>
+                          <div className="flex items-center gap-4 text-sm text-slate-500">
+                            <span>📅 {new Date(event.start_date).toLocaleDateString('tr-TR')}</span>
+                            <span>📊 {event.participant_count} katılımcı</span>
+                            <span>💰 Ücretsiz</span>
+                            {event.group_name && <span>👥 {event.group_name}</span>}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleEditEvent(event)}
+                            className="p-2 text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                            title="Etkinliği Düzenle"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteEvent(event.id, event.title)}
+                            className="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                            title="Etkinliği Sil"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Create Event Modal */}
+            <AnimatePresence>
+              {isCreatingEvent && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="glass-strong rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+                  >
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-xl font-bold text-slate-800 dark:text-white">Yeni Etkinlik Oluştur</h3>
+                      <button
+                        onClick={() => {
+                          setIsCreatingEvent(false)
+                          setEventForm({
+                            title: '',
+                            description: '',
+                            event_type: '',
+                            location: '',
+                            virtual_link: '',
+                            start_date: '',
+                            end_date: '',
+                            max_participants: 30,
+                            // price: 0,
+                            // currency: 'TRY',
+                            group_id: '',
+                            image_url: '',
+                            selectedImageFile: null
+                          })
+                        }}
+                        className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-500 hover:text-red-500 rounded-lg transition-colors"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Etkinlik Başlığı *</label>
+                        <input
+                          type="text"
+                          value={eventForm.title}
+                          onChange={(e) => setEventForm(prev => ({ ...prev, title: e.target.value }))}
+                          className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                          placeholder="Etkinlik başlığını girin"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Açıklama</label>
+                        <textarea
+                          value={eventForm.description}
+                          onChange={(e) => setEventForm(prev => ({ ...prev, description: e.target.value }))}
+                          className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                          rows={3}
+                          placeholder="Etkinlik hakkında kısa bir açıklama"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Etkinlik Türü</label>
+                          <select
+                            value={eventForm.event_type}
+                            onChange={(e) => setEventForm(prev => ({ ...prev, event_type: e.target.value }))}
+                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                          >
+                            <option value="">Tür seçin</option>
+                            <option value="tasting">Tadım</option>
+                            <option value="workshop">Workshop</option>
+                            <option value="meetup">Buluşma</option>
+                            <option value="competition">Yarışma</option>
+                            <option value="seminar">Seminer</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Bağlı Grup</label>
+                          <select
+                            value={eventForm.group_id}
+                            onChange={(e) => setEventForm(prev => ({ ...prev, group_id: e.target.value }))}
+                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                          >
+                            <option value="">Grup seçin (opsiyonel)</option>
+                            {groups.map(group => (
+                              <option key={group.id} value={group.id}>{group.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Başlangıç Tarihi *</label>
+                          <input
+                            type="datetime-local"
+                            value={eventForm.start_date}
+                            onChange={(e) => setEventForm(prev => ({ ...prev, start_date: e.target.value }))}
+                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Bitiş Tarihi</label>
+                          <input
+                            type="datetime-local"
+                            value={eventForm.end_date}
+                            onChange={(e) => setEventForm(prev => ({ ...prev, end_date: e.target.value }))}
+                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Konum</label>
+                          <input
+                            type="text"
+                            value={eventForm.location}
+                            onChange={(e) => setEventForm(prev => ({ ...prev, location: e.target.value }))}
+                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            placeholder="Etkinlik konumu"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Online Link</label>
+                          <input
+                            type="url"
+                            value={eventForm.virtual_link}
+                            onChange={(e) => setEventForm(prev => ({ ...prev, virtual_link: e.target.value }))}
+                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            placeholder="Zoom, Meet vs. linki"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Max Katılımcı</label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="1000"
+                            value={eventForm.max_participants}
+                            onChange={(e) => setEventForm(prev => ({ ...prev, max_participants: parseInt(e.target.value) || 30 }))}
+                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                          />
+                        </div>
+
+{/* Price and currency fields removed until database schema is updated */}
+                      </div>
+
+                      <div className="flex items-center gap-3 pt-4">
+                        <button
+                          onClick={handleCreateEvent}
+                          className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white py-2 px-4 rounded-lg transition-all duration-200"
+                        >
+                          Etkinlik Oluştur
+                        </button>
+                        <button
+                          onClick={() => {
+                            setIsCreatingEvent(false)
+                            setEventForm({
+                              title: '',
+                              description: '',
+                              event_type: '',
+                              location: '',
+                              virtual_link: '',
+                              start_date: '',
+                              end_date: '',
+                              max_participants: 30,
+                              // price: 0,
+                              // currency: 'TRY',
+                              group_id: '',
+                              image_url: '',
+                              selectedImageFile: null
+                            })
+                          }}
+                          className="px-4 py-2 bg-slate-500/20 hover:bg-slate-500/30 text-slate-600 dark:text-slate-400 rounded-lg transition-colors"
+                        >
+                          İptal
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                </div>
+              )}
+            </AnimatePresence>
+
+            {/* Edit Event Modal */}
+            <AnimatePresence>
+              {editingEvent && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="glass-strong rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+                  >
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-xl font-bold text-slate-800 dark:text-white">Etkinliği Düzenle</h3>
+                      <button
+                        onClick={() => setEditingEvent(null)}
+                        className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-500 hover:text-red-500 rounded-lg transition-colors"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Etkinlik Başlığı *</label>
+                        <input
+                          type="text"
+                          value={eventForm.title}
+                          onChange={(e) => setEventForm(prev => ({ ...prev, title: e.target.value }))}
+                          className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Açıklama</label>
+                        <textarea
+                          value={eventForm.description}
+                          onChange={(e) => setEventForm(prev => ({ ...prev, description: e.target.value }))}
+                          className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                          rows={3}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Etkinlik Türü</label>
+                          <select
+                            value={eventForm.event_type}
+                            onChange={(e) => setEventForm(prev => ({ ...prev, event_type: e.target.value }))}
+                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                          >
+                            <option value="">Tür seçin</option>
+                            <option value="tasting">Tadım</option>
+                            <option value="workshop">Workshop</option>
+                            <option value="meetup">Buluşma</option>
+                            <option value="competition">Yarışma</option>
+                            <option value="seminar">Seminer</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Bağlı Grup</label>
+                          <select
+                            value={eventForm.group_id}
+                            onChange={(e) => setEventForm(prev => ({ ...prev, group_id: e.target.value }))}
+                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                          >
+                            <option value="">Grup seçin (opsiyonel)</option>
+                            {groups.map(group => (
+                              <option key={group.id} value={group.id}>{group.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Başlangıç Tarihi *</label>
+                          <input
+                            type="datetime-local"
+                            value={eventForm.start_date}
+                            onChange={(e) => setEventForm(prev => ({ ...prev, start_date: e.target.value }))}
+                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Bitiş Tarihi</label>
+                          <input
+                            type="datetime-local"
+                            value={eventForm.end_date}
+                            onChange={(e) => setEventForm(prev => ({ ...prev, end_date: e.target.value }))}
+                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Konum</label>
+                          <input
+                            type="text"
+                            value={eventForm.location}
+                            onChange={(e) => setEventForm(prev => ({ ...prev, location: e.target.value }))}
+                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Online Link</label>
+                          <input
+                            type="url"
+                            value={eventForm.virtual_link}
+                            onChange={(e) => setEventForm(prev => ({ ...prev, virtual_link: e.target.value }))}
+                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Max Katılımcı</label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="1000"
+                            value={eventForm.max_participants}
+                            onChange={(e) => setEventForm(prev => ({ ...prev, max_participants: parseInt(e.target.value) || 30 }))}
+                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                          />
+                        </div>
+
+{/* Price and currency fields removed until database schema is updated */}
+                      </div>
+
+                      <div className="flex items-center gap-3 pt-4">
+                        <button
+                          onClick={handleSaveEvent}
+                          className="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white py-2 px-4 rounded-lg transition-all duration-200"
+                        >
+                          Kaydet
+                        </button>
+                        <button
+                          onClick={() => setEditingEvent(null)}
+                          className="px-4 py-2 bg-slate-500/20 hover:bg-slate-500/30 text-slate-600 dark:text-slate-400 rounded-lg transition-colors"
+                        >
+                          İptal
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                </div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        )}
       </div>
     </div>
   )

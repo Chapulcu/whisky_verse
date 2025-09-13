@@ -33,7 +33,17 @@
       "Bash(git clone:*)",
       "Read(//Users/takhan/Desktop/agent_workspace 3/**)",
       "Bash(unzip:*)",
-      "Bash(lsof:*)"
+      "Bash(lsof:*)",
+      "Bash(find:*)",
+      "Bash(psql:*)",
+      "Bash(/bashes)",
+      "Bash(sed:*)",
+      "Bash(cat:*)",
+      "Bash(killall:*)",
+      "Bash(awk:*)",
+      "Bash(xargs kill:*)",
+      "Bash(sudo lsof:*)",
+      "Bash(pbcopy)"
     ],
     "deny": [],
     "ask": []

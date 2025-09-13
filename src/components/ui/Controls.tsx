@@ -13,331 +13,182 @@ interface ThemeToggleProps {
 
 export function ThemeToggle({ className = '' }: ThemeToggleProps) {
   const { theme, setTheme } = useTheme()
-  const [isOpen, setIsOpen] = useState(false)
-  const [buttonRect, setButtonRect] = useState<DOMRect | null>(null)
-  const buttonRef = useRef<HTMLButtonElement>(null)
-  const mountedRef = useRef(true)
 
-  // CRITICAL FIX: Safe state updates with position calculation
-  const safeSetIsOpen = useCallback((value: boolean) => {
-    if (mountedRef.current) {
-      if (value && buttonRef.current) {
-        setButtonRect(buttonRef.current.getBoundingClientRect())
-      }
-      setIsOpen(value)
-    }
-  }, [])
-
-  // CRITICAL FIX: Cleanup on unmount + click outside handler
-  useEffect(() => {
-    mountedRef.current = true
+  // Simple cycle: light -> dark -> system -> light
+  const handleThemeToggle = useCallback(() => {
+    console.log('🎨 Theme toggle clicked, current:', theme)
     
-    const handleClickOutside = (event: MouseEvent) => {
-      if (isOpen && buttonRef.current && !buttonRef.current.contains(event.target as Node)) {
-        safeSetIsOpen(false)
-      }
+    let nextTheme: 'light' | 'dark' | 'system'
+    switch (theme) {
+      case 'light':
+        nextTheme = 'dark'
+        break
+      case 'dark':
+        nextTheme = 'system'
+        break
+      default:
+        nextTheme = 'light'
+        break
     }
     
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
-    }
-    
-    return () => {
-      mountedRef.current = false
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [isOpen, safeSetIsOpen])
+    console.log('🎨 Setting theme to:', nextTheme)
+    setTheme(nextTheme)
+  }, [theme, setTheme])
 
-  const themeOptions = [
-    { value: 'light', label: 'Light', icon: Sun },
-    { value: 'dark', label: 'Dark', icon: Moon },
-    { value: 'system', label: 'System', icon: Monitor },
-  ] as const
-
-  const handleThemeChange = useCallback((newTheme: 'light' | 'dark' | 'system') => {
-    try {
-      if (mountedRef.current) {
-        setTheme(newTheme)
-        safeSetIsOpen(false)
-      }
-    } catch (error) {
-      console.error('Theme change error:', error)
+  const getCurrentIcon = () => {
+    switch (theme) {
+      case 'light': return Sun
+      case 'dark': return Moon
+      default: return Monitor
     }
-  }, [setTheme, safeSetIsOpen])
+  }
+
+  const getThemeLabel = () => {
+    switch (theme) {
+      case 'light': return 'Light Mode'
+      case 'dark': return 'Dark Mode'
+      default: return 'System Mode'
+    }
+  }
+
+  const CurrentIcon = getCurrentIcon()
 
   return (
     <ErrorBoundary>
-      <div className={`relative ${className}`}>
-        <button
-          ref={buttonRef}
-          onClick={() => safeSetIsOpen(!isOpen)}
-          className="btn-glass p-2 rounded-lg"
-          aria-label="Toggle theme"
-        >
-          {theme === 'light' && <Sun className="w-5 h-5" />}
-          {theme === 'dark' && <Moon className="w-5 h-5" />}
-          {theme === 'system' && <Monitor className="w-5 h-5" />}
-        </button>
-
-        {/* Portal for dropdown */}
-        {isOpen && buttonRect && createPortal(
-          <AnimatePresence>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: -10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: -10 }}
-              className="fixed w-40 glass rounded-lg shadow-xl"
-              style={{
-                left: buttonRect.right - 160,
-                top: buttonRect.bottom + 8,
-                zIndex: 9999
-              }}
-            >
-              <div className="py-2">
-                {themeOptions.map(({ value, label, icon: Icon }) => (
-                  <button
-                    key={value}
-                    onClick={() => handleThemeChange(value)}
-                    className={`w-full px-4 py-2 text-left flex items-center gap-3 hover:bg-white/10 dark:hover:bg-white/5 transition-colors ${
-                      theme === value ? 'text-primary-600 dark:text-primary-400' : ''
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </motion.div>
-          </AnimatePresence>,
-          document.body
-        )}
-      </div>
+      <button
+        onClick={handleThemeToggle}
+        className={`btn-glass p-2 rounded-lg ${className}`}
+        title={`Current: ${getThemeLabel()}, Click to change`}
+      >
+        <CurrentIcon className="w-4 h-4" />
+      </button>
     </ErrorBoundary>
   )
 }
 
 export function LanguageToggle({ className = '' }: { className?: string }) {
   const { i18n } = useTranslation()
-  const [isOpen, setIsOpen] = useState(false)
-  const [buttonRect, setButtonRect] = useState<DOMRect | null>(null)
-  const buttonRef = useRef<HTMLButtonElement>(null)
-  const mountedRef = useRef(true)
-
-  // CRITICAL FIX: Safe state updates with position calculation
-  const safeSetIsOpen = useCallback((value: boolean) => {
-    if (mountedRef.current) {
-      if (value && buttonRef.current) {
-        setButtonRect(buttonRef.current.getBoundingClientRect())
-      }
-      setIsOpen(value)
-    }
-  }, [])
-
-  // CRITICAL FIX: Cleanup on unmount + click outside handler
-  useEffect(() => {
-    mountedRef.current = true
-    
-    const handleClickOutside = (event: MouseEvent) => {
-      if (isOpen && buttonRef.current && !buttonRef.current.contains(event.target as Node)) {
-        safeSetIsOpen(false)
-      }
-    }
-    
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
-    }
-    
-    return () => {
-      mountedRef.current = false
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [isOpen, safeSetIsOpen])
 
   const languages = [
     { code: 'tr', name: 'Türkçe', flag: '🇹🇷' },
     { code: 'en', name: 'English', flag: '🇺🇸' },
   ]
 
-  const currentLang = languages.find(lang => lang.code === i18n.language) || languages[0]
+  // Simple toggle between TR and EN
+  const handleLanguageToggle = useCallback(() => {
+    console.log('🌍 Language toggle clicked, current:', i18n.language)
+    
+    const nextLanguage = i18n.language === 'tr' ? 'en' : 'tr'
+    console.log('🌍 Setting language to:', nextLanguage)
+    
+    i18n.changeLanguage(nextLanguage)
+  }, [i18n])
 
-  const handleLanguageChange = useCallback((langCode: string) => {
-    try {
-      if (mountedRef.current) {
-        i18n.changeLanguage(langCode)
-        safeSetIsOpen(false)
-      }
-    } catch (error) {
-      console.error('Language change error:', error)
-    }
-  }, [i18n, safeSetIsOpen])
+  const currentLanguage = languages.find(lang => lang.code === i18n.language) || languages[0]
 
   return (
     <ErrorBoundary>
-      <div className={`relative ${className}`}>
-        <button
-          ref={buttonRef}
-          onClick={() => safeSetIsOpen(!isOpen)}
-          className="btn-glass p-2 rounded-lg flex items-center gap-2"
-          aria-label="Change language"
-        >
-          <Languages className="w-5 h-5" />
-          <span className="text-sm font-medium">{currentLang.flag}</span>
-        </button>
-
-        {/* Portal for dropdown */}
-        {isOpen && buttonRect && createPortal(
-          <AnimatePresence>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: -10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: -10 }}
-              className="fixed w-40 glass rounded-lg shadow-xl"
-              style={{
-                left: buttonRect.right - 160,
-                top: buttonRect.bottom + 8,
-                zIndex: 9999
-              }}
-            >
-              <div className="py-2">
-                {languages.map((lang) => (
-                  <button
-                    key={lang.code}
-                    onClick={() => handleLanguageChange(lang.code)}
-                    className={`w-full px-4 py-2 text-left flex items-center gap-3 hover:bg-white/10 dark:hover:bg-white/5 transition-colors ${
-                      i18n.language === lang.code ? 'text-primary-600 dark:text-primary-400' : ''
-                    }`}
-                  >
-                    <span>{lang.flag}</span>
-                    {lang.name}
-                  </button>
-                ))}
-              </div>
-            </motion.div>
-          </AnimatePresence>,
-          document.body
-        )}
-      </div>
+      <button
+        onClick={handleLanguageToggle}
+        className={`btn-glass p-2 rounded-lg flex items-center gap-1 ${className}`}
+        title={`Current: ${currentLanguage.name}, Click to switch`}
+      >
+        <span className="text-sm">{currentLanguage.flag}</span>
+        <Languages className="w-3 h-3" />
+      </button>
     </ErrorBoundary>
   )
 }
 
 export function UserMenu({ className = '' }: { className?: string }) {
   const { user, profile, signOut } = useAuth()
-  const { t } = useTranslation()
-  const [isOpen, setIsOpen] = useState(false)
-  const [buttonRect, setButtonRect] = useState<DOMRect | null>(null)
-  const buttonRef = useRef<HTMLButtonElement>(null)
-  const mountedRef = useRef(true)
+  const [showLogoutModal, setShowLogoutModal] = useState(false)
 
-  // CRITICAL FIX: Safe state updates with position calculation
-  const safeSetIsOpen = useCallback((value: boolean) => {
-    if (mountedRef.current) {
-      if (value && buttonRef.current) {
-        setButtonRect(buttonRef.current.getBoundingClientRect())
-      }
-      setIsOpen(value)
-    }
+  const handleLogoutClick = useCallback(() => {
+    console.log('🚪 Logout button clicked')
+    setShowLogoutModal(true)
   }, [])
 
-  // CRITICAL FIX: Cleanup on unmount + click outside handler
-  useEffect(() => {
-    mountedRef.current = true
+  const handleConfirmLogout = useCallback(async () => {
+    console.log('🚪 Logout confirmed')
+    setShowLogoutModal(false)
     
-    const handleClickOutside = (event: MouseEvent) => {
-      if (isOpen && buttonRef.current && !buttonRef.current.contains(event.target as Node)) {
-        safeSetIsOpen(false)
-      }
-    }
-    
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
-    }
-    
-    return () => {
-      mountedRef.current = false
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [isOpen, safeSetIsOpen])
-
-  const handleSignOut = useCallback(async () => {
     try {
-      console.log('🚪 Sign out button clicked')
-      if (mountedRef.current) {
-        safeSetIsOpen(false)
-        console.log('🚪 Calling signOut function...')
-        await signOut()
-        console.log('🚪 SignOut completed')
-      }
+      console.log('🚪 Calling signOut...')
+      await signOut()
+      console.log('🚪 SignOut completed successfully')
     } catch (error) {
-      console.error('🚪 Sign out error:', error)
+      console.error('🚪 SignOut error, forcing reload:', error)
+      // Force reload even on error
+      localStorage.clear()
+      sessionStorage.clear()
+      window.location.href = '/'
     }
-  }, [signOut, safeSetIsOpen])
+  }, [signOut])
+
+  const handleCancelLogout = useCallback(() => {
+    console.log('🚪 Logout cancelled')
+    setShowLogoutModal(false)
+  }, [])
 
   if (!user) return null
 
   return (
     <ErrorBoundary>
-      <div className={`relative ${className}`}>
-        <button
-          ref={buttonRef}
-          onClick={() => safeSetIsOpen(!isOpen)}
-          className="btn-glass p-2 rounded-lg flex items-center gap-2"
-          aria-label="User menu"
-        >
-          {profile?.avatar_url ? (
-            <img
-              src={profile.avatar_url}
-              alt={profile.full_name || 'User'}
-              className="w-6 h-6 rounded-full"
-            />
-          ) : (
-            <User className="w-5 h-5" />
-          )}
-          {profile?.role === 'vip' && (
-            <span className="text-xs bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-0.5 rounded-full font-medium">
-              VIP
-            </span>
-          )}
-        </button>
+      <button
+        onClick={handleLogoutClick}
+        className={`btn-glass p-2 rounded-lg flex items-center gap-1 text-red-500 hover:text-red-400 ${className}`}
+        title={`Logout: ${profile?.full_name || user.email}`}
+      >
+        <User className="w-3 h-3" />
+        <LogOut className="w-3 h-3" />
+      </button>
 
-        {/* Portal for dropdown */}
-        {isOpen && buttonRect && createPortal(
-          <AnimatePresence>
+      {/* Logout Confirmation Modal - Portal to body */}
+      {showLogoutModal && createPortal(
+        <AnimatePresence>
+          <div 
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[10000] flex items-center justify-center p-4"
+            onClick={handleCancelLogout}
+          >
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: -10 }}
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: -10 }}
-              className="fixed w-48 glass rounded-lg shadow-xl"
-              style={{
-                left: buttonRect.right - 192,
-                top: buttonRect.bottom + 8,
-                zIndex: 9999
-              }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="glass rounded-xl p-6 max-w-sm w-full shadow-2xl border border-white/10"
+              onClick={(e) => e.stopPropagation()}
             >
-              <div className="py-2">
-                <div className="px-4 py-2 border-b border-white/10 dark:border-white/5">
-                  <p className="text-sm font-medium truncate">{profile?.full_name || user.email}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
-                  {profile?.role && (
-                    <p className="text-xs text-primary-600 dark:text-primary-400 font-medium capitalize mt-1">
-                      {profile.role === 'vip' ? 'VIP Üye' : profile.role === 'admin' ? 'Yönetici' : 'Kullanıcı'}
-                    </p>
-                  )}
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center">
+                  <LogOut className="w-5 h-5 text-red-500" />
                 </div>
-                
+                <h3 className="text-lg font-semibold">Çıkış Yap</h3>
+              </div>
+              
+              <p className="text-slate-600 dark:text-slate-400 mb-6">
+                Hesabınızdan çıkış yapmak istediğinizden emin misiniz?
+              </p>
+              
+              <div className="flex gap-3">
                 <button
-                  onClick={handleSignOut}
-                  className="w-full px-4 py-2 text-left flex items-center gap-3 hover:bg-white/10 dark:hover:bg-white/5 transition-colors text-red-600 dark:text-red-400"
+                  onClick={handleCancelLogout}
+                  className="flex-1 px-4 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 rounded-lg transition-colors font-medium"
+                >
+                  İptal
+                </button>
+                <button
+                  onClick={handleConfirmLogout}
+                  className="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors flex items-center justify-center gap-2 font-medium"
                 >
                   <LogOut className="w-4 h-4" />
-                  {t('signOut')}
+                  Çıkış Yap
                 </button>
               </div>
             </motion.div>
-          </AnimatePresence>,
-          document.body
-        )}
-      </div>
+          </div>
+        </AnimatePresence>,
+        document.body
+      )}
     </ErrorBoundary>
   )
 }
