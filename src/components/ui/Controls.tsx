@@ -148,7 +148,7 @@ export function UserMenu({ className = '' }: { className?: string }) {
       {showLogoutModal && createPortal(
         <AnimatePresence>
           <div 
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[10000] flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[99999] flex items-center justify-center p-4"
             onClick={handleCancelLogout}
           >
             <motion.div

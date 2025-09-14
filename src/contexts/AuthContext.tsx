@@ -41,23 +41,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Load user profile from database
   const loadUserProfile = useCallback(async (userId: string) => {
     try {
+      console.log('📝 Loading profile for user ID:', userId)
+      
       const { data: profileData, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single()
 
+      console.log('📝 Profile query result:', { profileData, error })
+
       if (error) {
-        console.error('Error loading profile:', error.message)
+        console.error('❌ Error loading profile:', error.message)
         
-        // Special handling for admin@whiskyverse.com - create temp profile
+        // Check current user email for fallback logic
         const currentUser = await supabase.auth.getUser()
-        if (currentUser.data.user?.email === 'admin@whiskyverse.com') {
-          console.log('Creating temporary admin profile for admin@whiskyverse.com')
+        const userEmail = currentUser.data.user?.email
+        console.log('📧 Current user email:', userEmail)
+        
+        // Special handling for admin users - create temp profile for admin or akhantalip
+        if (userEmail === 'admin@whiskyverse.com' || userEmail === 'akhantalip@gmail.com') {
+          console.log('🔑 Creating temporary admin profile for:', userEmail)
           const tempProfile: Profile = {
             id: userId,
-            email: 'admin@whiskyverse.com',
-            full_name: 'System Administrator',
+            email: userEmail,
+            full_name: userEmail === 'admin@whiskyverse.com' ? 'System Administrator' : 'Admin User',
             role: 'admin',
             language: 'tr',
             avatar_url: null,
@@ -70,6 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           }
+          console.log('✅ Setting temporary profile:', tempProfile)
           setProfile(tempProfile)
           return
         }
@@ -77,18 +86,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (profileData) {
+        console.log('✅ Profile loaded successfully:', profileData)
         setProfile(profileData)
+      } else {
+        console.log('⚠️ No profile data returned')
       }
     } catch (error) {
-      console.error('Error loading profile:', error)
+      console.error('❌ Exception loading profile:', error)
       
-      // Fallback for admin user
+      // Fallback for admin users
       const currentUser = await supabase.auth.getUser()
-      if (currentUser.data.user?.email === 'admin@whiskyverse.com') {
+      const userEmail = currentUser.data.user?.email
+      console.log('📧 Fallback: Current user email:', userEmail)
+      
+      if (userEmail === 'admin@whiskyverse.com' || userEmail === 'akhantalip@gmail.com') {
+        console.log('🔑 Creating fallback admin profile for:', userEmail)
         const tempProfile: Profile = {
           id: userId,
-          email: 'admin@whiskyverse.com',
-          full_name: 'System Administrator', 
+          email: userEmail,
+          full_name: userEmail === 'admin@whiskyverse.com' ? 'System Administrator' : 'Admin User',
           role: 'admin',
           language: 'tr',
           avatar_url: null,
@@ -101,6 +117,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         }
+        console.log('✅ Setting fallback profile:', tempProfile)
         setProfile(tempProfile)
       }
     }

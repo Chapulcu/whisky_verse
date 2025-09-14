@@ -22,7 +22,24 @@ export function useAdminOperations() {
   const [isLoading, setIsLoading] = useState(false)
 
   const checkAdminPermission = () => {
-    if (!user || (!profile || profile.role !== 'admin') && user.email !== 'admin@whiskyverse.com') {
+    // First check if user exists
+    if (!user) {
+      throw new Error('Bu işlem için giriş yapmanız gereklidir')
+    }
+
+    // Admin check: either email is admin@whiskyverse.com OR profile role is admin
+    const isEmailAdmin = user.email === 'admin@whiskyverse.com'
+    const isProfileAdmin = profile && profile.role === 'admin'
+    
+    console.log('🔐 Admin permission check:', {
+      userEmail: user.email,
+      isEmailAdmin,
+      profileRole: profile?.role,
+      isProfileAdmin,
+      hasProfile: !!profile
+    })
+
+    if (!isEmailAdmin && !isProfileAdmin) {
       throw new Error('Bu işlem için admin yetkisi gereklidir')
     }
   }

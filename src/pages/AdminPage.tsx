@@ -137,6 +137,9 @@ export function AdminPage() {
   const [isImporting, setIsImporting] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
+  // const [selectedWhiskies, setSelectedWhiskies] = useState<number[]>([])
+  // const [isBulkDeleting, setIsBulkDeleting] = useState(false)
+  // const [isBulkUpdating, setIsBulkUpdating] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const imageInputRef = useRef<HTMLInputElement>(null)
   const { uploadWhiskyImage, isUploading } = useWhiskyUpload()
@@ -175,6 +178,7 @@ export function AdminPage() {
     finish: string
     description: string
     image_url: string
+    language_code: 'tr' | 'en'
     selectedImageFile: File | null
   }>({
     name: '',
@@ -190,6 +194,7 @@ export function AdminPage() {
     finish: '',
     description: '',
     image_url: '',
+    language_code: 'tr',
     selectedImageFile: null
   })
 
@@ -708,6 +713,7 @@ export function AdminPage() {
         finish: '',
         description: '',
         image_url: '',
+        language_code: 'tr',
         selectedImageFile: null
       })
       await loadWhiskies()
@@ -734,6 +740,7 @@ export function AdminPage() {
       finish: whisky.finish || '',
       description: whisky.description || '',
       image_url: whisky.image_url || '',
+      language_code: 'tr', // Default language for editing
       selectedImageFile: null
     })
   }
@@ -743,7 +750,10 @@ export function AdminPage() {
   }
 
   const handleUpdateWhisky = async () => {
-    if (!editingWhisky) return
+    if (!editingWhisky) {
+      toast.error('Güncellenecek viski bulunamadı')
+      return
+    }
     
     if (!whiskyForm.name.trim() || !whiskyForm.type.trim() || !whiskyForm.country.trim()) {
       toast.error('Ad, tip ve ülke alanları gereklidir')
@@ -751,15 +761,20 @@ export function AdminPage() {
     }
 
     try {
+      console.log('🔄 Updating whisky:', editingWhisky.id, 'with data:', whiskyForm)
+      
       let imageUrl = whiskyForm.image_url.trim() || null
       
       // Upload new image if a file is selected
       if (whiskyForm.selectedImageFile) {
+        console.log('📸 Uploading new image...')
         setUploadingImage(true)
         try {
           const uploadResult = await uploadWhiskyImage(whiskyForm.selectedImageFile)
           imageUrl = uploadResult.publicUrl
+          console.log('✅ Image uploaded successfully:', imageUrl)
         } catch (uploadError: any) {
+          console.error('❌ Image upload error:', uploadError)
           toast.error('Resim yüklenirken hata oluştu: ' + (uploadError.message || 'Bilinmeyen hata'))
           setUploadingImage(false)
           return
@@ -767,29 +782,63 @@ export function AdminPage() {
         setUploadingImage(false)
       }
 
-      const { error } = await supabase
-        .from('whiskies')
-        .update({
-          name: whiskyForm.name.trim(),
-          type: whiskyForm.type.trim(),
-          country: whiskyForm.country.trim(),
-          region: whiskyForm.region.trim() || null,
-          alcohol_percentage: whiskyForm.alcohol_percentage,
-          rating: whiskyForm.rating,
-          age_years: whiskyForm.age_years,
-          color: whiskyForm.color.trim() || null,
-          aroma: whiskyForm.aroma.trim() || null,
-          taste: whiskyForm.taste.trim() || null,
-          finish: whiskyForm.finish.trim() || null,
-          description: whiskyForm.description.trim() || null,
-          image_url: imageUrl,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', editingWhisky.id)
+      const updateData = {
+        name: whiskyForm.name.trim(),
+        type: whiskyForm.type.trim(),
+        country: whiskyForm.country.trim(),
+        region: whiskyForm.region.trim() || null,
+        alcohol_percentage: whiskyForm.alcohol_percentage,
+        rating: whiskyForm.rating,
+        age_years: whiskyForm.age_years,
+        color: whiskyForm.color.trim() || null,
+        aroma: whiskyForm.aroma.trim() || null,
+        taste: whiskyForm.taste.trim() || null,
+        finish: whiskyForm.finish.trim() || null,
+        description: whiskyForm.description.trim() || null,
+        image_url: imageUrl,
+        // language_code: whiskyForm.language_code, // Temporarily disabled - column may not exist
+        updated_at: new Date().toISOString()
+      }
 
-      if (error) throw error
+      console.log('📝 Updating with data:', updateData)
+
+      console.log('📡 Sending update request to Supabase...')
+      const { data, error } = await supabase
+        .from('whiskies')
+        .update(updateData)
+        .eq('id', editingWhisky.id)
+        .select()
+
+      console.log('📡 Supabase response received:', { data, error })
+
+      if (error) {
+        console.error('❌ Supabase update error:', error)
+        throw error
+      }
+
+      console.log('✅ Update successful:', data)
+      console.log('🚪 About to close modal and reset form...')
 
       setEditingWhisky(null)
+      // Reset form
+      setWhiskyForm({
+        name: '',
+        type: '',
+        country: '',
+        region: '',
+        alcohol_percentage: 40,
+        rating: null,
+        age_years: null,
+        color: '',
+        aroma: '',
+        taste: '',
+        finish: '',
+        description: '',
+        image_url: '',
+        language_code: 'tr',
+        selectedImageFile: null
+      })
+      
       await loadWhiskies()
       toast.success('Viski başarıyla güncellendi!')
     } catch (error: any) {
@@ -843,6 +892,66 @@ export function AdminPage() {
       toast.error('Viski silinirken hata oluştu: ' + (error.message || 'Bilinmeyen hata'))
     }
   }
+
+  // Bulk operations for whiskies - TEMPORARILY DISABLED
+  /*
+  const handleSelectAllWhiskies = () => {
+    const currentPageIds = paginatedWhiskies.map(w => w.id)
+    if (selectedWhiskies.length === currentPageIds.length && 
+        currentPageIds.every(id => selectedWhiskies.includes(id))) {
+      setSelectedWhiskies([])
+    } else {
+      setSelectedWhiskies(currentPageIds)
+    }
+  }
+
+  const handleSelectWhisky = (whiskyId: number) => {
+    setSelectedWhiskies(prev => 
+      prev.includes(whiskyId) 
+        ? prev.filter(id => id !== whiskyId)
+        : [...prev, whiskyId]
+    )
+  }
+
+  const handleBulkDeleteWhiskies = async () => {
+    if (selectedWhiskies.length === 0) {
+      toast.error('Lütfen silmek istediğiniz viskileri seçin')
+      return
+    }
+
+    if (!confirm(`${selectedWhiskies.length} adet viskiyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`)) {
+      return
+    }
+
+    setIsBulkDeleting(true)
+    try {
+      // Delete user_whiskies records first for all selected whiskies
+      for (const whiskyId of selectedWhiskies) {
+        await supabase
+          .from('user_whiskies')
+          .delete()
+          .eq('whisky_id', whiskyId)
+      }
+
+      // Delete whiskies
+      const { error } = await supabase
+        .from('whiskies')
+        .delete()
+        .in('id', selectedWhiskies)
+
+      if (error) throw error
+
+      setSelectedWhiskies([])
+      await loadWhiskies()
+      toast.success(`${selectedWhiskies.length} viski başarıyla silindi!`)
+    } catch (error: any) {
+      console.error('Error bulk deleting whiskies:', error)
+      toast.error('Viskiler silinirken hata oluştu: ' + (error.message || 'Bilinmeyen hata'))
+    } finally {
+      setIsBulkDeleting(false)
+    }
+  }
+  */
 
   const getStats = () => {
     const totalUsers = users.length
@@ -1818,6 +1927,7 @@ export function AdminPage() {
                   <Plus className="w-4 h-4" />
                   Viski Ekle
                 </button>
+
                 
                 <div className="flex items-center gap-2">
                   <button
@@ -2585,6 +2695,20 @@ export function AdminPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                      Dil / Language *
+                    </label>
+                    <select
+                      value={whiskyForm.language_code}
+                      onChange={(e) => setWhiskyForm(prev => ({ ...prev, language_code: e.target.value as 'tr' | 'en' }))}
+                      className="w-full px-4 py-3 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-slate-900 dark:text-white"
+                    >
+                      <option value="tr">🇹🇷 Türkçe</option>
+                      <option value="en">🇺🇸 English</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                       Alkol Oranı % *
                     </label>
                     <input
@@ -2903,6 +3027,20 @@ export function AdminPage() {
                       className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                       placeholder="Örn. Speyside, Highland, Kentucky"
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
+                      Dil / Language *
+                    </label>
+                    <select
+                      value={whiskyForm.language_code}
+                      onChange={(e) => setWhiskyForm(prev => ({ ...prev, language_code: e.target.value as 'tr' | 'en' }))}
+                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    >
+                      <option value="tr">🇹🇷 Türkçe</option>
+                      <option value="en">🇺🇸 English</option>
+                    </select>
                   </div>
 
                   <div>

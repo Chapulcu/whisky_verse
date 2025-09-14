@@ -703,22 +703,22 @@ export function WhiskiesPage() {
       <PaginationControls />
 
       {/* Whiskies Grid/List */}
-      <div className={viewMode === 'grid' ? `grid grid-cols-1 ${gridColumnClasses[gridColumns]} gap-6` : 'space-y-4'}>
+      <div className={viewMode === 'grid' ? `grid grid-cols-1 ${gridColumnClasses[gridColumns]} gap-8` : 'space-y-4'}>
         {paginatedWhiskies.map((whisky, index) => (
           <motion.div
             key={whisky.id}
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: index * 0.1 }}
-            className={`card group hover:scale-[1.02] hover:shadow-2xl transition-all duration-300 ${
-              viewMode === 'list' ? 'flex items-center gap-6' : ''
+            className={`card group hover:scale-[1.02] hover:shadow-2xl transition-all duration-500 hover:shadow-amber-500/20 hover:border-amber-300/30 ${
+              viewMode === 'list' ? 'flex items-center gap-6' : 'p-6'
             }`}
           >
             {viewMode === 'grid' ? (
               // Grid View
               <>
                 {/* Image */}
-                <div className="relative h-64 md:h-72 lg:h-80 mb-4 rounded-lg overflow-hidden bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/20 dark:to-orange-900/20 shadow-lg ring-1 ring-white/20 dark:ring-white/10">
+                <div className="relative h-80 md:h-96 lg:h-[420px] mb-6 rounded-xl overflow-hidden bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/20 dark:to-orange-900/20 shadow-2xl ring-2 ring-amber-200/30 dark:ring-amber-500/20">
                   <button
                     onClick={() => handleViewWhisky(whisky)}
                     className="w-full h-full block cursor-pointer group"
@@ -728,20 +728,20 @@ export function WhiskiesPage() {
                       <img
                         src={whisky.image_url}
                         alt={whisky.name}
-                        className="w-full h-full object-cover transition-all duration-300 group-hover:scale-110 group-hover:brightness-110"
+                        className="w-full h-full object-cover transition-all duration-500 group-hover:scale-110 group-hover:brightness-125 shadow-inner"
                         onError={(e) => {
                           e.currentTarget.style.display = 'none'
                         }}
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                        <Wine className="w-16 h-16 text-amber-400" />
+                      <div className="w-full h-full flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+                        <Wine className="w-20 h-20 text-amber-400 drop-shadow-lg" />
                       </div>
                     )}
                   </button>
                   
                   {/* Quick Actions */}
-                  <div className="absolute top-2 right-2 flex gap-2">
+                  <div className="absolute top-3 right-3 flex gap-2">
                     <button
                       onClick={() => handleViewWhisky(whisky)}
                       className="p-2 rounded-full bg-amber-600/20 hover:bg-amber-500/30 text-amber-100 hover:text-white backdrop-blur-md border border-amber-400/20 hover:border-amber-300/30 transition-all duration-300 shadow-lg hover:shadow-amber-500/25"
@@ -797,53 +797,39 @@ export function WhiskiesPage() {
                 </div>
 
                 {/* Content */}
-                <div className="space-y-3">
+                <div className="space-y-4 p-1">
                   <div>
                     <button
                       onClick={() => handleViewWhisky(whisky)}
-                      className="text-left hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+                      className="text-left hover:text-amber-600 dark:hover:text-amber-400 transition-colors w-full"
                       title="Detayları görüntüle"
                     >
-                      <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-1">
+                      <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-2 leading-tight">
                         {whisky.name}
                       </h3>
                     </button>
-                    <p className="text-sm text-primary-600 dark:text-primary-400 font-medium">
+                    <p className="text-base text-primary-600 dark:text-primary-400 font-semibold bg-primary-50/50 dark:bg-primary-900/20 px-3 py-1 rounded-full inline-block">
                       {whisky.type}
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-slate-300">
-                    <div className="flex items-center gap-1">
-                      <MapPin className="w-4 h-4" />
+                  <div className="flex items-center gap-4 text-base text-slate-600 dark:text-slate-300 font-medium">
+                    <div className="flex items-center gap-2 bg-slate-100/70 dark:bg-slate-800/50 px-3 py-2 rounded-lg">
+                      <MapPin className="w-5 h-5 text-amber-500" />
                       <span>{whisky.country}</span>
-                      {whisky.region && <span>/ {whisky.region}</span>}
+                      {whisky.region && <span className="text-slate-500 dark:text-slate-400">/ {whisky.region}</span>}
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Percent className="w-4 h-4" />
-                      <span>{whisky.alcohol_percentage}</span>
+                    <div className="flex items-center gap-2 bg-amber-100/70 dark:bg-amber-900/20 px-3 py-2 rounded-lg">
+                      <Percent className="w-5 h-5 text-amber-600" />
+                      <span className="font-semibold">{whisky.alcohol_percentage}%</span>
                     </div>
                   </div>
 
-                  {whisky.description && (
-                    <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-3">
-                      {whisky.description}
-                    </p>
-                  )}
-
-                  {/* Tasting Notes Preview */}
-                  {(whisky.aroma || whisky.taste || whisky.finish) && (
-                    <div className="space-y-1 text-xs text-slate-500 dark:text-slate-400">
-                      {whisky.aroma && (
-                        <div>
-                          <span className="font-medium">Koku:</span> {whisky.aroma.substring(0, 50)}...
-                        </div>
-                      )}
-                      {whisky.taste && (
-                        <div>
-                          <span className="font-medium">Tat:</span> {whisky.taste.substring(0, 50)}...
-                        </div>
-                      )}
+                  {/* Rating display if available */}
+                  {whisky.rating && (
+                    <div className="flex items-center gap-2 bg-yellow-100/70 dark:bg-yellow-900/20 px-3 py-2 rounded-lg w-fit">
+                      <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                      <span className="font-semibold text-yellow-700 dark:text-yellow-300">{whisky.rating}/100</span>
                     </div>
                   )}
                 </div>
