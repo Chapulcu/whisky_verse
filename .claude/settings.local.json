@@ -43,7 +43,10 @@
       "Bash(awk:*)",
       "Bash(xargs kill:*)",
       "Bash(sudo lsof:*)",
-      "Bash(pbcopy)"
+      "Bash(pbcopy)",
+      "Bash(git checkout:*)",
+      "Bash(git push:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
