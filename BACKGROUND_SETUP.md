@@ -12,6 +12,9 @@ CREATE TABLE IF NOT EXISTS public.site_background_settings (
     id BIGSERIAL PRIMARY KEY,
     light_background_url TEXT,
     dark_background_url TEXT,
+    light_background_video_url TEXT,
+    dark_background_video_url TEXT,
+    background_type VARCHAR(10) DEFAULT 'image' CHECK (background_type IN ('image', 'video')),
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
@@ -58,7 +61,14 @@ Supabase Storage bölümünde:
    - Bucket adı: `site-assets`
    - Public bucket: ✅ Aktif
    - File size limit: 50MB
-   - Allowed MIME types: `image/*`
+   - Allowed MIME types: 
+     ```
+     image/*
+     video/*
+     video/mp4
+     video/webm
+     video/quicktime
+     ```
 
 2. **Bucket politikalarını ayarlayın:**
 

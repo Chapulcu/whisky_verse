@@ -6,7 +6,7 @@ import { useBackgroundManagement } from '@/hooks/useBackgroundManagement'
 import { Toaster } from 'react-hot-toast'
 
 export function Layout() {
-  const { getCurrentBackgroundUrl, settings } = useBackgroundManagement()
+  const { getCurrentBackgroundUrl, getCurrentBackgroundVideoUrl, isVideoBackground, settings } = useBackgroundManagement()
   const [isDark, setIsDark] = useState(false)
 
   // Detect theme changes
@@ -28,16 +28,20 @@ export function Layout() {
   }, [])
 
   const backgroundUrl = getCurrentBackgroundUrl(isDark)
+  const backgroundVideoUrl = getCurrentBackgroundVideoUrl(isDark)
+  const isVideo = isVideoBackground()
   
   // Debug logging
   console.log('Layout background debug:', {
     isDark,
     backgroundUrl,
+    backgroundVideoUrl,
+    isVideo,
     settings
   })
   
-  // Dynamic style for background image
-  const backgroundStyle = backgroundUrl ? {
+  // Dynamic style for background image (only used when not video)
+  const backgroundStyle = backgroundUrl && !isVideo ? {
     backgroundImage: `url(${backgroundUrl})`,
     backgroundSize: 'cover',
     backgroundPosition: 'center',
@@ -52,8 +56,24 @@ export function Layout() {
       className="min-h-screen cyber-bg relative"
       style={backgroundStyle}
     >
+      {/* Video Background */}
+      {isVideo && backgroundVideoUrl && (
+        <>
+          <video
+            className="absolute inset-0 w-full h-full object-cover"
+            src={backgroundVideoUrl}
+            autoPlay
+            loop
+            muted
+            playsInline
+            style={{ zIndex: -1 }}
+          />
+          <div className="absolute inset-0 bg-white/10 dark:bg-black/20 backdrop-blur-[2px]" />
+        </>
+      )}
+      
       {/* Overlay for better readability when background image is present */}
-      {backgroundUrl && (
+      {!isVideo && backgroundUrl && (
         <div className="absolute inset-0 bg-white/10 dark:bg-black/20 backdrop-blur-[2px]" />
       )}
       

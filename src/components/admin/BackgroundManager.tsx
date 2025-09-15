@@ -11,10 +11,14 @@ import {
   Save,
   Loader2,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  Video,
+  Play,
+  Pause
 } from 'lucide-react'
 import { useBackgroundManagement } from '@/hooks/useBackgroundManagement'
 import { useTranslation } from 'react-i18next'
+import { VideoBackgroundSection } from './VideoBackgroundSection'
 
 export function BackgroundManager() {
   const { t } = useTranslation()
@@ -23,13 +27,20 @@ export function BackgroundManager() {
     loading,
     uploading,
     uploadBackgroundImage,
+    uploadBackgroundVideo,
     removeBackgroundImage,
-    getCurrentBackgroundUrl
+    removeBackgroundVideo,
+    getCurrentBackgroundUrl,
+    getCurrentBackgroundVideoUrl,
+    isVideoBackground
   } = useBackgroundManagement()
 
   const [previewMode, setPreviewMode] = useState<'light' | 'dark'>('light')
+  const [mediaType, setMediaType] = useState<'image' | 'video'>('image')
   const lightFileInputRef = useRef<HTMLInputElement>(null)
   const darkFileInputRef = useRef<HTMLInputElement>(null)
+  const lightVideoInputRef = useRef<HTMLInputElement>(null)
+  const darkVideoInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, theme: 'light' | 'dark') => {
     const file = event.target.files?.[0]
@@ -53,8 +64,32 @@ export function BackgroundManager() {
     event.target.value = ''
   }
 
+  const handleVideoUpload = async (event: React.ChangeEvent<HTMLInputElement>, theme: 'light' | 'dark') => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('video/')) {
+      alert('Lütfen sadece video dosyası seçin')
+      return
+    }
+
+    // Validate file size (max 50MB)
+    if (file.size > 50 * 1024 * 1024) {
+      alert('Video dosyası 50MB\'dan küçük olmalıdır')
+      return
+    }
+
+    await uploadBackgroundVideo(file, theme)
+    
+    // Clear input
+    event.target.value = ''
+  }
+
   const lightBackgroundUrl = getCurrentBackgroundUrl(false)
   const darkBackgroundUrl = getCurrentBackgroundUrl(true)
+  const lightVideoUrl = getCurrentBackgroundVideoUrl(false)
+  const darkVideoUrl = getCurrentBackgroundVideoUrl(true)
 
   if (loading) {
     return (
@@ -84,37 +119,103 @@ export function BackgroundManager() {
         </div>
 
         {/* Preview Mode Toggle */}
-        <div className="flex items-center gap-2 mb-4">
-          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Önizleme:</span>
-          <div className="flex rounded-lg border border-slate-300 dark:border-slate-600 overflow-hidden">
-            <button
-              onClick={() => setPreviewMode('light')}
-              className={`px-3 py-1.5 flex items-center gap-1.5 text-sm font-medium transition-colors ${
-                previewMode === 'light'
-                  ? 'bg-amber-500 text-white'
-                  : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600'
-              }`}
-            >
-              <Sun className="w-4 h-4" />
-              Açık Tema
-            </button>
-            <button
-              onClick={() => setPreviewMode('dark')}
-              className={`px-3 py-1.5 flex items-center gap-1.5 text-sm font-medium transition-colors ${
-                previewMode === 'dark'
-                  ? 'bg-slate-700 text-white'
-                  : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600'
-              }`}
-            >
-              <Moon className="w-4 h-4" />
-              Koyu Tema
-            </button>
+        <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Önizleme:</span>
+            <div className="flex rounded-lg border border-slate-300 dark:border-slate-600 overflow-hidden">
+              <button
+                onClick={() => setPreviewMode('light')}
+                className={`px-3 py-1.5 flex items-center gap-1.5 text-sm font-medium transition-colors ${
+                  previewMode === 'light'
+                    ? 'bg-amber-500 text-white'
+                    : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600'
+                }`}
+              >
+                <Sun className="w-4 h-4" />
+                Açık Tema
+              </button>
+              <button
+                onClick={() => setPreviewMode('dark')}
+                className={`px-3 py-1.5 flex items-center gap-1.5 text-sm font-medium transition-colors ${
+                  previewMode === 'dark'
+                    ? 'bg-slate-700 text-white'
+                    : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600'
+                }`}
+              >
+                <Moon className="w-4 h-4" />
+                Koyu Tema
+              </button>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Medya Türü:</span>
+            <div className="flex rounded-lg border border-slate-300 dark:border-slate-600 overflow-hidden">
+              <button
+                onClick={() => setMediaType('image')}
+                className={`px-3 py-1.5 flex items-center gap-1.5 text-sm font-medium transition-colors ${
+                  mediaType === 'image'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600'
+                }`}
+              >
+                <Image className="w-4 h-4" />
+                Resim
+              </button>
+              <button
+                onClick={() => setMediaType('video')}
+                className={`px-3 py-1.5 flex items-center gap-1.5 text-sm font-medium transition-colors ${
+                  mediaType === 'video'
+                    ? 'bg-purple-500 text-white'
+                    : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600'
+                }`}
+              >
+                <Video className="w-4 h-4" />
+                Video
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
+      {/* Upload Warning */}
+      {uploading && (
+        <div className="card p-4 bg-amber-50/50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800">
+          <div className="flex items-start gap-3">
+            <Loader2 className="w-5 h-5 text-amber-600 dark:text-amber-400 animate-spin mt-0.5 flex-shrink-0" />
+            <div className="text-sm text-amber-800 dark:text-amber-200">
+              <p className="font-semibold mb-1">Video yükleniyor...</p>
+              <p>Bu işlem birkaç dakika sürebilir. Lütfen sayfayı yenilemeyin veya başka bir sekmeye geçmeyin.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* Light Theme Background */}
+        {mediaType === 'video' ? (
+          <>
+            {/* Video Sections */}
+            <VideoBackgroundSection
+              theme="light"
+              videoUrl={lightVideoUrl}
+              uploading={uploading}
+              onVideoUpload={handleVideoUpload}
+              onRemoveVideo={removeBackgroundVideo}
+              delay={0.1}
+            />
+            <VideoBackgroundSection
+              theme="dark"
+              videoUrl={darkVideoUrl}
+              uploading={uploading}
+              onVideoUpload={handleVideoUpload}
+              onRemoveVideo={removeBackgroundVideo}
+              delay={0.2}
+            />
+          </>
+        ) : (
+          <>
+            {/* Image Sections */}
+            {/* Light Theme Background */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -285,6 +386,8 @@ export function BackgroundManager() {
             )}
           </div>
         </motion.div>
+          </>
+        )}
       </div>
 
       {/* Usage Guidelines */}
@@ -294,11 +397,12 @@ export function BackgroundManager() {
           <div className="text-sm text-blue-800 dark:text-blue-200">
             <h4 className="font-semibold mb-2">Kullanım Önerileri:</h4>
             <ul className="space-y-1 list-disc list-inside">
-              <li>Dosya boyutu maksimum 5MB olmalıdır</li>
-              <li>En iyi sonuçlar için 1920x1080 veya daha yüksek çözünürlük kullanın</li>
-              <li>Arka plan resimleri site performansını etkileyebilir</li>
-              <li>Açık ve koyu tema için farklı resimler yükleyebilirsiniz</li>
-              <li>Resim kaldırıldığında varsayılan grid arka plan gösterilir</li>
+              <li><strong>Resim:</strong> Maksimum 5MB, 1920x1080+ çözünürlük önerilir</li>
+              <li><strong>Video:</strong> Maksimum 50MB, MP4 formatı önerilir, kısa döngüler tercih edilir</li>
+              <li>Arka plan medyaları site performansını etkileyebilir</li>
+              <li>Açık ve koyu tema için farklı resim/video yükleyebilirsiniz</li>
+              <li>Video arka planlar otomatik olarak sessiz ve döngülü oynatılır</li>
+              <li>Medya kaldırıldığında varsayılan grid arka plan gösterilir</li>
             </ul>
           </div>
         </div>
