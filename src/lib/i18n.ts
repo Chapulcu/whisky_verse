@@ -116,7 +116,11 @@ i18n
           generalInfo: 'Viski hakkında genel bilgiler...',
           describeAroma: 'Aroma notlarını açıklayın...',
           describeTaste: 'Tat notlarını açıklayın...',
-          describeFinish: 'Final notlarını açıklayın...'
+          describeFinish: 'Final notlarını açıklayın...',
+          
+          // Age Verification
+          pleaseEnterBirthDate: 'Lütfen doğum tarihinizi girin',
+          mustBe18OrOlder: '18 yaşında veya daha büyük olmalısınız'
         }
       },
       en: {
@@ -209,7 +213,11 @@ i18n
           generalInfo: 'General information about the whisky...',
           describeAroma: 'Describe aroma notes...',
           describeTaste: 'Describe taste notes...',
-          describeFinish: 'Describe finish notes...'
+          describeFinish: 'Describe finish notes...',
+          
+          // Age Verification
+          pleaseEnterBirthDate: 'Please enter your birth date',
+          mustBe18OrOlder: 'You must be 18 years or older'
         }
       }
     }

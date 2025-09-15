@@ -1,7 +1,8 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { AgeVerification } from '@/components/AgeVerification'
 import { Layout } from '@/components/Layout'
 import { HomePage } from '@/pages/HomePage'
 import { AuthPage } from '@/pages/AuthPage'
@@ -41,6 +42,17 @@ function SafePage({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
+  const [isAgeVerified, setIsAgeVerified] = useState(false)
+
+  // Show age verification first, then the app
+  if (!isAgeVerified) {
+    return (
+      <ErrorBoundary>
+        <AgeVerification onVerified={() => setIsAgeVerified(true)} />
+      </ErrorBoundary>
+    )
+  }
+
   return (
     <ErrorBoundary>
       <AuthProvider>

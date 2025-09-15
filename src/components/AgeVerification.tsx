@@ -1,0 +1,188 @@
+import React, { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
+import { Calendar, AlertTriangle, CheckCircle, X } from 'lucide-react'
+
+interface AgeVerificationProps {
+  onVerified: () => void
+}
+
+export function AgeVerification({ onVerified }: AgeVerificationProps) {
+  const { t, i18n } = useTranslation()
+  const [isVisible, setIsVisible] = useState(false)
+  const [birthDate, setBirthDate] = useState('')
+  const [error, setError] = useState('')
+  const [isValidating, setIsValidating] = useState(false)
+
+  // Check if user already verified age (stored in localStorage)
+  useEffect(() => {
+    const ageVerified = localStorage.getItem('whiskyverse_age_verified')
+    const verificationDate = localStorage.getItem('whiskyverse_age_verification_date')
+    
+    // Check if verification is still valid (30 days)
+    if (ageVerified === 'true' && verificationDate) {
+      const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000)
+      if (parseInt(verificationDate) > thirtyDaysAgo) {
+        onVerified()
+        return
+      } else {
+        // Clear expired verification
+        localStorage.removeItem('whiskyverse_age_verified')
+        localStorage.removeItem('whiskyverse_age_verification_date')
+      }
+    }
+    
+    setIsVisible(true)
+  }, [onVerified])
+
+  const calculateAge = (birthDate: string): number => {
+    const birth = new Date(birthDate)
+    const today = new Date()
+    let age = today.getFullYear() - birth.getFullYear()
+    const monthDiff = today.getMonth() - birth.getMonth()
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--
+    }
+    
+    return age
+  }
+
+  const handleVerification = () => {
+    if (!birthDate) {
+      setError(t('pleaseEnterBirthDate'))
+      return
+    }
+
+    setIsValidating(true)
+    setError('')
+
+    // Simulate validation delay
+    setTimeout(() => {
+      const age = calculateAge(birthDate)
+      
+      if (age >= 18) {
+        // Store verification in localStorage
+        localStorage.setItem('whiskyverse_age_verified', 'true')
+        localStorage.setItem('whiskyverse_age_verification_date', Date.now().toString())
+        
+        setIsVisible(false)
+        setTimeout(() => onVerified(), 300)
+      } else {
+        setError(t('mustBe18OrOlder'))
+      }
+      
+      setIsValidating(false)
+    }, 1000)
+  }
+
+  const handleReject = () => {
+    // Redirect to a different page or show warning
+    window.location.href = 'https://www.google.com'
+  }
+
+  const isEnglish = i18n.language === 'en' || i18n.language === 'en-US'
+
+  return (
+    <AnimatePresence>
+      {isVisible && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md"
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            transition={{ duration: 0.3 }}
+            className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl"
+          >
+            {/* Header */}
+            <div className="text-center mb-8">
+              <div className="w-20 h-20 bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <AlertTriangle className="w-10 h-10 text-white" />
+              </div>
+              
+              <h1 className="text-2xl font-bold text-white mb-2">
+                {isEnglish ? 'Age Verification Required' : 'Yaş Doğrulaması Gerekli'}
+              </h1>
+              
+              <p className="text-slate-300 text-sm leading-relaxed">
+                {isEnglish 
+                  ? 'This website contains content related to alcoholic beverages. You must be 18 years or older to enter.'
+                  : 'Bu web sitesi alkollü içeceklerle ilgili içerik barındırmaktadır. Giriş yapabilmek için 18 yaşında veya daha büyük olmalısınız.'
+                }
+              </p>
+            </div>
+
+            {/* Birth Date Input */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                <Calendar className="w-4 h-4 inline mr-2" />
+                {isEnglish ? 'Enter your birth date' : 'Doğum tarihinizi girin'}
+              </label>
+              <input
+                type="date"
+                value={birthDate}
+                onChange={(e) => setBirthDate(e.target.value)}
+                max={new Date().toISOString().split('T')[0]}
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                placeholder={isEnglish ? 'Select your birth date' : 'Doğum tarihinizi seçin'}
+              />
+              
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-2 text-red-400 text-sm flex items-center gap-1"
+                >
+                  <X className="w-4 h-4" />
+                  {error}
+                </motion.div>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="space-y-3">
+              <button
+                onClick={handleVerification}
+                disabled={isValidating || !birthDate}
+                className="w-full px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg hover:shadow-emerald-500/25"
+              >
+                {isValidating ? (
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <CheckCircle className="w-5 h-5" />
+                )}
+                {isValidating 
+                  ? (isEnglish ? 'Verifying...' : 'Doğrulanıyor...')
+                  : (isEnglish ? 'I am 18 or older' : '18 yaşında veya daha büyüğüm')
+                }
+              </button>
+
+              <button
+                onClick={handleReject}
+                className="w-full px-6 py-3 bg-slate-600/50 hover:bg-slate-600/70 text-slate-300 hover:text-white font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
+              >
+                <X className="w-5 h-5" />
+                {isEnglish ? 'I am under 18' : '18 yaşından küçüğüm'}
+              </button>
+            </div>
+
+            {/* Legal Notice */}
+            <div className="mt-6 pt-6 border-t border-white/10">
+              <p className="text-xs text-slate-400 text-center leading-relaxed">
+                {isEnglish 
+                  ? 'By entering this site, you confirm that you are of legal drinking age in your jurisdiction and agree to our terms of use.'
+                  : 'Bu siteye giriş yaparak, yasal içme yaşında olduğunuzu ve kullanım şartlarımızı kabul ettiğinizi onaylıyorsunuz.'
+                }
+              </p>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
+}
