@@ -37,6 +37,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
 import { TranslationManager } from '@/components/TranslationManager'
+import { BackgroundManager } from '@/components/admin/BackgroundManager'
 
 interface User {
   id: string
@@ -116,7 +117,7 @@ export function AdminPage() {
   const [whiskies, setWhiskies] = useState<Whisky[]>([])
   const [groups, setGroups] = useState<Group[]>([])
   const [events, setEvents] = useState<Event[]>([])
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'whiskies' | 'groups' | 'events'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'whiskies' | 'groups' | 'events' | 'background'>('overview')
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCountry, setSelectedCountry] = useState('')
   const [selectedType, setSelectedType] = useState('')
@@ -1740,6 +1741,17 @@ export function AdminPage() {
             >
               <CalendarDays className="w-4 h-4" />
               Etkinlik Yönetimi
+            </button>
+            <button
+              onClick={() => setActiveTab('background')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'background'
+                  ? 'bg-white/20 text-slate-800 dark:text-white'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
+              }`}
+            >
+              <Image className="w-4 h-4" />
+              Arka Plan
             </button>
           </div>
         </div>
@@ -4273,6 +4285,17 @@ export function AdminPage() {
                 </div>
               )}
             </AnimatePresence>
+          </motion.div>
+        )}
+
+        {/* Background Management Tab */}
+        {activeTab === 'background' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            <BackgroundManager />
           </motion.div>
         )}
 

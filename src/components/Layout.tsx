@@ -1,20 +1,72 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { Navigation } from './Navigation'
 import { ScrollToTop } from './ScrollToTop'
+import { useBackgroundManagement } from '@/hooks/useBackgroundManagement'
 import { Toaster } from 'react-hot-toast'
 
 export function Layout() {
+  const { getCurrentBackgroundUrl, settings } = useBackgroundManagement()
+  const [isDark, setIsDark] = useState(false)
+
+  // Detect theme changes
+  useEffect(() => {
+    const checkTheme = () => {
+      setIsDark(document.documentElement.classList.contains('dark'))
+    }
+
+    checkTheme()
+
+    // Listen for theme changes
+    const observer = new MutationObserver(checkTheme)
+    observer.observe(document.documentElement, { 
+      attributes: true, 
+      attributeFilter: ['class'] 
+    })
+
+    return () => observer.disconnect()
+  }, [])
+
+  const backgroundUrl = getCurrentBackgroundUrl(isDark)
+  
+  // Debug logging
+  console.log('Layout background debug:', {
+    isDark,
+    backgroundUrl,
+    settings
+  })
+  
+  // Dynamic style for background image
+  const backgroundStyle = backgroundUrl ? {
+    backgroundImage: `url(${backgroundUrl})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundAttachment: 'fixed',
+    backgroundRepeat: 'no-repeat'
+  } : {}
+  
+  console.log('Background style:', backgroundStyle)
+
   return (
-    <div className="min-h-screen cyber-bg">
-      <Navigation />
+    <div 
+      className="min-h-screen cyber-bg relative"
+      style={backgroundStyle}
+    >
+      {/* Overlay for better readability when background image is present */}
+      {backgroundUrl && (
+        <div className="absolute inset-0 bg-white/10 dark:bg-black/20 backdrop-blur-[2px]" />
+      )}
       
-      {/* Main Content */}
-      <main className="pt-20 md:pt-24 pb-8">
-        <div className="container mx-auto mobile-padding">
-          <Outlet />
-        </div>
-      </main>
+      <div className="relative z-10">
+        <Navigation />
+        
+        {/* Main Content */}
+        <main className="pt-20 md:pt-24 pb-8">
+          <div className="container mx-auto mobile-padding">
+            <Outlet />
+          </div>
+        </main>
+      </div>
 
       {/* Scroll To Top Button */}
       <ScrollToTop />
