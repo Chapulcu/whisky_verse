@@ -46,7 +46,10 @@
       "Bash(pbcopy)",
       "Bash(git checkout:*)",
       "Bash(git push:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(npx supabase db describe:*)",
+      "Bash(npx supabase:*)",
+      "Bash(git restore:*)"
     ],
     "deny": [],
     "ask": []

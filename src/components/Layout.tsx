@@ -23,21 +23,35 @@ export function Layout() {
       <Toaster
         position="top-right"
         toastOptions={{
-          duration: 4000,
+          duration: 6000,
           style: {
-            background: 'rgba(255, 255, 255, 0.1)',
+            background: 'rgba(15, 23, 42, 0.95)',
             backdropFilter: 'blur(16px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
+            border: '1px solid rgba(168, 85, 247, 0.4)',
             borderRadius: '12px',
-            color: '#1e293b',
+            color: '#f8fafc',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.1)',
+            fontWeight: '500',
+            fontSize: '14px',
+            maxWidth: '400px',
           },
           success: {
+            style: {
+              background: 'rgba(16, 185, 129, 0.15)',
+              border: '1px solid rgba(16, 185, 129, 0.4)',
+              color: '#10b981',
+            },
             iconTheme: {
               primary: '#10b981',
               secondary: '#ffffff',
             },
           },
           error: {
+            style: {
+              background: 'rgba(239, 68, 68, 0.15)',
+              border: '1px solid rgba(239, 68, 68, 0.4)',
+              color: '#ef4444',
+            },
             iconTheme: {
               primary: '#ef4444',
               secondary: '#ffffff',

@@ -256,12 +256,20 @@ export function useWhiskyTranslations() {
       color?: string
     }
   ) => {
+    console.log('useMultilingualWhiskies: updateTranslation called with:', { whiskyId, languageCode, translations })
     try {
       setLoading(true)
 
       // Check if multilingual structure exists
       try {
-        const { data, error } = await supabase.rpc(
+        console.log('useMultilingualWhiskies: Trying RPC call...')
+        
+        // Add timeout to RPC call
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('RPC timeout')), 15000) // 15 second timeout
+        })
+
+        const rpcPromise = supabase.rpc(
           'upsert_whisky_translation',
           {
             p_whisky_id: whiskyId,
@@ -276,33 +284,177 @@ export function useWhiskyTranslations() {
           }
         )
 
+        const { data, error } = await Promise.race([rpcPromise, timeoutPromise]) as any
+
         if (error) throw error
         
+        console.log('useMultilingualWhiskies: RPC call successful')
         toast.success('Çeviri güncellendi!')
         return { success: true }
       } catch (rpcError: any) {
-        // If multilingual structure doesn't exist, update original table if it's Turkish
+        console.log('useMultilingualWhiskies: RPC failed, using fallback method')
+        
         if (languageCode === 'tr') {
-          const { error } = await supabase
-            .from('whiskies')
-            .update({
-              name: translations.name,
-              type: translations.type || null,
-              description: translations.description || null,
-              aroma: translations.aroma || null,
-              taste: translations.taste || null,
-              finish: translations.finish || null,
-              color: translations.color || null
-            })
-            .eq('id', whiskyId)
-
-          if (error) throw error
+          // Turkish: Update main whiskies table directly
+          console.log(`useMultilingualWhiskies: Fetching current whisky data for TR update`)
           
-          toast.success('Viski güncellendi!')
+          const fetchPromise = supabase
+            .from('whiskies')
+            .select('*')
+            .eq('id', whiskyId)
+            .single()
+            
+          const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Fetch timeout')), 15000)
+          })
+
+          const { data: currentWhisky, error: fetchError } = await Promise.race([fetchPromise, timeoutPromise]) as any
+
+          if (fetchError) {
+            console.error('useMultilingualWhiskies: Fetch error:', fetchError)
+            throw fetchError
+          }
+          if (!currentWhisky) throw new Error('Whisky not found')
+
+          // Only update fields that have values, preserve existing ones
+          const updateData: any = {}
+          
+          if (translations.name?.trim()) {
+            updateData.name = translations.name
+          }
+          if (translations.type?.trim()) {
+            updateData.type = translations.type
+          }
+          if (translations.description?.trim()) {
+            updateData.description = translations.description
+          }
+          if (translations.aroma?.trim()) {
+            updateData.aroma = translations.aroma
+          }
+          if (translations.taste?.trim()) {
+            updateData.taste = translations.taste
+          }
+          if (translations.finish?.trim()) {
+            updateData.finish = translations.finish
+          }
+          if (translations.color?.trim()) {
+            updateData.color = translations.color
+          }
+
+          // Only update if there are actual changes
+          if (Object.keys(updateData).length === 0) {
+            toast.error('Güncellenecek veri bulunamadı')
+            return { success: false, error: 'No data to update' }
+          }
+
+          console.log('useMultilingualWhiskies: Updating whisky data:', updateData)
+          
+          const updatePromise = supabase
+            .from('whiskies')
+            .update(updateData)
+            .eq('id', whiskyId)
+            
+          const updateTimeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Update timeout')), 15000)
+          })
+
+          const { error } = await Promise.race([updatePromise, updateTimeoutPromise]) as any
+
+          if (error) {
+            console.error('useMultilingualWhiskies: Update error:', error)
+            throw error
+          }
+          
+          console.log('useMultilingualWhiskies: Turkish update successful')
+          toast.success('Türkçe veriler güncellendi!')
           return { success: true }
         } else {
-          toast.error('Çoklu dil yapısı henüz kurulmamış. Sadece Türkçe düzenlenebilir.')
-          return { success: false, error: 'Multilingual structure not available' }
+          // Non-Turkish: Save directly as completed translation
+          console.log(`useMultilingualWhiskies: Saving direct translation for ${languageCode}`)
+          
+          const translatedText = {
+            name: translations.name || '',
+            type: translations.type || '',
+            description: translations.description || '',
+            aroma: translations.aroma || '',
+            taste: translations.taste || '',
+            finish: translations.finish || '',
+            color: translations.color || ''
+          }
+
+          // Check if translation job exists for this whisky/language
+          console.log(`useMultilingualWhiskies: Checking existing translation for ${languageCode}`)
+          
+          const checkPromise = supabase
+            .from('translation_jobs')
+            .select('id')
+            .eq('whisky_id', whiskyId)
+            .eq('target_language', languageCode)
+            .maybeSingle()
+            
+          const checkTimeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Check timeout')), 15000)
+          })
+
+          const { data: existing, error: existingError } = await Promise.race([checkPromise, checkTimeoutPromise]) as any
+
+          console.log(`useMultilingualWhiskies: Check result for ${languageCode}:`, { existing, existingError })
+
+          if (existing) {
+            // Update existing translation
+            console.log(`useMultilingualWhiskies: Updating existing translation for ${languageCode}`)
+            
+            const updateJobPromise = supabase
+              .from('translation_jobs')
+              .update({
+                translated_text: translatedText,
+                status: 'completed',
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', existing.id)
+              
+            const updateJobTimeoutPromise = new Promise((_, reject) => {
+              setTimeout(() => reject(new Error('Update job timeout')), 15000)
+            })
+
+            const { error } = await Promise.race([updateJobPromise, updateJobTimeoutPromise]) as any
+
+            if (error) {
+              console.error(`useMultilingualWhiskies: Update error for ${languageCode}:`, error)
+              throw error
+            }
+            console.log(`useMultilingualWhiskies: Update successful for ${languageCode}`)
+          } else {
+            // Create new completed translation
+            console.log(`useMultilingualWhiskies: Creating new translation for ${languageCode}`)
+            
+            const insertJobPromise = supabase
+              .from('translation_jobs')
+              .insert({
+                whisky_id: whiskyId,
+                source_language: 'tr',
+                target_language: languageCode,
+                source_text: {}, // Empty since we're directly providing translation
+                translated_text: translatedText,
+                status: 'completed'
+              })
+              
+            const insertJobTimeoutPromise = new Promise((_, reject) => {
+              setTimeout(() => reject(new Error('Insert job timeout')), 15000)
+            })
+
+            const { error } = await Promise.race([insertJobPromise, insertJobTimeoutPromise]) as any
+
+            if (error) {
+              console.error(`useMultilingualWhiskies: Insert error for ${languageCode}:`, error)
+              throw error
+            }
+            console.log(`useMultilingualWhiskies: Insert successful for ${languageCode}`)
+          }
+          
+          console.log(`useMultilingualWhiskies: Direct translation saved for ${languageCode}`)
+          toast.success(`${languageCode.toUpperCase()} çevirisi kaydedildi!`)
+          return { success: true }
         }
       }
     } catch (error: any) {
@@ -333,32 +485,91 @@ export function useWhiskyTranslations() {
         // If no translations exist, fall back to original whisky data
         throw new Error('No translations found, falling back to original data')
       } catch (rpcError: any) {
-        // If multilingual structure doesn't exist, return current data as Turkish translation
-        console.log('Multilingual functions not available, providing current data as Turkish')
+        // If multilingual structure doesn't exist, get data from whiskies table + translation_jobs
+        console.log('Multilingual functions not available, getting data from whiskies + translation_jobs')
         
-        const { data, error } = await supabase
+        const { data: whiskyData, error: whiskyError } = await supabase
           .from('whiskies')
           .select('*')
           .eq('id', whiskyId)
           .single()
 
-        if (error) throw error
-        if (!data) return []
-        
-        // Return current data as Turkish translation
-        return [{
-          whisky_id: data.id,
+        if (whiskyError) throw whiskyError
+        if (!whiskyData) return []
+
+        // Get completed translations from translation_jobs
+        const { data: translations, error: translationsError } = await supabase
+          .from('translation_jobs')
+          .select('target_language, translated_text')
+          .eq('whisky_id', whiskyId)
+          .eq('status', 'completed')
+
+        if (translationsError) {
+          console.warn('Error fetching translations:', translationsError)
+        }
+
+        const result: WhiskyTranslation[] = []
+
+        // Add Turkish (main data)
+        result.push({
+          whisky_id: whiskyData.id,
           language_code: 'tr',
           language_name: 'Türkçe',
-          name: data.name,
-          type: data.type,
-          description: data.description,
-          aroma: data.aroma,
-          taste: data.taste,
-          finish: data.finish,
-          color: data.color,
-          is_complete: Boolean(data.name && data.type)
-        }]
+          name: whiskyData.name,
+          type: whiskyData.type,
+          description: whiskyData.description,
+          aroma: whiskyData.aroma,
+          taste: whiskyData.taste,
+          finish: whiskyData.finish,
+          color: whiskyData.color,
+          is_complete: Boolean(whiskyData.name && whiskyData.type)
+        })
+
+        // Add other language translations
+        if (translations) {
+          for (const translation of translations) {
+            const translatedText = translation.translated_text as any
+            const langName = translation.target_language === 'en' ? 'English' : 
+                           translation.target_language === 'ru' ? 'Русский' : translation.target_language
+
+            result.push({
+              whisky_id: whiskyData.id,
+              language_code: translation.target_language,
+              language_name: langName,
+              name: translatedText?.name || '',
+              type: translatedText?.type || '',
+              description: translatedText?.description || '',
+              aroma: translatedText?.aroma || '',
+              taste: translatedText?.taste || '',
+              finish: translatedText?.finish || '',
+              color: translatedText?.color || '',
+              is_complete: Boolean(translatedText?.name && translatedText?.type)
+            })
+          }
+        }
+
+        // Add empty entries for missing languages
+        const languages = ['en', 'ru']
+        for (const lang of languages) {
+          if (!result.find(r => r.language_code === lang)) {
+            const langName = lang === 'en' ? 'English' : 'Русский'
+            result.push({
+              whisky_id: whiskyData.id,
+              language_code: lang,
+              language_name: langName,
+              name: '',
+              type: '',
+              description: '',
+              aroma: '',
+              taste: '',
+              finish: '',
+              color: '',
+              is_complete: false
+            })
+          }
+        }
+
+        return result
       }
     } catch (error: any) {
       console.error('Error loading translations:', error)

@@ -36,6 +36,7 @@ import {
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
+import { TranslationManager } from '@/components/TranslationManager'
 
 interface User {
   id: string
@@ -137,6 +138,8 @@ export function AdminPage() {
   const [isImporting, setIsImporting] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
+  const [showTranslationManager, setShowTranslationManager] = useState(false)
+  const [translatingWhisky, setTranslatingWhisky] = useState<Whisky | null>(null)
   // const [selectedWhiskies, setSelectedWhiskies] = useState<number[]>([])
   // const [isBulkDeleting, setIsBulkDeleting] = useState(false)
   // const [isBulkUpdating, setIsBulkUpdating] = useState(false)
@@ -3029,18 +3032,23 @@ export function AdminPage() {
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                      Dil / Language *
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-3">
+                      Çeviri Yönetimi
                     </label>
-                    <select
-                      value={whiskyForm.language_code}
-                      onChange={(e) => setWhiskyForm(prev => ({ ...prev, language_code: e.target.value as 'tr' | 'en' }))}
-                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (editingWhisky) {
+                          setTranslatingWhisky(editingWhisky)
+                          setShowTranslationManager(true)
+                        }
+                      }}
+                      className="w-full px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2"
                     >
-                      <option value="tr">🇹🇷 Türkçe</option>
-                      <option value="en">🇺🇸 English</option>
-                    </select>
+                      <Globe className="w-5 h-5" />
+                      Çevirileri Yönet (TR/EN/RU)
+                    </button>
                   </div>
 
                   <div>
@@ -4266,6 +4274,21 @@ export function AdminPage() {
               )}
             </AnimatePresence>
           </motion.div>
+        )}
+
+        {/* Translation Manager Modal */}
+        {showTranslationManager && translatingWhisky && (
+          <TranslationManager
+            whiskyId={translatingWhisky.id}
+            onClose={() => {
+              setShowTranslationManager(false)
+              setTranslatingWhisky(null)
+            }}
+            onSave={() => {
+              // Skip heavy operations during save to avoid blocking
+              console.log('AdminPage: Translation saved, skipping refresh for now')
+            }}
+          />
         )}
       </div>
     </div>

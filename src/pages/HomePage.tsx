@@ -2,6 +2,7 @@ import React, { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
+import { useHomeStats } from '@/hooks/useHomeStats'
 import { motion } from 'framer-motion'
 import { 
   Wine, 
@@ -11,12 +12,14 @@ import {
   ArrowRight, 
   Sparkles,
   TrendingUp,
-  Award
+  Award,
+  Globe
 } from 'lucide-react'
 
 export function HomePage() {
   const { t, i18n } = useTranslation()
   const { user, profile } = useAuth()
+  const { stats, loading: statsLoading } = useHomeStats()
 
   // CRITICAL FIX: Stable language detection
   const isEnglish = useMemo(() => {
@@ -59,13 +62,33 @@ export function HomePage() {
     }
   ], [])
 
-  // CRITICAL FIX: Memoized stats to prevent re-creation
-  const stats = useMemo(() => [
-    { number: '500+', label: 'Viski Çeşidi', labelEn: 'Whisky Varieties' },
-    { number: '1000+', label: 'Aktif Üye', labelEn: 'Active Members' },
-    { number: '50+', label: 'Etkinlik', labelEn: 'Events' },
-    { number: '25+', label: 'Ülke', labelEn: 'Countries' }
-  ], [])
+  // Dynamic stats from database
+  const statsDisplay = useMemo(() => [
+    { 
+      number: statsLoading ? '...' : `${stats.whiskiesCount}+`, 
+      label: 'Viski Çeşidi', 
+      labelEn: 'Whisky Varieties',
+      icon: Wine
+    },
+    { 
+      number: statsLoading ? '...' : `${stats.membersCount}+`, 
+      label: 'Aktif Üye', 
+      labelEn: 'Active Members',
+      icon: Users
+    },
+    { 
+      number: statsLoading ? '...' : `${stats.eventsCount}+`, 
+      label: 'Etkinlik', 
+      labelEn: 'Events',
+      icon: Calendar
+    },
+    { 
+      number: statsLoading ? '...' : `${stats.countriesCount}+`, 
+      label: 'Ülke', 
+      labelEn: 'Countries',
+      icon: Globe
+    }
+  ], [stats, statsLoading])
 
   // CRITICAL FIX: Memoized user status checks
   const userStatus = useMemo(() => {
@@ -147,16 +170,24 @@ export function HomePage() {
           transition={{ duration: 0.8, delay: 0.2 }}
           className="grid grid-cols-2 md:grid-cols-4 gap-6"
         >
-          {stats.map((stat, index) => (
-            <div key={index} className="card text-center">
-              <div className="text-3xl md:text-4xl font-cyber font-bold text-gradient mb-2">
-                {stat.number}
+          {statsDisplay.map((stat, index) => {
+            const Icon = stat.icon
+            return (
+              <div key={index} className="card text-center group hover:scale-105 transition-transform">
+                <div className="flex justify-center mb-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <Icon className="w-6 h-6 text-white" />
+                  </div>
+                </div>
+                <div className="text-3xl md:text-4xl font-cyber font-bold text-gradient mb-2">
+                  {stat.number}
+                </div>
+                <div className="text-slate-600 dark:text-slate-300 font-medium">
+                  {isEnglish ? stat.labelEn : stat.label}
+                </div>
               </div>
-              <div className="text-slate-600 dark:text-slate-300 font-medium">
-                {isEnglish ? stat.labelEn : stat.label}
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </motion.div>
       </section>
 
