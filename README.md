@@ -92,6 +92,12 @@ cp .env.example .env
 # .env dosyasını Supabase bilgilerinizle düzenleyin
 ```
 
+⚠️ **ÖNEMLİ GÜVENLİK UYARISI:**
+- `.env` dosyaları Git'e commit edilmez (`.gitignore` ile korunur)
+- Supabase URL'leri ve API anahtarlarını kimse ile paylaşmayın
+- Production değerlerini development değerlerinden ayrı tutun
+- API anahtarlarını public repository'lerde **asla** paylaşmayın
+
 4. **Uygulamayı başlatın:**
 ```bash
 npm run dev
