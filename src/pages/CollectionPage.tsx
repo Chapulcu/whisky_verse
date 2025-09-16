@@ -127,7 +127,7 @@ export function CollectionPage() {
       stars.push(
         <button
           key={i}
-          onClick={() => editable && handleRating(itemId, i)}
+          onClick={() => editable && setRatingValue(i)}
           disabled={!editable}
           className={`${
             i <= rating 
@@ -388,7 +388,10 @@ export function CollectionPage() {
                       </span>
                       {!item.tasted && (
                         <button
-                          onClick={() => setEditingRating(item.id)}
+                          onClick={() => {
+                            setEditingRating(item.id)
+                            setRatingValue(item.rating || 0)
+                          }}
                           className="text-xs text-amber-600 hover:text-amber-700 font-medium"
                         >
                           {t('collectionPage.whiskyCard.rateButton')}
@@ -482,7 +485,11 @@ export function CollectionPage() {
                     <div className="flex items-center gap-2 text-xs text-slate-500">
                       <Calendar className="w-3 h-3" />
                       <span>
-                        {t('collectionPage.whiskyCard.addedOn')}: {new Date(item.added_at).toLocaleDateString('tr-TR')}
+                        {t('collectionPage.whiskyCard.addedOn')}: {
+                          item.added_at && !isNaN(Date.parse(item.added_at))
+                            ? new Date(item.added_at).toLocaleDateString('tr-TR')
+                            : t('collectionPage.whiskyCard.dateUnknown')
+                        }
                       </span>
                     </div>
                   </div>

@@ -419,6 +419,7 @@
       "cancel": "Cancel",
       "noNotes": "No notes added yet",
       "addedOn": "Added on",
+      "dateUnknown": "Unknown",
       "notesPlaceholder": "Write your tasting notes...",
       "confirmRemove": "Are you sure you want to remove this whisky from your collection?"
     },

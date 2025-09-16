@@ -518,6 +518,7 @@
       "cancel": "İptal",
       "noNotes": "Henüz not eklenmemiş",
       "addedOn": "Eklenme",
+      "dateUnknown": "Bilinmiyor",
       "notesPlaceholder": "Tadım notlarınızı yazın...",
       "confirmRemove": "whisky'sini koleksiyondan kaldırmak istediğinizden emin misiniz?"
     },
