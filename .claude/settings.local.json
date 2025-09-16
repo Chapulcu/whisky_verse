@@ -51,7 +51,8 @@
       "Bash(npx supabase:*)",
       "Bash(git restore:*)",
       "Bash(git rm:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Read(//var/folders/xp/g7ybln5j49v5254kxypbsm3h0000gn/T/TemporaryItems/NSIRD_screencaptureui_1nkFZH/**)"
     ],
     "deny": [],
     "ask": []
