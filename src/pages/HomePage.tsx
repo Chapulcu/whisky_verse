@@ -21,43 +21,31 @@ export function HomePage() {
   const { user, profile } = useAuth()
   const { stats, loading: statsLoading } = useHomeStats()
 
-  // CRITICAL FIX: Stable language detection
-  const isEnglish = useMemo(() => {
-    return i18n.language === 'en' || i18n.language === 'en-US'
-  }, [i18n.language])
 
   // CRITICAL FIX: Memoized features to prevent re-creation
   const features = useMemo(() => [
     {
       icon: Wine,
-      title: 'Kapsamlı Viski Koleksiyonu',
-      titleEn: 'Comprehensive Whisky Collection',
-      description: 'Dünyanın en iyi viskilerini keşfedin, tadın ve koleksiyonunuzu oluşturun.',
-      descriptionEn: 'Discover, taste, and build your collection of the world\'s finest whiskies.',
+      titleKey: 'home.features.collection.title',
+      descriptionKey: 'home.features.collection.description',
       color: 'from-amber-500 to-orange-500'
     },
     {
       icon: Users,
-      title: 'Viski Topluluğu',
-      titleEn: 'Whisky Community',
-      description: 'Diğer viski severlerle bağlantı kurun ve deneyimlerinizi paylaşın.',
-      descriptionEn: 'Connect with fellow whisky enthusiasts and share your experiences.',
+      titleKey: 'home.features.community.title',
+      descriptionKey: 'home.features.community.description',
       color: 'from-blue-500 to-purple-500'
     },
     {
       icon: Calendar,
-      title: 'Tatma Etkinlikleri',
-      titleEn: 'Tasting Events',
-      description: 'VIP üyeler için özel tatma etkinlikleri ve masterclass\'lar.',
-      descriptionEn: 'Exclusive tasting events and masterclasses for VIP members.',
+      titleKey: 'home.features.events.title',
+      descriptionKey: 'home.features.events.description',
       color: 'from-purple-500 to-pink-500'
     },
     {
       icon: Award,
-      title: 'Uzman Değerlendirmeleri',
-      titleEn: 'Expert Reviews',
-      description: 'Profesyonel sommelier\'lerden detaylı tadim notları ve öneriler.',
-      descriptionEn: 'Detailed tasting notes and recommendations from professional sommeliers.',
+      titleKey: 'home.features.reviews.title',
+      descriptionKey: 'home.features.reviews.description',
       color: 'from-green-500 to-teal-500'
     }
   ], [])
@@ -66,26 +54,22 @@ export function HomePage() {
   const statsDisplay = useMemo(() => [
     { 
       number: statsLoading ? '...' : `${stats.whiskiesCount}+`, 
-      label: 'Viski Çeşidi', 
-      labelEn: 'Whisky Varieties',
+      labelKey: 'home.stats.whiskies',
       icon: Wine
     },
     { 
       number: statsLoading ? '...' : `${stats.membersCount}+`, 
-      label: 'Aktif Üye', 
-      labelEn: 'Active Members',
+      labelKey: 'home.stats.members',
       icon: Users
     },
     { 
       number: statsLoading ? '...' : `${stats.eventsCount}+`, 
-      label: 'Etkinlik', 
-      labelEn: 'Events',
+      labelKey: 'home.stats.events',
       icon: Calendar
     },
     { 
       number: statsLoading ? '...' : `${stats.countriesCount}+`, 
-      label: 'Ülke', 
-      labelEn: 'Countries',
+      labelKey: 'home.stats.countries',
       icon: Globe
     }
   ], [stats, statsLoading])
@@ -123,14 +107,11 @@ export function HomePage() {
           </div>
           
           <h1 className="mobile-heading font-cyber font-bold text-gradient mb-6">
-            WhiskyVerse
+            {t('home.heroTitle')}
           </h1>
           
           <p className="mobile-text-size text-slate-600 dark:text-slate-300 mb-8 max-w-3xl mx-auto">
-            {isEnglish 
-              ? "The ultimate platform for whisky enthusiasts. Discover, taste, and connect with the world's finest spirits."
-              : "Viski severler için nihai platform. Dünyanın en iyi ruhlarını keşfedin, tadın ve bağlantı kurun."
-            }
+            {t('home.heroDescription')}
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -147,7 +128,7 @@ export function HomePage() {
             ) : (
               <>
                 <Link to="/whiskies" className="btn-primary flex items-center gap-2">
-                  {isEnglish ? 'Explore Whiskies' : 'Viskiler Keşfedin'}
+                  {t('home.exploreWhiskies')}
                   <ArrowRight className="w-4 h-4" />
                 </Link>
                 {userStatus.shouldShowUpgrade && (
@@ -183,7 +164,7 @@ export function HomePage() {
                   {stat.number}
                 </div>
                 <div className="text-slate-600 dark:text-slate-300 font-medium">
-                  {isEnglish ? stat.labelEn : stat.label}
+                  {t(stat.labelKey)}
                 </div>
               </div>
             )
@@ -200,13 +181,10 @@ export function HomePage() {
           className="text-center mb-12"
         >
           <h2 className="text-3xl md:text-4xl font-cyber font-bold text-gradient mb-4">
-            {isEnglish ? 'Discover the Features' : 'Özellikleri Keşfedin'}
+            {t('home.features.title')}
           </h2>
           <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
-            {isEnglish 
-              ? "Everything you need to become a whisky connoisseur and connect with like-minded enthusiasts."
-              : "Bir viski uzmanı olmak ve benzer düşünceli meraklılarla bağlantı kurmak için ihtiyacınız olan her şey."
-            }
+            {t('home.features.subtitle')}
           </p>
         </motion.div>
 
@@ -227,10 +205,10 @@ export function HomePage() {
                   </div>
                   <div className="flex-1">
                     <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">
-                      {isEnglish ? feature.titleEn : feature.title}
+                      {t(feature.titleKey)}
                     </h3>
                     <p className="text-slate-600 dark:text-slate-300">
-                      {isEnglish ? feature.descriptionEn : feature.description}
+                      {t(feature.descriptionKey)}
                     </p>
                   </div>
                 </div>
@@ -251,16 +229,13 @@ export function HomePage() {
           >
             <TrendingUp className="w-16 h-16 text-primary-500 mx-auto mb-6" />
             <h3 className="text-2xl md:text-3xl font-cyber font-bold text-gradient mb-4">
-              {isEnglish ? 'Ready to Start Your Journey?' : 'Yolculuğunuza Başlamaya Hazır mısınız?'}
+              {t('home.cta.title')}
             </h3>
             <p className="text-lg text-slate-600 dark:text-slate-300 mb-8 max-w-2xl mx-auto">
-              {isEnglish 
-                ? "Join thousands of whisky enthusiasts and start building your perfect collection today."
-                : "Binlerce viski meraklısına katılın ve bugün mükemmel koleksiyonunuzu oluşturmaya başlayın."
-              }
+              {t('home.cta.description')}
             </p>
             <Link to="/auth" className="btn-primary text-lg px-8 py-4 inline-flex items-center gap-2">
-              {isEnglish ? 'Join WhiskyVerse' : 'WhiskyVerse\'e Katıl'}
+              {t('home.joinWhiskyVerse')}
               <ArrowRight className="w-5 h-5" />
             </Link>
           </motion.div>

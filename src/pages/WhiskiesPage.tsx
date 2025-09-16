@@ -111,7 +111,7 @@ export function WhiskiesPage() {
       setUserWhiskies(data || [])
     } catch (error) {
       console.error('Error loading user collection:', error)
-      toast.error('Kullanıcı koleksiyonu yüklenemedi')
+      toast.error(t('userCollectionLoadError'))
     }
   }
 
@@ -145,7 +145,7 @@ export function WhiskiesPage() {
 
   const addToCollection = async (whiskyId: number) => {
     if (!user) {
-      toast.error('Koleksiyona eklemek için giriş yapmalısınız')
+      toast.error(t('loginRequiredCollection'))
       return
     }
 
@@ -166,7 +166,7 @@ export function WhiskiesPage() {
 
       if (existingEntries && existingEntries.length > 0) {
         console.log('Whisky already in collection:', existingEntries)
-        toast.error('Bu viski zaten koleksiyonunuzda')
+        toast.error(t('whiskyAlreadyInCollection'))
         return
       }
 
@@ -197,13 +197,13 @@ export function WhiskiesPage() {
         detail: { action: 'added', whiskyId } 
       }))
       
-      toast.success('Koleksiyona eklendi!')
+      toast.success(t('whiskiesPage.toasts.addedToCollection'))
     } catch (error: any) {
       console.error('Error adding to collection:', error)
       if (error.code === '23505') {
-        toast.error('Bu viski zaten koleksiyonunuzda')
+        toast.error(t('whiskyAlreadyInCollection'))
       } else {
-        toast.error('Koleksiyona eklenirken hata oluştu')
+        toast.error(t('addToCollectionError'))
       }
     }
   }
@@ -240,10 +240,10 @@ export function WhiskiesPage() {
       }
 
       await loadUserCollection()
-      toast.success('Durum güncellendi!')
+      toast.success(t('whiskiesPage.toasts.statusUpdated'))
     } catch (error) {
       console.error('Error updating tasted status:', error)
-      toast.error('Durum güncellenirken hata oluştu')
+      toast.error(t('whiskiesPage.toasts.statusUpdateError'))
     }
   }
 
@@ -309,7 +309,7 @@ export function WhiskiesPage() {
     return (
       <div className={`flex flex-col sm:flex-row items-center justify-between gap-4 ${className}`}>
         <div className="text-sm text-slate-600 dark:text-slate-300">
-          {startIndex + 1}-{Math.min(endIndex, filteredWhiskies.length)} / {filteredWhiskies.length} viski görüntülüyor
+          {startIndex + 1}-{Math.min(endIndex, filteredWhiskies.length)} / {filteredWhiskies.length} {t('whiskiesPage.showing')}
         </div>
         
         <div className="flex items-center gap-2">
@@ -317,7 +317,7 @@ export function WhiskiesPage() {
             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
             className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-slate-600 dark:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 backdrop-blur-md border border-white/20"
-            title="Önceki sayfa"
+            title={t('whiskiesPage.previousPage')}
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -355,7 +355,7 @@ export function WhiskiesPage() {
             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
             disabled={currentPage === totalPages}
             className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-slate-600 dark:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 backdrop-blur-md border border-white/20"
-            title="Sonraki sayfa"
+            title={t('whiskiesPage.nextPage')}
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -382,11 +382,11 @@ export function WhiskiesPage() {
     const file = e.target.files?.[0]
     if (file) {
       if (!file.type.startsWith('image/')) {
-        toast.error('Lütfen geçerli bir resim dosyası seçin')
+        toast.error(t('whiskiesPage.toasts.validImageFile'))
         return
       }
       if (file.size > 10 * 1024 * 1024) {
-        toast.error('Dosya boyutu 10MB\'den küçük olmalıdır')
+        toast.error(t('whiskiesPage.toasts.maxFileSize'))
         return
       }
       setSelectedImage(file)
@@ -424,17 +424,17 @@ export function WhiskiesPage() {
     e.preventDefault()
     
     if (!user) {
-      toast.error('Viski eklemek için giriş yapmalısınız')
+      toast.error(t('whiskiesPage.toasts.loginRequiredAdd'))
       return
     }
 
     if (!addForm.name.trim()) {
-      toast.error('Viski adı gereklidir')
+      toast.error(t('whiskiesPage.toasts.nameRequired'))
       return
     }
 
     if (!selectedImage) {
-      toast.error('Lütfen bir resim seçin')
+      toast.error(t('whiskiesPage.toasts.imageRequired'))
       return
     }
 
@@ -480,10 +480,10 @@ export function WhiskiesPage() {
       {/* Header */}
       <div className="text-center mobile-card-spacing">
         <h1 className="mobile-heading font-cyber font-bold text-gradient mb-4">
-          {t('whiskies')}
+          {t('whiskiesPage.title')}
         </h1>
         <p className="mobile-text-size text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
-          Dünyanın en iyi viskilerini keşfedin ve koleksiyonunuzu oluşturun
+          {t('whiskiesPage.subtitle')}
         </p>
         
         {user && (
@@ -493,7 +493,7 @@ export function WhiskiesPage() {
               className="btn-primary mobile-button mobile-touch-target touch-friendly inline-flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
-              Yeni Viski Ekle
+              {t('whiskiesPage.addNewWhisky')}
             </button>
           </div>
         )}
@@ -506,7 +506,7 @@ export function WhiskiesPage() {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
           <input
             type="text"
-            placeholder="Viski ara... (en az 3 karakter)"
+            placeholder={t('whiskiesPage.searchPlaceholder')}
             value={localSearchTerm}
             onChange={(e) => setLocalSearchTerm(e.target.value)}
             className="input-glass pl-10 pr-32"
@@ -514,7 +514,7 @@ export function WhiskiesPage() {
           />
           {localSearchTerm.length > 0 && localSearchTerm.length < 3 && (
             <div className="absolute left-3 top-full mt-1 text-xs text-amber-500 z-10 bg-black/80 px-2 py-1 rounded">
-              Arama için en az 3 karakter gereklidir
+              {t('whiskiesPage.searchMinChars')}
             </div>
           )}
           <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
@@ -527,7 +527,7 @@ export function WhiskiesPage() {
                     ? 'bg-amber-500/30 text-amber-200 shadow-lg'
                     : 'text-slate-400 hover:text-slate-300 hover:bg-white/10'
                 }`}
-                title="Grid Görünümü"
+                title={t('whiskiesPage.gridView')}
               >
                 <Grid3X3 className="w-4 h-4" />
               </button>
@@ -538,7 +538,7 @@ export function WhiskiesPage() {
                     ? 'bg-amber-500/30 text-amber-200 shadow-lg'
                     : 'text-slate-400 hover:text-slate-300 hover:bg-white/10'
                 }`}
-                title="Liste Görünümü"
+                title={t('whiskiesPage.listView')}
               >
                 <List className="w-4 h-4" />
               </button>
@@ -565,7 +565,7 @@ export function WhiskiesPage() {
                   setCurrentPage(1)
                 }}
                 className="btn-glass p-2 flex items-center gap-2 bg-red-500/20 hover:bg-red-500/30 text-red-200 border-red-400/20"
-                title="Tüm filtreleri temizle"
+                title={t('whiskiesPage.clearAllFilters')}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -590,7 +590,7 @@ export function WhiskiesPage() {
                 onChange={(e) => setSelectedCountry(e.target.value)}
                 className="input-glass"
               >
-                <option value="">Tüm Ülkeler</option>
+                <option value="">{t('whiskiesPage.allCountries')}</option>
                 {countries.map(country => (
                   <option key={country} value={country}>{country}</option>
                 ))}
@@ -606,7 +606,7 @@ export function WhiskiesPage() {
                 onChange={(e) => setSelectedType(e.target.value)}
                 className="input-glass"
               >
-                <option value="">Tüm Tipler</option>
+                <option value="">{t('whiskiesPage.allTypes')}</option>
                 {types.map(type => (
                   <option key={type} value={type}>{type}</option>
                 ))}
@@ -628,7 +628,7 @@ export function WhiskiesPage() {
                 className="btn-glass w-full flex items-center justify-center gap-2"
               >
                 <X className="w-4 h-4" />
-                Filtreleri Temizle
+                {t('whiskiesPage.clearFilters')}
               </button>
             </div>
           </motion.div>
@@ -640,13 +640,13 @@ export function WhiskiesPage() {
       {/* Results Count and Grid Settings */}
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
         <div className="text-slate-600 dark:text-slate-300">
-          {filteredWhiskies.length} viski bulundu • Sayfa {currentPage} / {totalPages}
+          {filteredWhiskies.length} {t('whiskiesPage.whiskiesFound')} • {t('whiskiesPage.page')} {currentPage} / {totalPages}
         </div>
         
         {viewMode === 'grid' && (
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <span className="text-sm text-slate-600 dark:text-slate-300">Sütun:</span>
+              <span className="text-sm text-slate-600 dark:text-slate-300">{t('whiskiesPage.column')}:</span>
               <select
                 value={gridColumns}
                 onChange={(e) => setGridColumns(Number(e.target.value) as 2 | 3 | 4 | 5 | 6)}
@@ -661,7 +661,7 @@ export function WhiskiesPage() {
             </div>
             
             <div className="flex items-center gap-2">
-              <span className="text-sm text-slate-600 dark:text-slate-300">Sayfa başı:</span>
+              <span className="text-sm text-slate-600 dark:text-slate-300">{t('whiskiesPage.perPage')}:</span>
               <select
                 value={itemsPerPage}
                 onChange={(e) => {
@@ -681,7 +681,7 @@ export function WhiskiesPage() {
         
         {viewMode === 'list' && (
           <div className="flex items-center gap-2">
-            <span className="text-sm text-slate-600 dark:text-slate-300">Sayfa başı:</span>
+            <span className="text-sm text-slate-600 dark:text-slate-300">{t('whiskiesPage.perPage')}:</span>
             <select
               value={itemsPerPage}
               onChange={(e) => {
@@ -722,7 +722,7 @@ export function WhiskiesPage() {
                   <button
                     onClick={() => handleViewWhisky(whisky)}
                     className="w-full h-full block cursor-pointer group"
-                    title="Detayları görüntüle"
+                    title={t('whiskiesPage.viewDetails')}
                   >
                     {whisky.image_url ? (
                       <img
@@ -745,7 +745,7 @@ export function WhiskiesPage() {
                     <button
                       onClick={() => handleViewWhisky(whisky)}
                       className="p-2 rounded-full bg-amber-600/20 hover:bg-amber-500/30 text-amber-100 hover:text-white backdrop-blur-md border border-amber-400/20 hover:border-amber-300/30 transition-all duration-300 shadow-lg hover:shadow-amber-500/25"
-                      title="Detayları Görüntüle"
+                      title={t('whiskiesPage.viewDetails')}
                     >
                       <Eye className="w-4 h-4" />
                     </button>
@@ -755,7 +755,7 @@ export function WhiskiesPage() {
                       <button
                         onClick={() => handleTranslateWhisky(whisky)}
                         className="p-2 rounded-full bg-blue-600/20 hover:bg-blue-500/30 text-blue-100 hover:text-white backdrop-blur-md border border-blue-400/20 hover:border-blue-300/30 transition-all duration-300 shadow-lg hover:shadow-blue-500/25"
-                        title="Çevirileri Yönet"
+                        title={t('whiskiesPage.manageTranslations')}
                       >
                         <Globe className="w-4 h-4" />
                       </button>
@@ -771,7 +771,7 @@ export function WhiskiesPage() {
                               ? 'bg-emerald-600/25 hover:bg-emerald-500/35 text-emerald-100 border-emerald-400/30 shadow-emerald-500/25'
                               : 'bg-orange-600/20 hover:bg-orange-500/30 text-orange-100 hover:text-white border-orange-400/20 hover:border-orange-300/30 shadow-orange-500/25'
                           }`}
-                          title={isInCollection(whisky.id) ? 'Koleksiyonda' : 'Koleksiyona Ekle'}
+                          title={isInCollection(whisky.id) ? t('whiskiesPage.inCollection') : t('whisky.addToCollection')}
                         >
                           {isInCollection(whisky.id) ? (
                             <Heart className="w-4 h-4 fill-current" />
@@ -787,7 +787,7 @@ export function WhiskiesPage() {
                               ? 'bg-yellow-600/25 hover:bg-yellow-500/35 text-yellow-100 border-yellow-400/30 shadow-yellow-500/25'
                               : 'bg-amber-700/20 hover:bg-amber-600/30 text-amber-100 hover:text-white border-amber-500/20 hover:border-amber-400/30 shadow-amber-600/25'
                           }`}
-                          title={isTasted(whisky.id) ? 'Tadıldı' : 'Tadıldı Olarak İşaretle'}
+                          title={isTasted(whisky.id) ? t('whiskiesPage.tasted') : t('whiskiesPage.markTasted')}
                         >
                           <Star className={`w-4 h-4 ${isTasted(whisky.id) ? 'fill-current' : ''}`} />
                         </button>
@@ -802,7 +802,7 @@ export function WhiskiesPage() {
                     <button
                       onClick={() => handleViewWhisky(whisky)}
                       className="text-left hover:text-amber-600 dark:hover:text-amber-400 transition-colors w-full"
-                      title="Detayları görüntüle"
+                      title={t('whiskiesPage.viewDetails')}
                     >
                       <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-2 leading-tight">
                         {whisky.name}
@@ -842,7 +842,7 @@ export function WhiskiesPage() {
                   <button
                     onClick={() => handleViewWhisky(whisky)}
                     className="w-full h-full block cursor-pointer group"
-                    title="Detayları görüntüle"
+                    title={t('whiskiesPage.viewDetails')}
                   >
                     {whisky.image_url ? (
                       <img
@@ -867,7 +867,7 @@ export function WhiskiesPage() {
                     <button
                       onClick={() => handleViewWhisky(whisky)}
                       className="text-left hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
-                      title="Detayları görüntüle"
+                      title={t('whiskiesPage.viewDetails')}
                     >
                       <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-1">
                         {whisky.name}
@@ -965,10 +965,10 @@ export function WhiskiesPage() {
         <div className="text-center py-12">
           <Wine className="w-16 h-16 text-slate-400 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-slate-600 dark:text-slate-300 mb-2">
-            Viski bulunamadı
+            {t('whiskiesPage.noWhiskiesFound')}
           </h3>
           <p className="text-slate-500 dark:text-slate-400">
-            Arama kriterlerinizi değiştirerek tekrar deneyin
+            {t('whiskiesPage.changeSearchCriteria')}
           </p>
         </div>
       )}
@@ -983,7 +983,7 @@ export function WhiskiesPage() {
           >
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-semibold bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
-                Yeni Viski Ekle
+                {t('whiskiesPage.addWhiskyModal.title')}
               </h3>
               <button
                 onClick={() => {
@@ -1000,7 +1000,7 @@ export function WhiskiesPage() {
               {/* Image Upload */}
               <div>
                 <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                  Viski Resmi *
+                  {t('whiskiesPage.addWhiskyModal.whiskyImageRequired')}
                 </label>
                 <div className="flex items-start gap-4">
                   <div className="flex-1">
@@ -1016,7 +1016,7 @@ export function WhiskiesPage() {
                     <div className="w-24 h-24 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 flex-shrink-0">
                       <img 
                         src={imagePreview} 
-                        alt="Önizleme" 
+                        alt={t('whiskiesPage.addWhiskyModal.preview')} 
                         className="w-full h-full object-cover"
                       />
                     </div>
@@ -1028,14 +1028,14 @@ export function WhiskiesPage() {
                 {/* Name */}
                 <div>
                   <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                    Viski Adı *
+                    {t('whiskiesPage.addWhiskyModal.whiskyNameRequired')}
                   </label>
                   <input
                     type="text"
                     value={addForm.name}
                     onChange={(e) => setAddForm(prev => ({ ...prev, name: e.target.value }))}
                     className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
-                    placeholder="Örn: Macallan 18"
+                    placeholder={t('whiskiesPage.addWhiskyModal.whiskyNamePlaceholder')}
                     required
                   />
                 </div>
@@ -1043,7 +1043,7 @@ export function WhiskiesPage() {
                 {/* Type */}
                 <div>
                   <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                    Tip
+                    {t('whiskiesPage.addWhiskyModal.type')}
                   </label>
                   <select
                     value={addForm.type}
@@ -1063,35 +1063,35 @@ export function WhiskiesPage() {
                 {/* Country */}
                 <div>
                   <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                    Ülke
+                    {t('whisky.country')}
                   </label>
                   <input
                     type="text"
                     value={addForm.country}
                     onChange={(e) => setAddForm(prev => ({ ...prev, country: e.target.value }))}
                     className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
-                    placeholder="Örn: İskoçya"
+                    placeholder={t('whiskiesPage.addWhiskyModal.countryPlaceholder')}
                   />
                 </div>
 
                 {/* Region */}
                 <div>
                   <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                    Bölge
+                    {t('whiskiesPage.addWhiskyModal.region')}
                   </label>
                   <input
                     type="text"
                     value={addForm.region}
                     onChange={(e) => setAddForm(prev => ({ ...prev, region: e.target.value }))}
                     className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
-                    placeholder="Örn: Speyside"
+                    placeholder={t('whiskiesPage.addWhiskyModal.regionPlaceholder')}
                   />
                 </div>
 
                 {/* Alcohol Percentage */}
                 <div>
                   <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                    Alkol Oranı (%)
+                    {t('whiskiesPage.addWhiskyModal.alcoholPercent')}
                   </label>
                   <input
                     type="number"
@@ -1107,7 +1107,7 @@ export function WhiskiesPage() {
                 {/* Rating */}
                 <div>
                   <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                    Puanlama (1-100)
+                    {t('whiskiesPage.addWhiskyModal.ratingLabel')}
                   </label>
                   <input
                     type="number"
@@ -1117,14 +1117,14 @@ export function WhiskiesPage() {
                     value={addForm.rating || ''}
                     onChange={(e) => setAddForm(prev => ({ ...prev, rating: e.target.value ? parseFloat(e.target.value) : null }))}
                     className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
-                    placeholder="Örn. 85.5"
+                    placeholder={t('whiskiesPage.addWhiskyModal.ratingPlaceholder')}
                   />
                 </div>
 
                 {/* Age */}
                 <div>
                   <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                    Yaş (Yıl)
+                    {t('whiskiesPage.addWhiskyModal.ageLabel')}
                   </label>
                   <input
                     type="number"
@@ -1133,21 +1133,21 @@ export function WhiskiesPage() {
                     value={addForm.age_years || ''}
                     onChange={(e) => setAddForm(prev => ({ ...prev, age_years: e.target.value ? parseInt(e.target.value) : null }))}
                     className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
-                    placeholder="Örn. 18 (NAS için boş bırakın)"
+                    placeholder={t('whiskiesPage.addWhiskyModal.agePlaceholder')}
                   />
                 </div>
 
                 {/* Color */}
                 <div>
                   <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                    Renk
+                    {t('whiskiesPage.addWhiskyModal.color')}
                   </label>
                   <input
                     type="text"
                     value={addForm.color}
                     onChange={(e) => setAddForm(prev => ({ ...prev, color: e.target.value }))}
                     className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
-                    placeholder="Örn: Koyu kehribar"
+                    placeholder={t('whiskiesPage.addWhiskyModal.colorPlaceholder')}
                   />
                 </div>
               </div>
@@ -1155,13 +1155,13 @@ export function WhiskiesPage() {
               {/* Aroma */}
               <div>
                 <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                  Aroma
+                  {t('whiskiesPage.addWhiskyModal.aroma')}
                 </label>
                 <textarea
                   value={addForm.aroma}
                   onChange={(e) => setAddForm(prev => ({ ...prev, aroma: e.target.value }))}
                   className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 min-h-[80px] resize-none"
-                  placeholder="Aroma notlarını açıklayın..."
+                  placeholder={t('whiskiesPage.addWhiskyModal.aromaPlaceholder')}
                   rows={3}
                 />
               </div>
@@ -1169,13 +1169,13 @@ export function WhiskiesPage() {
               {/* Taste */}
               <div>
                 <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                  Tat
+                  {t('whiskiesPage.addWhiskyModal.taste')}
                 </label>
                 <textarea
                   value={addForm.taste}
                   onChange={(e) => setAddForm(prev => ({ ...prev, taste: e.target.value }))}
                   className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 min-h-[80px] resize-none"
-                  placeholder="Tat notlarını açıklayın..."
+                  placeholder={t('whiskiesPage.addWhiskyModal.tastePlaceholder')}
                   rows={3}
                 />
               </div>
@@ -1183,13 +1183,13 @@ export function WhiskiesPage() {
               {/* Finish */}
               <div>
                 <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                  Final
+                  {t('whiskiesPage.addWhiskyModal.finish')}
                 </label>
                 <textarea
                   value={addForm.finish}
                   onChange={(e) => setAddForm(prev => ({ ...prev, finish: e.target.value }))}
                   className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 min-h-[80px] resize-none"
-                  placeholder="Final notlarını açıklayın..."
+                  placeholder={t('whiskiesPage.addWhiskyModal.finishPlaceholder')}
                   rows={3}
                 />
               </div>
@@ -1197,13 +1197,13 @@ export function WhiskiesPage() {
               {/* Description */}
               <div>
                 <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                  Genel Açıklama
+                  {t('whiskiesPage.addWhiskyModal.generalDescription')}
                 </label>
                 <textarea
                   value={addForm.description}
                   onChange={(e) => setAddForm(prev => ({ ...prev, description: e.target.value }))}
                   className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 min-h-[100px] resize-none"
-                  placeholder="Viski hakkında genel bilgiler..."
+                  placeholder={t('whiskiesPage.addWhiskyModal.descriptionPlaceholder')}
                   rows={4}
                 />
               </div>
@@ -1217,7 +1217,7 @@ export function WhiskiesPage() {
                   }}
                   className="flex-1 px-4 py-2 bg-slate-500/20 hover:bg-slate-500/30 text-slate-600 dark:text-slate-400 rounded-lg transition-colors"
                 >
-                  İptal
+                  {t('whiskiesPage.addWhiskyModal.cancel')}
                 </button>
                 <button
                   type="submit"
@@ -1229,7 +1229,7 @@ export function WhiskiesPage() {
                   ) : (
                     <Upload className="w-4 h-4" />
                   )}
-                  {isUploading ? 'Ekleniyor...' : 'Viski Ekle'}
+                  {isUploading ? t('whiskiesPage.addWhiskyModal.adding') : t('whiskiesPage.addWhiskyModal.addWhisky')}
                 </button>
               </div>
             </form>
@@ -1247,7 +1247,7 @@ export function WhiskiesPage() {
           >
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
-                Viski Detayları
+                {t('whiskiesPage.whiskyDetails')}
               </h3>
               <button
                 onClick={() => setViewingWhisky(null)}
@@ -1288,11 +1288,11 @@ export function WhiskiesPage() {
 
                 {/* Basic Information */}
                 <div className="modal-bg-section rounded-xl p-6 space-y-4">
-                  <h4 className="text-lg font-semibold modal-text-primary mb-4">Temel Bilgiler</h4>
+                  <h4 className="text-lg font-semibold modal-text-primary mb-4">{t('whiskiesPage.basicInfo')}</h4>
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm font-medium modal-text-muted">Tip</label>
+                      <label className="text-sm font-medium modal-text-muted">{t('whiskiesPage.type')}</label>
                       <div className="mt-1">
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
                           {viewingWhisky.type}
@@ -1301,13 +1301,13 @@ export function WhiskiesPage() {
                     </div>
                     
                     <div>
-                      <label className="text-sm font-medium modal-text-muted">Ülke</label>
+                      <label className="text-sm font-medium modal-text-muted">{t('whisky.country')}</label>
                       <p className="mt-1 modal-text-primary font-medium">{viewingWhisky.country}</p>
                     </div>
                     
                     {viewingWhisky.rating && (
                       <div>
-                        <label className="text-sm font-medium modal-text-muted">Puanlama</label>
+                        <label className="text-sm font-medium modal-text-muted">{t('whiskiesPage.rating')}</label>
                         <div className="mt-1 flex items-center gap-2">
                           <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
                             <Star className="w-3 h-3 mr-1 fill-current" />
@@ -1319,14 +1319,14 @@ export function WhiskiesPage() {
                     
                     {viewingWhisky.age_years && (
                       <div>
-                        <label className="text-sm font-medium modal-text-muted">Yaş</label>
-                        <p className="mt-1 modal-text-primary font-medium">{viewingWhisky.age_years} yıl</p>
+                        <label className="text-sm font-medium modal-text-muted">{t('whiskiesPage.age')}</label>
+                        <p className="mt-1 modal-text-primary font-medium">{viewingWhisky.age_years} {t('whiskiesPage.years')}</p>
                       </div>
                     )}
                     
                     {viewingWhisky.region && (
                       <div className="col-span-2">
-                        <label className="text-sm font-medium modal-text-muted">Bölge</label>
+                        <label className="text-sm font-medium modal-text-muted">{t('whisky.region')}</label>
                         <p className="mt-1 modal-text-primary font-medium flex items-center gap-2">
                           <MapPin className="w-4 h-4 text-amber-500" />
                           {viewingWhisky.region}
@@ -1336,7 +1336,7 @@ export function WhiskiesPage() {
                     
                     {viewingWhisky.color && (
                       <div className="col-span-2">
-                        <label className="text-sm font-medium modal-text-muted">Renk</label>
+                        <label className="text-sm font-medium modal-text-muted">{t('whisky.color')}</label>
                         <p className="mt-1 modal-text-primary">{viewingWhisky.color}</p>
                       </div>
                     )}
@@ -1346,7 +1346,7 @@ export function WhiskiesPage() {
                 {/* Collection Status */}
                 {user && (
                   <div className="modal-bg-section rounded-xl p-4">
-                    <h4 className="text-lg font-semibold modal-text-primary mb-3">Koleksiyon Durumu</h4>
+                    <h4 className="text-lg font-semibold modal-text-primary mb-3">{t('whiskiesPage.collectionStatus')}</h4>
                     <div className="flex items-center gap-4">
                       <button
                         onClick={() => addToCollection(viewingWhisky.id)}
@@ -1360,12 +1360,12 @@ export function WhiskiesPage() {
                         {isInCollection(viewingWhisky.id) ? (
                           <>
                             <Heart className="w-4 h-4 fill-current" />
-                            Koleksiyonda
+                            {t('whiskiesPage.inCollection')}
                           </>
                         ) : (
                           <>
                             <Plus className="w-4 h-4" />
-                            Koleksiyona Ekle
+                            {t('whisky.addToCollection')}
                           </>
                         )}
                       </button>
@@ -1379,7 +1379,7 @@ export function WhiskiesPage() {
                         }`}
                       >
                         <Star className={`w-4 h-4 ${isTasted(viewingWhisky.id) ? 'fill-current' : ''}`} />
-                        {isTasted(viewingWhisky.id) ? 'Tadıldı' : 'Tadıldı Olarak İşaretle'}
+                        {isTasted(viewingWhisky.id) ? t('whiskiesPage.tasted') : t('whiskiesPage.markTasted')}
                       </button>
                     </div>
                   </div>
@@ -1402,7 +1402,7 @@ export function WhiskiesPage() {
 
                 {/* Tasting Notes */}
                 <div className="space-y-4">
-                  <h4 className="text-lg font-semibold text-slate-800 dark:text-white">Tadim Notları</h4>
+                  <h4 className="text-lg font-semibold text-slate-800 dark:text-white">{t('whiskiesPage.tastingNotes')}</h4>
                   
                   {viewingWhisky.aroma && (
                     <div className="bg-white/20 dark:bg-slate-700/20 rounded-xl p-4">
@@ -1410,7 +1410,7 @@ export function WhiskiesPage() {
                         <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-center">
                           <span className="text-white text-sm font-medium">A</span>
                         </div>
-                        <h5 className="font-medium text-slate-800 dark:text-white">Koku</h5>
+                        <h5 className="font-medium text-slate-800 dark:text-white">{t('whiskiesPage.smell')}</h5>
                       </div>
                       <p className="text-slate-600 dark:text-slate-400 ml-10">{viewingWhisky.aroma}</p>
                     </div>
@@ -1422,7 +1422,7 @@ export function WhiskiesPage() {
                         <div className="w-8 h-8 bg-gradient-to-r from-amber-400 to-orange-500 rounded-full flex items-center justify-center">
                           <span className="text-white text-sm font-medium">T</span>
                         </div>
-                        <h5 className="font-medium text-slate-800 dark:text-white">Damak Tadı</h5>
+                        <h5 className="font-medium text-slate-800 dark:text-white">{t('whiskiesPage.palate')}</h5>
                       </div>
                       <p className="text-slate-600 dark:text-slate-400 ml-10">{viewingWhisky.taste}</p>
                     </div>
@@ -1434,7 +1434,7 @@ export function WhiskiesPage() {
                         <div className="w-8 h-8 bg-gradient-to-r from-purple-400 to-pink-500 rounded-full flex items-center justify-center">
                           <span className="text-white text-sm font-medium">F</span>
                         </div>
-                        <h5 className="font-medium text-slate-800 dark:text-white">Bitiş</h5>
+                        <h5 className="font-medium text-slate-800 dark:text-white">{t('whiskiesPage.finish')}</h5>
                       </div>
                       <p className="text-slate-600 dark:text-slate-400 ml-10">{viewingWhisky.finish}</p>
                     </div>
@@ -1443,7 +1443,7 @@ export function WhiskiesPage() {
                   {!viewingWhisky.aroma && !viewingWhisky.taste && !viewingWhisky.finish && (
                     <div className="text-center py-8">
                       <Wine className="w-12 h-12 mx-auto text-slate-400 mb-4" />
-                      <p className="text-slate-500 dark:text-slate-400">Henüz tadim notu eklenmemiş</p>
+                      <p className="text-slate-500 dark:text-slate-400">{t('whiskiesPage.noTastingNotes')}</p>
                     </div>
                   )}
                 </div>
@@ -1457,7 +1457,7 @@ export function WhiskiesPage() {
                 onClick={() => setViewingWhisky(null)}
                 className="px-6 py-2 bg-slate-500/20 hover:bg-slate-500/30 text-slate-600 dark:text-slate-400 rounded-lg transition-colors"
               >
-                Kapat
+                {t('whiskiesPage.close')}
               </button>
             </div>
           </motion.div>
@@ -1480,7 +1480,7 @@ export function WhiskiesPage() {
                 setViewingImage(null)
               }}
               className="absolute -top-12 right-0 p-2 text-white hover:text-gray-300 transition-colors z-10"
-              title="Kapat"
+              title={t('whiskiesPage.close')}
             >
               <X className="w-8 h-8" />
             </button>
@@ -1502,7 +1502,7 @@ export function WhiskiesPage() {
 
             {/* Image Info */}
             <div className="mt-4 text-center text-white/80 text-sm">
-              Resmi büyütmek için tıklayın
+              {t('whiskiesPage.clickToEnlarge')}
             </div>
           </motion.div>
 

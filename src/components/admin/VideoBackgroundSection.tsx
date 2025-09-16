@@ -1,4 +1,5 @@
 import React, { useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { 
   Video, 
@@ -31,6 +32,7 @@ export function VideoBackgroundSection({
   onRemoveVideo,
   delay 
 }: VideoBackgroundSectionProps) {
+  const { t } = useTranslation()
   const videoInputRef = useRef<HTMLInputElement>(null)
   const videoPreviewRef = useRef<HTMLVideoElement>(null)
 
@@ -58,7 +60,7 @@ export function VideoBackgroundSection({
           <Moon className="w-5 h-5 text-slate-400" />
         )}
         <h4 className="font-semibold text-slate-800 dark:text-slate-200">
-          {theme === 'light' ? 'Açık' : 'Koyu'} Tema Video Arka Planı
+          {theme === 'light' ? t('light') : t('dark')} {t('themeVideoBackground')}
         </h4>
       </div>
 
@@ -101,7 +103,7 @@ export function VideoBackgroundSection({
           <div className="h-full flex items-center justify-center">
             <div className={`text-center ${theme === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
               <EyeOff className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">Varsayılan grid arka plan</p>
+              <p className="text-sm">{t('defaultGridBackground')}</p>
             </div>
           </div>
         )}
@@ -128,12 +130,12 @@ export function VideoBackgroundSection({
           {uploading ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              Yükleniyor...
+              {t('loading')}
             </>
           ) : (
             <>
               <Upload className="w-4 h-4" />
-              Video Yükle
+              {t('uploadVideo')}
             </>
           )}
         </button>
@@ -143,7 +145,7 @@ export function VideoBackgroundSection({
             className="px-3 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
           >
             <Trash2 className="w-4 h-4" />
-            Kaldır
+            {t('remove')}
           </button>
         )}
       </div>
@@ -153,12 +155,12 @@ export function VideoBackgroundSection({
         {videoUrl ? (
           <>
             <CheckCircle className="w-3 h-3 text-green-500" />
-            <span className="text-green-600 dark:text-green-400">Video arka plan aktif</span>
+            <span className="text-green-600 dark:text-green-400">{t('videoBackgroundActive')}</span>
           </>
         ) : (
           <>
             <AlertCircle className="w-3 h-3 text-slate-500" />
-            <span className="text-slate-500">Varsayılan arka plan kullanılıyor</span>
+            <span className="text-slate-500">{t('usingDefaultBackground')}</span>
           </>
         )}
       </div>

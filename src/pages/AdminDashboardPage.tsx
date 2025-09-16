@@ -142,8 +142,8 @@ export function AdminDashboardPage() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <Shield className="w-16 h-16 mx-auto text-red-500 mb-4" />
-          <h1 className="text-2xl font-bold text-text-primary mb-2">Yetkisiz Erişim</h1>
-          <p className="text-text-secondary">Bu sayfaya erişim için admin yetkisi gereklidir.</p>
+          <h1 className="text-2xl font-bold text-text-primary mb-2">{t('unauthorizedAccess')}</h1>
+          <p className="text-text-secondary">{t('adminAccessRequired')}</p>
         </div>
       </div>
     )

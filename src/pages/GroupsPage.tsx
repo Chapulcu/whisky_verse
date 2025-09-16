@@ -96,7 +96,7 @@ export function GroupsPage() {
       setGroups(groupsWithDetails)
     } catch (error) {
       console.error('Error loading groups:', error)
-      toast.error('Gruplar yüklenemedi')
+      toast.error(t('groupsPage.toasts.groupsLoadError'))
     } finally {
       setLoading(false)
     }
@@ -178,14 +178,14 @@ export function GroupsPage() {
 
       if (memberError) throw memberError
 
-      toast.success('Grup başarıyla oluşturuldu!')
+      toast.success(t('groupsPage.toasts.groupCreated'))
       setShowCreateModal(false)
       setCreateForm({ name: '', description: '', is_public: true, member_limit: 50 })
       loadGroups()
       loadMyGroups()
     } catch (error: any) {
       console.error('Error creating group:', error)
-      toast.error(error.message || 'Grup oluşturulurken hata oluştu')
+      toast.error(error.message || t('groupsPage.toasts.groupCreateError'))
     }
   }
 
@@ -203,14 +203,14 @@ export function GroupsPage() {
 
       if (error) throw error
 
-      toast.success('Gruba katıldınız!')
+      toast.success(t('groupsPage.toasts.joinedGroup'))
       loadGroups()
     } catch (error: any) {
       console.error('Error joining group:', error)
       if (error.code === '23505') {
-        toast.error('Zaten bu grubun üyesisiniz')
+        toast.error(t('groupsPage.toasts.alreadyMember'))
       } else {
-        toast.error('Gruba katılırken hata oluştu')
+        toast.error(t('groupsPage.toasts.joinError'))
       }
     }
   }
@@ -227,18 +227,18 @@ export function GroupsPage() {
 
       if (error) throw error
 
-      toast.success('Gruptan ayrıldınız')
+      toast.success(t('groupsPage.toasts.leftGroup'))
       loadGroups()
     } catch (error) {
       console.error('Error leaving group:', error)
-      toast.error('Gruptan ayrılırken hata oluştu')
+      toast.error(t('groupsPage.toasts.leaveError'))
     }
   }
 
   const deleteGroup = async (groupId: number) => {
     if (!user) return
     
-    if (!confirm('Bu grubu silmek istediğinizden emin misiniz?')) return
+    if (!confirm(t('groupsPage.toasts.deleteConfirm'))) return
 
     try {
       // Delete group members first
@@ -263,7 +263,7 @@ export function GroupsPage() {
       loadMyGroups()
     } catch (error) {
       console.error('Error deleting group:', error)
-      toast.error('Grup silinirken hata oluştu')
+      toast.error(t('groupsPage.toasts.deleteError'))
     }
   }
 
@@ -286,11 +286,11 @@ export function GroupsPage() {
       <div className="text-center">
         <h1 className="text-3xl md:text-4xl font-cyber font-bold text-gradient mb-4 flex items-center justify-center gap-3">
           <Users className="w-10 h-10" />
-          Viski Grupları
+          {t('groupsPage.title')}
           <Crown className="w-8 h-8 text-yellow-500" />
         </h1>
         <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
-          Viski tutkunlarıyla bir araya gelin, grup oluşturun ve deneyimlerinizi paylaşın
+          {t('groupsPage.subtitle')}
         </p>
       </div>
 
@@ -306,7 +306,7 @@ export function GroupsPage() {
                   : 'text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100'
               }`}
             >
-              Grupları Keşfet
+              {t('groupsPage.tabs.discover')}
             </button>
             <button
               onClick={() => setActiveTab('my-groups')}
@@ -316,7 +316,7 @@ export function GroupsPage() {
                   : 'text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100'
               }`}
             >
-              Gruplarım ({myGroups.length})
+              {t('groupsPage.tabs.myGroups')} ({myGroups.length})
             </button>
           </div>
           
@@ -325,7 +325,7 @@ export function GroupsPage() {
             className="btn-primary flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
-            Yeni Grup Oluştur
+            {t('groupsPage.createButton')}
           </button>
         </div>
 
@@ -335,7 +335,7 @@ export function GroupsPage() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
             <input
               type="text"
-              placeholder="Grup ara..."
+              placeholder={t('groupsPage.searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="input-glass pl-10"
@@ -372,11 +372,11 @@ export function GroupsPage() {
               
               <div className="flex items-center gap-2">
                 {group.is_public ? (
-                  <div title="Herkese Açık">
+                  <div title={t('groupsPage.publicTooltip')}>
                     <Eye className="w-4 h-4 text-green-500" />
                   </div>
                 ) : (
-                  <div title="Özel">
+                  <div title={t('groupsPage.privateTooltip')}>
                     <Lock className="w-4 h-4 text-orange-500" />
                   </div>
                 )}
@@ -424,7 +424,7 @@ export function GroupsPage() {
                     onClick={() => leaveGroup(group.id)}
                     className="btn-glass flex-1 text-red-600 dark:text-red-400"
                   >
-                    Gruptan Ayrıl
+                    {t('groupsPage.leaveButton')}
                   </button>
                 ) : (
                   <button
@@ -433,7 +433,7 @@ export function GroupsPage() {
                     disabled={group.member_count >= group.member_limit}
                   >
                     <UserPlus className="w-4 h-4" />
-                    {group.member_count >= group.member_limit ? 'Dolu' : 'Katıl'}
+                    {group.member_count >= group.member_limit ? t('groupsPage.fullLabel') : t('groupsPage.joinButton')}
                   </button>
                 )
               )}
@@ -441,7 +441,7 @@ export function GroupsPage() {
               {activeTab === 'my-groups' && (
                 <button className="btn-secondary flex-1 flex items-center justify-center gap-2">
                   <Settings className="w-4 h-4" />
-                  Yönet
+                  {t('groupsPage.manageButton')}
                 </button>
               )}
             </div>
@@ -455,12 +455,12 @@ export function GroupsPage() {
         <div className="text-center py-12">
           <Users className="w-16 h-16 text-slate-400 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-slate-600 dark:text-slate-300 mb-2">
-            {activeTab === 'discover' ? 'Grup bulunamadı' : 'Henüz grup oluşturmadınız'}
+            {activeTab === 'discover' ? t('groupsPage.emptyStates.noGroupsFound') : t('groupsPage.emptyStates.noGroupsCreated')}
           </h3>
           <p className="text-slate-500 dark:text-slate-400 mb-4">
             {activeTab === 'discover' 
-              ? 'Arama kriterlerinizi değiştirerek tekrar deneyin'
-              : 'İlk grubunuzu oluşturun ve viski severlerle buluşun'
+              ? t('groupsPage.emptyStates.tryDifferentSearch')
+              : t('groupsPage.emptyStates.createFirstGroup')
             }
           </p>
           {activeTab === 'my-groups' && (
@@ -469,7 +469,7 @@ export function GroupsPage() {
               className="btn-primary inline-flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
-              Grup Oluştur
+              {t('groupsPage.createButton')}
             </button>
           )}
         </div>
@@ -484,7 +484,7 @@ export function GroupsPage() {
             className="card-strong max-w-md w-full max-h-[90vh] overflow-y-auto"
           >
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-gradient">Yeni Grup Oluştur</h3>
+              <h3 className="text-xl font-semibold text-gradient">{t('groupsPage.createModal.title')}</h3>
               <button
                 onClick={() => setShowCreateModal(false)}
                 className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
@@ -496,14 +496,14 @@ export function GroupsPage() {
             <form onSubmit={createGroup} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Grup Adı *
+                  {t('groupsPage.createModal.groupName')} *
                 </label>
                 <input
                   type="text"
                   value={createForm.name}
                   onChange={(e) => setCreateForm(prev => ({ ...prev, name: e.target.value }))}
                   className="input-glass"
-                  placeholder="Örn: İstanbul Viski Severler"
+                  placeholder={t('groupsPage.createModal.groupNamePlaceholder')}
                   required
                   maxLength={255}
                 />
@@ -511,20 +511,20 @@ export function GroupsPage() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Açıklama
+                  {t('groupsPage.createModal.description')}
                 </label>
                 <textarea
                   value={createForm.description}
                   onChange={(e) => setCreateForm(prev => ({ ...prev, description: e.target.value }))}
                   className="input-glass min-h-[100px] resize-none"
-                  placeholder="Grubunuz hakkında kısa bir açıklama..."
+                  placeholder={t('groupsPage.createModal.descriptionPlaceholder')}
                   rows={4}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Üye Limiti
+                  {t('groupsPage.createModal.memberLimit')}
                 </label>
                 <input
                   type="number"
@@ -545,7 +545,7 @@ export function GroupsPage() {
                   className="w-4 h-4 text-primary-600 border-slate-300 rounded focus:ring-primary-500"
                 />
                 <label htmlFor="is_public" className="text-sm text-slate-700 dark:text-slate-300">
-                  Herkese açık grup (Diğer kullanıcılar grubu görebilir ve katılabilir)
+                  {t('groupsPage.createModal.publicGroup')}
                 </label>
               </div>
 
@@ -555,14 +555,14 @@ export function GroupsPage() {
                   onClick={() => setShowCreateModal(false)}
                   className="btn-glass flex-1"
                 >
-                  İptal
+                  {t('groupsPage.createModal.cancelButton')}
                 </button>
                 <button
                   type="submit"
                   className="btn-primary flex-1"
                   disabled={!createForm.name.trim()}
                 >
-                  Oluştur
+                  {t('groupsPage.createModal.createButton')}
                 </button>
               </div>
             </form>

@@ -73,22 +73,22 @@ export function CollectionPage() {
         tasted_at: new Date().toISOString()
       })
       setEditingRating(null)
-      toast.success('Değerlendirme güncellendi')
+      toast.success(t('collectionPage.toasts.ratingUpdated'))
     } catch (error) {
-      toast.error('Değerlendirme güncellenemedi')
+      toast.error(t('collectionPage.toasts.ratingUpdateError'))
     }
   }
 
   const handleRemove = async (itemId: number, whiskyName: string) => {
-    if (!confirm(`"${whiskyName}" whisky'sini koleksiyondan kaldırmak istediğinizden emin misiniz?`)) {
+    if (!confirm(`"${whiskyName}" ${t('collectionPage.whiskyCard.confirmRemove')}`)) {
       return
     }
     
     try {
       await removeFromCollection(itemId)
-      toast.success('Whisky koleksiyondan kaldırıldı')
+      toast.success(t('collectionPage.toasts.whiskyRemoved'))
     } catch (error) {
-      toast.error('Whisky kaldırılamadı')
+      toast.error(t('collectionPage.toasts.whiskyRemoveError'))
     }
   }
 
@@ -105,9 +105,9 @@ export function CollectionPage() {
       })
       setEditingNotes(null)
       setNotesValue('')
-      toast.success('Tadım notu güncellendi')
+      toast.success(t('collectionPage.toasts.noteUpdated'))
     } catch (error) {
-      toast.error('Tadım notu güncellenemedi')
+      toast.error(t('collectionPage.toasts.noteUpdateError'))
     }
   }
 
@@ -159,7 +159,7 @@ export function CollectionPage() {
       <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
-          <p className="mt-4 text-lg font-medium">Koleksiyon yükleniyor...</p>
+          <p className="mt-4 text-lg font-medium">{t('collectionPage.loading')}</p>
         </div>
       </div>
     )
@@ -170,14 +170,14 @@ export function CollectionPage() {
       <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center">
         <div className="text-center">
           <Wine className="w-16 h-16 mx-auto mb-4 text-red-500" />
-          <h1 className="text-2xl font-bold mb-4">Hata Oluştu</h1>
+          <h1 className="text-2xl font-bold mb-4">{t('collectionPage.error')}</h1>
           <p className="text-slate-600 mb-4">{error}</p>
           <button
             onClick={() => loadCollection()}
             className="btn-primary flex items-center gap-2"
           >
             <RefreshCw className="w-4 h-4" />
-            Yeniden Dene
+            {t('collectionPage.tryAgain')}
           </button>
         </div>
       </div>
@@ -198,10 +198,10 @@ export function CollectionPage() {
             <BookOpen className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-4xl font-bold text-gradient bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent mb-2">
-            Viski Koleksiyonum
+            {t('collectionPage.title')}
           </h1>
           <p className="text-slate-600 dark:text-slate-400 text-lg">
-            {collection.length} viski koleksiyonunuzda
+            {collection.length} {t('collectionPage.subtitle')}
           </p>
         </motion.div>
 
@@ -214,21 +214,21 @@ export function CollectionPage() {
         >
           <div className="glass rounded-xl p-4 text-center">
             <div className="text-2xl font-bold text-amber-600">{stats.total}</div>
-            <div className="text-sm text-slate-600 dark:text-slate-400">Toplam Whisky</div>
+            <div className="text-sm text-slate-600 dark:text-slate-400">{t('collectionPage.stats.totalWhisky')}</div>
           </div>
           <div className="glass rounded-xl p-4 text-center">
             <div className="text-2xl font-bold text-green-600">{stats.tasted}</div>
-            <div className="text-sm text-slate-600 dark:text-slate-400">Tadılmış</div>
+            <div className="text-sm text-slate-600 dark:text-slate-400">{t('collectionPage.stats.tasted')}</div>
           </div>
           <div className="glass rounded-xl p-4 text-center">
             <div className="text-2xl font-bold text-blue-600">{stats.untasted}</div>
-            <div className="text-sm text-slate-600 dark:text-slate-400">Tadılmamış</div>
+            <div className="text-sm text-slate-600 dark:text-slate-400">{t('collectionPage.stats.untasted')}</div>
           </div>
           <div className="glass rounded-xl p-4 text-center">
             <div className="text-2xl font-bold text-purple-600">
               {stats.avgRating > 0 ? stats.avgRating.toFixed(1) : '—'}
             </div>
-            <div className="text-sm text-slate-600 dark:text-slate-400">Ort. Puan</div>
+            <div className="text-sm text-slate-600 dark:text-slate-400">{t('collectionPage.stats.avgRating')}</div>
           </div>
         </motion.div>
 
@@ -244,7 +244,7 @@ export function CollectionPage() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
             <input
               type="text"
-              placeholder="Koleksiyonda ara..."
+              placeholder={t('collectionPage.search.placeholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="input-glass w-full pl-10 pr-4 py-3"
@@ -259,9 +259,9 @@ export function CollectionPage() {
               onChange={(e) => setFilterType(e.target.value as any)}
               className="input-glass pl-10 pr-8 py-3 appearance-none bg-white dark:bg-slate-800"
             >
-              <option value="all">Tümü</option>
-              <option value="tasted">Tadılmış</option>
-              <option value="untasted">Tadılmamış</option>
+              <option value="all">{t('collectionPage.search.filters.all')}</option>
+              <option value="tasted">{t('collectionPage.search.filters.tasted')}</option>
+              <option value="untasted">{t('collectionPage.search.filters.untasted')}</option>
             </select>
           </div>
         </motion.div>
@@ -277,12 +277,12 @@ export function CollectionPage() {
               <Wine className="w-12 h-12 text-slate-400" />
             </div>
             <h3 className="text-xl font-medium mb-2 text-slate-800 dark:text-white">
-              {searchTerm || filterType !== 'all' ? 'Sonuç bulunamadı' : 'Koleksiyonunuz boş'}
+              {searchTerm || filterType !== 'all' ? t('collectionPage.empty.noResults') : t('collectionPage.empty.emptyCollection')}
             </h3>
             <p className="text-slate-500 mb-6">
               {searchTerm || filterType !== 'all' 
-                ? 'Farklı terimlerle arama yapmayı deneyin' 
-                : 'Whisky sayfasından favorilerinizi ekleyin'
+                ? t('collectionPage.empty.tryDifferentTerms')
+                : t('collectionPage.empty.addFromWhiskies')
               }
             </p>
             <Link 
@@ -290,7 +290,7 @@ export function CollectionPage() {
               className="btn-primary inline-flex items-center gap-2"
             >
               <Plus className="w-5 h-5" />
-              <span>Whisky Ekle</span>
+              <span>{t('collectionPage.empty.addWhisky')}</span>
             </Link>
           </motion.div>
         ) : (
@@ -327,11 +327,11 @@ export function CollectionPage() {
                     {item.tasted ? (
                       <div className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
                         <Award className="w-3 h-3" />
-                        Tadılmış
+                        {t('collectionPage.whiskyCard.tasted')}
                       </div>
                     ) : (
                       <div className="bg-blue-500 text-white px-2 py-1 rounded-full text-xs font-medium">
-                        Tadılmamış
+                        {t('collectionPage.whiskyCard.untasted')}
                       </div>
                     )}
                   </div>
@@ -384,14 +384,14 @@ export function CollectionPage() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                        Değerlendirme
+                        {t('collectionPage.whiskyCard.rating')}
                       </span>
                       {!item.tasted && (
                         <button
                           onClick={() => setEditingRating(item.id)}
                           className="text-xs text-amber-600 hover:text-amber-700 font-medium"
                         >
-                          Puanla
+                          {t('collectionPage.whiskyCard.rateButton')}
                         </button>
                       )}
                     </div>
@@ -436,13 +436,13 @@ export function CollectionPage() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                        Tadım Notu
+                        {t('collectionPage.whiskyCard.tastingNote')}
                       </span>
                       <button
                         onClick={() => handleNotesEdit(item.id, item.personal_notes || '')}
                         className="text-xs text-blue-600 hover:text-blue-700 font-medium"
                       >
-                        {item.personal_notes ? 'Düzenle' : 'Ekle'}
+                        {item.personal_notes ? t('collectionPage.whiskyCard.editButton') : t('collectionPage.whiskyCard.addButton')}
                       </button>
                     </div>
                     
@@ -451,7 +451,7 @@ export function CollectionPage() {
                         <textarea
                           value={notesValue}
                           onChange={(e) => setNotesValue(e.target.value)}
-                          placeholder="Tadım notlarınızı yazın..."
+                          placeholder={t('collectionPage.whiskyCard.notesPlaceholder')}
                           className="w-full p-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 resize-none"
                           rows={3}
                         />
@@ -460,19 +460,19 @@ export function CollectionPage() {
                             onClick={() => handleNotesSave(item.id)}
                             className="flex-1 bg-green-500 hover:bg-green-600 text-white py-1 px-3 rounded text-xs font-medium"
                           >
-                            Kaydet
+                            {t('collectionPage.whiskyCard.save')}
                           </button>
                           <button
                             onClick={handleNotesCancel}
                             className="flex-1 bg-slate-500 hover:bg-slate-600 text-white py-1 px-3 rounded text-xs font-medium"
                           >
-                            İptal
+                            {t('collectionPage.whiskyCard.cancel')}
                           </button>
                         </div>
                       </div>
                     ) : (
                       <p className="text-sm text-slate-600 dark:text-slate-400 min-h-[2.5rem]">
-                        {item.personal_notes || 'Henüz not eklenmemiş'}
+                        {item.personal_notes || t('collectionPage.whiskyCard.noNotes')}
                       </p>
                     )}
                   </div>
@@ -482,7 +482,7 @@ export function CollectionPage() {
                     <div className="flex items-center gap-2 text-xs text-slate-500">
                       <Calendar className="w-3 h-3" />
                       <span>
-                        Eklenme: {new Date(item.added_at).toLocaleDateString('tr-TR')}
+                        {t('collectionPage.whiskyCard.addedOn')}: {new Date(item.added_at).toLocaleDateString('tr-TR')}
                       </span>
                     </div>
                   </div>
@@ -533,19 +533,19 @@ export function CollectionPage() {
                   {/* Details */}
                   <div className="space-y-4">
                     <div>
-                      <h3 className="font-semibold text-slate-800 dark:text-white mb-2">Detaylar</h3>
+                      <h3 className="font-semibold text-slate-800 dark:text-white mb-2">{t('collectionPage.modal.details')}</h3>
                       <div className="space-y-2 text-sm">
-                        <div><strong>Tür:</strong> {selectedWhisky.type}</div>
-                        <div><strong>Ülke:</strong> {selectedWhisky.country}</div>
-                        {selectedWhisky.region && <div><strong>Bölge:</strong> {selectedWhisky.region}</div>}
+                        <div><strong>{t('collectionPage.modal.type')}:</strong> {selectedWhisky.type}</div>
+                        <div><strong>{t('collectionPage.modal.country')}:</strong> {selectedWhisky.country}</div>
+                        {selectedWhisky.region && <div><strong>{t('collectionPage.modal.region')}:</strong> {selectedWhisky.region}</div>}
                         {selectedWhisky.alcohol_percentage && <div><strong>ABV:</strong> {selectedWhisky.alcohol_percentage}%</div>}
-                        {selectedWhisky.age_years && <div><strong>Yaş:</strong> {selectedWhisky.age_years} yıl</div>}
+                        {selectedWhisky.age_years && <div><strong>{t('collectionPage.modal.age')}:</strong> {selectedWhisky.age_years} {t('collectionPage.modal.years')}</div>}
                       </div>
                     </div>
                     
                     {selectedWhisky.description && (
                       <div>
-                        <h3 className="font-semibold text-slate-800 dark:text-white mb-2">Açıklama</h3>
+                        <h3 className="font-semibold text-slate-800 dark:text-white mb-2">{t('collectionPage.modal.description')}</h3>
                         <p className="text-sm text-slate-600 dark:text-slate-400">
                           {selectedWhisky.description}
                         </p>
@@ -554,7 +554,7 @@ export function CollectionPage() {
                     
                     {selectedWhisky.aroma && (
                       <div>
-                        <h3 className="font-semibold text-slate-800 dark:text-white mb-2">Aroma</h3>
+                        <h3 className="font-semibold text-slate-800 dark:text-white mb-2">{t('collectionPage.modal.aroma')}</h3>
                         <p className="text-sm text-slate-600 dark:text-slate-400">
                           {selectedWhisky.aroma}
                         </p>
@@ -563,7 +563,7 @@ export function CollectionPage() {
                     
                     {selectedWhisky.taste && (
                       <div>
-                        <h3 className="font-semibold text-slate-800 dark:text-white mb-2">Tat</h3>
+                        <h3 className="font-semibold text-slate-800 dark:text-white mb-2">{t('collectionPage.modal.taste')}</h3>
                         <p className="text-sm text-slate-600 dark:text-slate-400">
                           {selectedWhisky.taste}
                         </p>
@@ -572,7 +572,7 @@ export function CollectionPage() {
                     
                     {selectedWhisky.finish && (
                       <div>
-                        <h3 className="font-semibold text-slate-800 dark:text-white mb-2">Final</h3>
+                        <h3 className="font-semibold text-slate-800 dark:text-white mb-2">{t('collectionPage.modal.finish')}</h3>
                         <p className="text-sm text-slate-600 dark:text-slate-400">
                           {selectedWhisky.finish}
                         </p>

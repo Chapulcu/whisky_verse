@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { AgeVerification } from '@/components/AgeVerification'
@@ -20,18 +21,20 @@ import './index.css'
 
 // CRITICAL FIX: Safe page wrapper to prevent hooks violations
 function SafePage({ children }: { children: React.ReactNode }) {
+  const { t } = useTranslation()
+  
   return (
     <ErrorBoundary fallback={
       <div className="text-center py-8">
         <div className="glass-strong rounded-xl p-6 max-w-md mx-auto">
           <p className="text-red-600 dark:text-red-400 font-medium mb-4">
-            Bu sayfa yüklenirken bir hata oluştu
+            {t('pageLoadError')}
           </p>
           <button 
             onClick={() => window.location.reload()}
             className="btn-primary px-4 py-2"
           >
-            Sayfayı Yenile
+            {t('refreshPage')}
           </button>
         </div>
       </div>

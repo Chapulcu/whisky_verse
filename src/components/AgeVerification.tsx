@@ -50,7 +50,7 @@ export function AgeVerification({ onVerified }: AgeVerificationProps) {
 
   const handleVerification = () => {
     if (!birthDate) {
-      setError(t('pleaseEnterBirthDate'))
+      setError(t('ageVerification.pleaseEnterBirthDate'))
       return
     }
 
@@ -69,7 +69,7 @@ export function AgeVerification({ onVerified }: AgeVerificationProps) {
         setIsVisible(false)
         setTimeout(() => onVerified(), 300)
       } else {
-        setError(t('mustBe18OrOlder'))
+        setError(t('ageVerification.mustBe18OrOlder'))
       }
       
       setIsValidating(false)
@@ -81,7 +81,6 @@ export function AgeVerification({ onVerified }: AgeVerificationProps) {
     window.location.href = 'https://www.google.com'
   }
 
-  const isEnglish = i18n.language === 'en' || i18n.language === 'en-US'
 
   return (
     <AnimatePresence>
@@ -106,14 +105,11 @@ export function AgeVerification({ onVerified }: AgeVerificationProps) {
               </div>
               
               <h1 className="text-2xl font-bold text-white mb-2">
-                {isEnglish ? 'Age Verification Required' : 'Yaş Doğrulaması Gerekli'}
+                {t('ageVerification.ageVerificationRequired')}
               </h1>
               
               <p className="text-slate-300 text-sm leading-relaxed">
-                {isEnglish 
-                  ? 'This website contains content related to alcoholic beverages. You must be 18 years or older to enter.'
-                  : 'Bu web sitesi alkollü içeceklerle ilgili içerik barındırmaktadır. Giriş yapabilmek için 18 yaşında veya daha büyük olmalısınız.'
-                }
+                {t('ageVerification.ageVerificationMessage')}
               </p>
             </div>
 
@@ -121,7 +117,7 @@ export function AgeVerification({ onVerified }: AgeVerificationProps) {
             <div className="mb-6">
               <label className="block text-sm font-medium text-slate-300 mb-2">
                 <Calendar className="w-4 h-4 inline mr-2" />
-                {isEnglish ? 'Enter your birth date' : 'Doğum tarihinizi girin'}
+                {t('ageVerification.enterBirthDate')}
               </label>
               <input
                 type="date"
@@ -129,7 +125,7 @@ export function AgeVerification({ onVerified }: AgeVerificationProps) {
                 onChange={(e) => setBirthDate(e.target.value)}
                 max={new Date().toISOString().split('T')[0]}
                 className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
-                placeholder={isEnglish ? 'Select your birth date' : 'Doğum tarihinizi seçin'}
+                placeholder={t('ageVerification.selectBirthDate')}
               />
               
               {error && (
@@ -157,8 +153,8 @@ export function AgeVerification({ onVerified }: AgeVerificationProps) {
                   <CheckCircle className="w-5 h-5" />
                 )}
                 {isValidating 
-                  ? (isEnglish ? 'Verifying...' : 'Doğrulanıyor...')
-                  : (isEnglish ? 'I am 18 or older' : '18 yaşında veya daha büyüğüm')
+                  ? t('ageVerification.verifying')
+                  : t('ageVerification.iam18OrOlder')
                 }
               </button>
 
@@ -167,17 +163,14 @@ export function AgeVerification({ onVerified }: AgeVerificationProps) {
                 className="w-full px-6 py-3 bg-slate-600/50 hover:bg-slate-600/70 text-slate-300 hover:text-white font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
               >
                 <X className="w-5 h-5" />
-                {isEnglish ? 'I am under 18' : '18 yaşından küçüğüm'}
+{t('ageVerification.iAmUnder18')}
               </button>
             </div>
 
             {/* Legal Notice */}
             <div className="mt-6 pt-6 border-t border-white/10">
               <p className="text-xs text-slate-400 text-center leading-relaxed">
-                {isEnglish 
-                  ? 'By entering this site, you confirm that you are of legal drinking age in your jurisdiction and agree to our terms of use.'
-                  : 'Bu siteye giriş yaparak, yasal içme yaşında olduğunuzu ve kullanım şartlarımızı kabul ettiğinizi onaylıyorsunuz.'
-                }
+                {t('ageVerification.legalNotice')}
               </p>
             </div>
           </motion.div>

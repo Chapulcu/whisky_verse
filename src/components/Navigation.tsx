@@ -19,7 +19,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ErrorBoundary } from './ErrorBoundary'
 
 export function Navigation() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { user, profile } = useAuth()
   const location = useLocation()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -27,8 +27,8 @@ export function Navigation() {
   // CRITICAL FIX: Always stable navigation items - no conditional hooks
   const navigationItems = useMemo(() => {
     const baseItems = [
-      { path: '/', label: t('home'), icon: Home },
-      { path: '/whiskies', label: t('whiskies'), icon: Wine },
+      { path: '/', label: t('navigation.home'), icon: Home },
+      { path: '/whiskies', label: t('navigation.whiskies'), icon: Wine },
     ]
 
     if (!user) {
@@ -36,13 +36,13 @@ export function Navigation() {
     }
 
     const userItems = [
-      { path: '/collection', label: t('myCollection'), icon: BookOpen },
-      { path: '/profile', label: t('profile'), icon: User },
+      { path: '/collection', label: t('navigation.myCollection'), icon: BookOpen },
+      { path: '/profile', label: t('navigation.profile'), icon: User },
     ]
 
     const vipItems = (profile?.role === 'vip' || profile?.role === 'admin') ? [
-      { path: '/groups', label: t('groups'), icon: Users },
-      { path: '/events', label: t('events'), icon: Calendar },
+      { path: '/groups', label: t('navigation.groups'), icon: Users },
+      { path: '/events', label: t('navigation.events'), icon: Calendar },
     ] : []
 
     const adminItems = (profile?.role === 'admin' || user?.email === 'admin@whiskyverse.com') ? [
@@ -50,7 +50,7 @@ export function Navigation() {
     ] : []
 
     return [...baseItems, ...userItems, ...vipItems, ...adminItems]
-  }, [t, user, profile?.role]) // Minimal stable dependencies
+  }, [t, user, profile?.role, i18n.language]) // Include language for re-rendering
 
   // CRITICAL FIX: Memoized handlers to prevent re-renders
   const isActive = useCallback((path: string) => {
@@ -105,15 +105,15 @@ export function Navigation() {
           <div className="flex items-center gap-1 border-l border-white/20 dark:border-white/10 pl-2 xl:pl-3 flex-shrink-0">
             {!user && (
               <Link to="/auth" className="btn-primary text-xs px-3 py-2 whitespace-nowrap">
-                {t('signIn')}
+                {t('auth.signIn')}
               </Link>
             )}
             
             {showUpgradeButton && (
               <Link to="/upgrade" className="btn-secondary text-xs px-2 py-2 flex items-center gap-1 whitespace-nowrap">
                 <Crown className="w-3 h-3 flex-shrink-0" />
-                <span className="hidden 2xl:inline">VIP ÜYELİĞİ</span>
-                <span className="2xl:hidden">VIP</span>
+                <span className="hidden 2xl:inline">{t('vip.vipMembership')}</span>
+                <span className="2xl:hidden">{t('vip.vip')}</span>
               </Link>
             )}
             
@@ -157,12 +157,12 @@ export function Navigation() {
           <div className="flex items-center gap-1 border-l border-white/20 dark:border-white/10 pl-2 flex-shrink-0">
             {!user && (
               <Link to="/auth" className="btn-primary text-xs px-2 py-2 whitespace-nowrap">
-                Giriş
+                {t('auth.signIn')}
               </Link>
             )}
             
             {showUpgradeButton && (
-              <Link to="/upgrade" className="btn-secondary text-xs p-2 flex items-center justify-center" title="VIP Üyeliğine Geç">
+              <Link to="/upgrade" className="btn-secondary text-xs p-2 flex items-center justify-center" title={t('vipMembership')}>
                 <Crown className="w-4 h-4" />
               </Link>
             )}
@@ -255,7 +255,7 @@ export function Navigation() {
                     onClick={closeMobileMenu}
                     className="btn-primary w-full text-center mobile-button mobile-touch-target"
                   >
-                    {t('signIn')}
+                    {t('auth.signIn')}
                   </Link>
                 )}
                 
@@ -301,7 +301,7 @@ export function Navigation() {
                         onClick={closeMobileMenu}
                         className="btn-primary text-xs px-3 py-2"
                       >
-                        {t('signIn')}
+                        {t('auth.signIn')}
                       </Link>
                     )}
                     
@@ -312,7 +312,7 @@ export function Navigation() {
                         className="btn-secondary text-xs px-2 py-2 flex items-center gap-1"
                       >
                         <Crown className="w-3 h-3" />
-                        <span className="hidden min-[480px]:inline">VIP</span>
+                        <span className="hidden min-[480px]:inline">{t('vip')}</span>
                       </Link>
                     )}
                   </div>

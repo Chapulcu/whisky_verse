@@ -146,7 +146,7 @@ export function EventsPage() {
       setEvents(eventsWithDetails)
     } catch (error) {
       console.error('Error loading events:', error)
-      toast.error('Etkinlikler yüklenemedi')
+      toast.error(t('eventsPage.toasts.eventsLoadError'))
     } finally {
       setLoading(false)
     }
@@ -242,7 +242,7 @@ export function EventsPage() {
 
       if (participantError) throw participantError
 
-      toast.success('Etkinlik başarıyla oluşturuldu!')
+      toast.success(t('eventCreatedSuccess'))
       setShowCreateModal(false)
       setCreateForm({
         group_id: '',
@@ -257,7 +257,7 @@ export function EventsPage() {
       loadMyEvents()
     } catch (error: any) {
       console.error('Error creating event:', error)
-      toast.error(error.message || 'Etkinlik oluşturulurken hata oluştu')
+      toast.error(error.message || t('eventsPage.toasts.eventCreateError'))
     }
   }
 
@@ -275,14 +275,14 @@ export function EventsPage() {
 
       if (error) throw error
 
-      toast.success('Etkinliğe kaydınız alındı!')
+      toast.success(t('eventRegistrationSuccess'))
       loadEvents()
     } catch (error: any) {
       console.error('Error registering for event:', error)
       if (error.code === '23505') {
-        toast.error('Zaten bu etkinliğe kayıtlısınız')
+        toast.error(t('eventsPage.toasts.alreadyRegistered'))
       } else {
-        toast.error('Kayıt olurken hata oluştu')
+        toast.error(t('eventsPage.toasts.registrationError'))
       }
     }
   }
@@ -299,18 +299,18 @@ export function EventsPage() {
 
       if (error) throw error
 
-      toast.success('Etkinlik kaydınız iptal edildi')
+      toast.success(t('eventRegistrationCancelled'))
       loadEvents()
     } catch (error) {
       console.error('Error unregistering from event:', error)
-      toast.error('Kayıt iptal edilirken hata oluştu')
+      toast.error(t('eventsPage.toasts.cancelRegistrationError'))
     }
   }
 
   const deleteEvent = async (eventId: number) => {
     if (!user) return
     
-    if (!confirm('Bu etkinliği silmek istediğinizden emin misiniz?')) return
+    if (!confirm(t('eventsPage.toasts.deleteConfirm'))) return
 
     try {
       // Delete participants first
@@ -330,12 +330,12 @@ export function EventsPage() {
 
       if (error) throw error
 
-      toast.success('Etkinlik silindi')
+      toast.success(t('eventDeletedSuccess'))
       loadEvents()
       loadMyEvents()
     } catch (error) {
       console.error('Error deleting event:', error)
-      toast.error('Etkinlik silinirken hata oluştu')
+      toast.error(t('eventsPage.toasts.deleteError'))
     }
   }
 
@@ -371,11 +371,11 @@ export function EventsPage() {
       <div className="text-center">
         <h1 className="text-3xl md:text-4xl font-cyber font-bold text-gradient mb-4 flex items-center justify-center gap-3">
           <Calendar className="w-10 h-10" />
-          Viski Etkinlikleri
+          {t('eventsPage.title')}
           <Crown className="w-8 h-8 text-yellow-500" />
         </h1>
         <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
-          Viski tadım etkinlikleri düzenleyin, katılın ve unutulmaz deneyimler yaşayın
+          {t('eventsPage.subtitle')}
         </p>
       </div>
 
@@ -391,7 +391,7 @@ export function EventsPage() {
                   : 'text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100'
               }`}
             >
-              Etkinlikleri Keşfet
+              {t('eventsPage.tabs.discover')}
             </button>
             <button
               onClick={() => setActiveTab('my-events')}
@@ -401,7 +401,7 @@ export function EventsPage() {
                   : 'text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100'
               }`}
             >
-              Etkinliklerim ({myEvents.length})
+              {t('eventsPage.tabs.myEvents')} ({myEvents.length})
             </button>
           </div>
           
@@ -409,10 +409,10 @@ export function EventsPage() {
             onClick={() => setShowCreateModal(true)}
             className="btn-primary flex items-center gap-2"
             disabled={myGroups.length === 0}
-            title={myGroups.length === 0 ? 'Etkinlik oluşturmak için önce bir grup oluşturmalısınız' : ''}
+            title={myGroups.length === 0 ? t('eventsPage.groupRequiredTitle') : ''}
           >
             <Plus className="w-4 h-4" />
-            Yeni Etkinlik Oluştur
+            {t('eventsPage.createButton')}
           </button>
         </div>
 
@@ -422,7 +422,7 @@ export function EventsPage() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
             <input
               type="text"
-              placeholder="Etkinlik ara..."
+              placeholder={t('eventsPage.searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="input-glass pl-10"
@@ -437,8 +437,8 @@ export function EventsPage() {
           <div className="flex items-center gap-3 text-yellow-800 dark:text-yellow-200">
             <Crown className="w-5 h-5" />
             <div>
-              <h3 className="font-medium">Etkinlik Oluşturabilmek İçin Grup Gerekli</h3>
-              <p className="text-sm mt-1">Etkinlik oluşturabilmek için önce bir grup oluşturmalı veya yöneticisi olduğunuz bir gruba sahip olmalısınız.</p>
+              <h3 className="font-medium">{t('eventsPage.groupRequired.title')}</h3>
+              <p className="text-sm mt-1">{t('eventsPage.groupRequired.description')}</p>
             </div>
           </div>
         </div>
@@ -476,11 +476,11 @@ export function EventsPage() {
                 
                 <div className="flex items-center gap-2 ml-2">
                   {event.is_active ? (
-                    <div title="Herkese Açık">
+                    <div title={t('eventsPage.publicTooltip')}>
                       <Eye className="w-4 h-4 text-green-500" />
                     </div>
                   ) : (
-                    <div title="Özel">
+                    <div title={t('eventsPage.privateTooltip')}>
                       <Lock className="w-4 h-4 text-orange-500" />
                     </div>
                   )}
@@ -489,7 +489,7 @@ export function EventsPage() {
                     <button
                       onClick={() => deleteEvent(event.id)}
                       className="p-1 text-red-500 hover:text-red-600 transition-colors"
-                      title="Etkinliği Sil"
+                      title={t('eventsPage.deleteTooltip')}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -509,7 +509,7 @@ export function EventsPage() {
                 <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
                   <Calendar className="w-4 h-4 text-primary-500" />
                   <span>{date} - {time}</span>
-                  {isPast && <span className="text-red-500">(Geçmiş)</span>}
+                  {isPast && <span className="text-red-500">{t('eventsPage.pastLabel')}</span>}
                 </div>
                 
                 {event.location && (
@@ -521,7 +521,7 @@ export function EventsPage() {
                 
                 <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
                   <Users className="w-4 h-4 text-primary-500" />
-                  <span>{event.participant_count}/{event.max_participants} katılımcı</span>
+                  <span>{event.participant_count}/{event.max_participants} {t('eventsPage.participantsLabel')}</span>
                 </div>
               </div>
 
@@ -534,7 +534,7 @@ export function EventsPage() {
                       className="btn-glass flex-1 text-red-600 dark:text-red-400 flex items-center justify-center gap-2"
                     >
                       <UserCheck className="w-4 h-4" />
-                      Kaydı İptal Et
+                      {t('eventsPage.cancelRegistrationButton')}
                     </button>
                   ) : (
                     <button
@@ -543,7 +543,7 @@ export function EventsPage() {
                       disabled={!event.can_register}
                     >
                       <UserPlus className="w-4 h-4" />
-                      {!event.can_register ? 'Dolu' : 'Katıl'}
+                      {!event.can_register ? t('eventsPage.fullLabel') : t('eventsPage.joinButton')}
                     </button>
                   )
                 )}
@@ -551,13 +551,13 @@ export function EventsPage() {
                 {activeTab === 'my-events' && !isPast && (
                   <button className="btn-secondary flex-1 flex items-center justify-center gap-2">
                     <Settings className="w-4 h-4" />
-                    Yönet
+                    {t('eventsPage.manageButton')}
                   </button>
                 )}
                 
                 {isPast && (
                   <button className="btn-glass flex-1 cursor-not-allowed" disabled>
-                    Etkinlik Bitti
+                    Event Ended
                   </button>
                 )}
               </div>
@@ -572,12 +572,12 @@ export function EventsPage() {
         <div className="text-center py-12">
           <Calendar className="w-16 h-16 text-slate-400 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-slate-600 dark:text-slate-300 mb-2">
-            {activeTab === 'discover' ? 'Etkinlik bulunamadı' : 'Henüz etkinlik oluşturmadınız'}
+            {activeTab === 'discover' ? t('eventsPage.emptyStates.noEventsFound') : t('eventsPage.emptyStates.noEventsCreated')}
           </h3>
           <p className="text-slate-500 dark:text-slate-400 mb-4">
             {activeTab === 'discover' 
-              ? 'Arama kriterlerinizi değiştirerek tekrar deneyin'
-              : 'İlk etkinliğinizi oluşturun ve viski severlerle buluşun'
+              ? t('eventsPage.emptyStates.tryDifferentSearch')
+              : t('eventsPage.emptyStates.createFirstEvent')
             }
           </p>
           {activeTab === 'my-events' && myGroups.length > 0 && (
@@ -586,7 +586,7 @@ export function EventsPage() {
               className="btn-primary inline-flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
-              Etkinlik Oluştur
+              {t('eventsPage.createButton')}
             </button>
           )}
         </div>
@@ -601,7 +601,7 @@ export function EventsPage() {
             className="card-strong max-w-md w-full max-h-[90vh] overflow-y-auto"
           >
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-gradient">Yeni Etkinlik Oluştur</h3>
+              <h3 className="text-xl font-semibold text-gradient">{t('eventsPage.createModal.title')}</h3>
               <button
                 onClick={() => setShowCreateModal(false)}
                 className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
@@ -621,7 +621,7 @@ export function EventsPage() {
                   className="input-glass"
                   required
                 >
-                  <option value="">Grup seçin</option>
+                  <option value="">{t('eventsPage.createModal.selectGroup')}</option>
                   {myGroups.map(group => (
                     <option key={group.id} value={group.id}>{group.name}</option>
                   ))}
@@ -630,14 +630,14 @@ export function EventsPage() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Etkinlik Başlığı *
+                  {t('eventsPage.createModal.eventTitle')} *
                 </label>
                 <input
                   type="text"
                   value={createForm.title}
                   onChange={(e) => setCreateForm(prev => ({ ...prev, title: e.target.value }))}
                   className="input-glass"
-                  placeholder="Örn: Scotch Whisky Tadım Gecesi"
+                  placeholder={t('eventsPage.createModal.eventTitlePlaceholder')}
                   required
                   maxLength={255}
                 />
@@ -645,13 +645,13 @@ export function EventsPage() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Açıklama
+                  {t('eventsPage.createModal.description')}
                 </label>
                 <textarea
                   value={createForm.description}
                   onChange={(e) => setCreateForm(prev => ({ ...prev, description: e.target.value }))}
                   className="input-glass min-h-[100px] resize-none"
-                  placeholder="Etkinlik hakkında detaylı bilgi..."
+                  placeholder={t('eventsPage.createModal.descriptionPlaceholder')}
                   rows={4}
                 />
               </div>
@@ -679,13 +679,13 @@ export function EventsPage() {
                   value={createForm.location}
                   onChange={(e) => setCreateForm(prev => ({ ...prev, location: e.target.value }))}
                   className="input-glass"
-                  placeholder="Örn: İstanbul, Beşiktaş - Whisky Bar"
+                  placeholder={t('eventsPage.createModal.locationPlaceholder')}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Maksimum Katılımcı
+                  {t('eventsPage.createModal.maxParticipants')}
                 </label>
                 <input
                   type="number"
@@ -706,7 +706,7 @@ export function EventsPage() {
                   className="w-4 h-4 text-primary-600 border-slate-300 rounded focus:ring-primary-500"
                 />
                 <label htmlFor="event_is_active" className="text-sm text-slate-700 dark:text-slate-300">
-                  Herkese açık etkinlik (Diğer kullanıcılar etkinliği görebilir ve katılabilir)
+                  {t('eventsPage.createModal.publicEvent')}
                 </label>
               </div>
 
@@ -716,14 +716,14 @@ export function EventsPage() {
                   onClick={() => setShowCreateModal(false)}
                   className="btn-glass flex-1"
                 >
-                  İptal
+                  {t('eventsPage.createModal.cancelButton')}
                 </button>
                 <button
                   type="submit"
                   className="btn-primary flex-1"
                   disabled={!createForm.title.trim() || !createForm.group_id || !createForm.start_date}
                 >
-                  Oluştur
+                  {t('eventsPage.createModal.createButton')}
                 </button>
               </div>
             </form>

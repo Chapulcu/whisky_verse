@@ -68,7 +68,7 @@ export function ProfilePage() {
 
   const handleSave = async () => {
     if (!formData.full_name.trim()) {
-      toast.error('İsim alanı boş bırakılamaz')
+      toast.error(t('profilePage.toasts.nameRequired'))
       return
     }
 
@@ -85,10 +85,10 @@ export function ProfilePage() {
         preferences: formData.preferences
       } as any)
       setIsEditing(false)
-      toast.success('Profil başarıyla güncellendi')
+      toast.success(t('profilePage.toasts.profileUpdated'))
     } catch (error: any) {
       console.error('Error updating profile:', error)
-      toast.error(error.message || 'Profil güncellenirken hata oluştu')
+      toast.error(error.message || t('profilePage.toasts.profileUpdateError'))
     } finally {
       setIsSaving(false)
     }
@@ -125,15 +125,15 @@ export function ProfilePage() {
     try {
       const avatarUrl = await uploadAvatar(file)
       await updateProfile({ avatar_url: avatarUrl } as any)
-      toast.success('Profil fotoğrafı güncellendi!')
+      toast.success(t('profilePage.toasts.avatarUpdated'))
     } catch (error: any) {
       console.error('Error uploading avatar:', error)
-      toast.error('Fotoğraf yüklenirken hata oluştu')
+      toast.error(t('profilePage.toasts.avatarUploadError'))
     }
   }
 
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'Belirtilmemiş'
+    if (!dateString) return t('profilePage.placeholders.notSpecified')
     return new Date(dateString).toLocaleDateString('tr-TR')
   }
 
@@ -145,20 +145,20 @@ export function ProfilePage() {
         return (
           <div className="flex items-center gap-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-3 py-1 rounded-full text-sm font-medium">
             <Crown className="w-4 h-4" />
-            <span>VIP Üye</span>
+            <span>{t('vipMember')}</span>
           </div>
         )
       case 'admin':
         return (
           <div className="flex items-center gap-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-1 rounded-full text-sm font-medium">
             <Settings className="w-4 h-4" />
-            <span>Yönetici</span>
+            <span>{t('profilePage.adminBadge')}</span>
           </div>
         )
       default:
         return (
           <div className="bg-slate-500/20 text-slate-600 dark:text-slate-400 px-3 py-1 rounded-full text-sm">
-            Standart Üye
+            {t('profilePage.memberBadge')}
           </div>
         )
     }
@@ -169,7 +169,7 @@ export function ProfilePage() {
       <div className="container mx-auto px-4 py-8 min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
-          <p className="mt-4 text-lg font-medium">Profil yükleniyor...</p>
+          <p className="mt-4 text-lg font-medium">{t('profilePage.loading')}</p>
         </div>
       </div>
     )
@@ -179,7 +179,7 @@ export function ProfilePage() {
     return (
       <div className="container mx-auto px-4 py-8 min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Lütfen giriş yapın</h1>
+          <h1 className="text-2xl font-bold mb-4">{t('profilePage.loginRequired')}</h1>
         </div>
       </div>
     )
@@ -196,10 +196,10 @@ export function ProfilePage() {
           {/* Header Section */}
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gradient bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent">
-              Profil Ayarları
+              {t('profilePage.title')}
             </h1>
             <p className="text-slate-600 dark:text-slate-400 mt-2">
-              Kişisel bilgilerinizi yönetin ve güncelleyin
+              {t('profilePage.subtitle')}
             </p>
           </div>
 
@@ -257,7 +257,7 @@ export function ProfilePage() {
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
                     <h2 className="text-2xl font-bold text-slate-800 dark:text-white">
-                      {profile?.full_name || 'İsimsiz Kullanıcı'}
+                      {profile?.full_name || t('user')}
                     </h2>
                     <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 mt-1">
                       <Mail className="w-4 h-4" />
@@ -265,7 +265,7 @@ export function ProfilePage() {
                     </div>
                     <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 mt-1">
                       <Calendar className="w-4 h-4" />
-                      <span>Üye olma: {formatDate(profile?.created_at || null)}</span>
+                      <span>{t('profilePage.joinDate')}: {formatDate(profile?.created_at || null)}</span>
                     </div>
                   </div>
                   <div className="flex flex-col sm:items-end gap-2">
@@ -275,7 +275,7 @@ export function ProfilePage() {
                       className="flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors text-sm font-medium"
                     >
                       <Edit3 className="w-4 h-4" />
-                      {isEditing ? 'Düzenlemeyi Kapat' : 'Profili Düzenle'}
+                      {isEditing ? t('profilePage.closeEditButton') : t('profilePage.editButton')}
                     </button>
                   </div>
                 </div>
@@ -289,7 +289,7 @@ export function ProfilePage() {
             <div className="glass rounded-xl p-6">
               <h3 className="text-xl font-semibold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
                 <User className="w-5 h-5 text-primary-500" />
-                Kişisel Bilgiler
+                {t('profilePage.personalInfo')}
               </h3>
               
               <div className="space-y-4">
@@ -304,11 +304,11 @@ export function ProfilePage() {
                       value={formData.full_name}
                       onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
                       className="input-glass w-full"
-                      placeholder="Adınızı ve soyadınızı girin"
+                      placeholder={t('profilePage.forms.fullNamePlaceholder')}
                     />
                   ) : (
                     <p className="text-slate-600 dark:text-slate-400">
-                      {profile?.full_name || 'Belirtilmemiş'}
+                      {profile?.full_name || t('profilePage.placeholders.notSpecified')}
                     </p>
                   )}
                 </div>
@@ -323,11 +323,11 @@ export function ProfilePage() {
                       value={formData.bio}
                       onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
                       className="input-glass w-full h-20 resize-none"
-                      placeholder="Kendiniz hakkında birkaç kelime..."
+                      placeholder={t('profilePage.forms.bioPlaceholder')}
                     />
                   ) : (
                     <p className="text-slate-600 dark:text-slate-400">
-                      {(profile as any)?.bio || 'Biyografi eklenmemiş'}
+                      {(profile as any)?.bio || t('profilePage.placeholders.bioNotAdded')}
                     </p>
                   )}
                 </div>
@@ -344,11 +344,11 @@ export function ProfilePage() {
                       value={formData.location}
                       onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
                       className="input-glass w-full"
-                      placeholder="Şehir, Ülke"
+                      placeholder={t('profilePage.forms.locationPlaceholder')}
                     />
                   ) : (
                     <p className="text-slate-600 dark:text-slate-400">
-                      {(profile as any)?.location || 'Belirtilmemiş'}
+                      {(profile as any)?.location || t('profilePage.placeholders.notSpecified')}
                     </p>
                   )}
                 </div>
@@ -356,7 +356,7 @@ export function ProfilePage() {
                 {/* Birth Date */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Doğum Tarihi
+                    {t('profilePage.forms.birthDate')}
                   </label>
                   {isEditing ? (
                     <input
@@ -378,7 +378,7 @@ export function ProfilePage() {
             <div className="glass rounded-xl p-6">
               <h3 className="text-xl font-semibold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
                 <Mail className="w-5 h-5 text-primary-500" />
-                İletişim Bilgileri
+                {t('profilePage.contactInfo')}
               </h3>
               
               <div className="space-y-4">
@@ -391,7 +391,7 @@ export function ProfilePage() {
                     {user.email}
                   </p>
                   <p className="text-xs text-slate-500 mt-1">
-                    E-posta adresi değiştirilemez
+                    {t('profilePage.placeholders.emailCannotChange')}
                   </p>
                 </div>
 
@@ -411,7 +411,7 @@ export function ProfilePage() {
                     />
                   ) : (
                     <p className="text-slate-600 dark:text-slate-400">
-                      {(profile as any)?.phone || 'Belirtilmemiş'}
+                      {(profile as any)?.phone || t('profilePage.placeholders.notSpecified')}
                     </p>
                   )}
                 </div>
@@ -442,7 +442,7 @@ export function ProfilePage() {
                           {(profile as any).website}
                         </a>
                       ) : (
-                        <p className="text-slate-600 dark:text-slate-400">Belirtilmemiş</p>
+                        <p className="text-slate-600 dark:text-slate-400">{t('profilePage.placeholders.notSpecified')}</p>
                       )}
                     </div>
                   )}
@@ -459,12 +459,12 @@ export function ProfilePage() {
                       onChange={(e) => setFormData(prev => ({ ...prev, language: e.target.value as 'tr' | 'en' }))}
                       className="input-glass w-full"
                     >
-                      <option value="tr">Türkçe</option>
+                      <option value="tr">{t('profilePage.forms.turkish')}</option>
                       <option value="en">English</option>
                     </select>
                   ) : (
                     <p className="text-slate-600 dark:text-slate-400">
-                      {profile?.language === 'tr' ? 'Türkçe' : 'English'}
+                      {profile?.language === 'tr' ? t('profilePage.forms.turkish') : t('profilePage.forms.english')}
                     </p>
                   )}
                 </div>
@@ -485,7 +485,7 @@ export function ProfilePage() {
                 className="flex items-center justify-center gap-2 px-6 py-3 bg-slate-500 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium"
               >
                 <X className="w-4 h-4" />
-                İptal
+                {t('profilePage.buttons.cancel')}
               </button>
               <button
                 onClick={handleSave}
@@ -495,12 +495,12 @@ export function ProfilePage() {
                 {isSaving ? (
                   <>
                     <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
-                    Kaydediliyor...
+                    {t('saving')}
                   </>
                 ) : (
                   <>
                     <Save className="w-4 h-4" />
-                    Değişiklikleri Kaydet
+                    {t('profilePage.buttons.saveChanges')}
                   </>
                 )}
               </button>

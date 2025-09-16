@@ -132,7 +132,7 @@ export function BackgroundManager() {
                 }`}
               >
                 <Sun className="w-4 h-4" />
-                Açık Tema
+                {t('admin.lightTheme')}
               </button>
               <button
                 onClick={() => setPreviewMode('dark')}
@@ -143,7 +143,7 @@ export function BackgroundManager() {
                 }`}
               >
                 <Moon className="w-4 h-4" />
-                Koyu Tema
+                {t('admin.darkTheme')}
               </button>
             </div>
           </div>
@@ -224,7 +224,7 @@ export function BackgroundManager() {
         >
           <div className="flex items-center gap-2 mb-4">
             <Sun className="w-5 h-5 text-amber-500" />
-            <h4 className="font-semibold text-slate-800 dark:text-slate-200">Açık Tema Arka Planı</h4>
+            <h4 className="font-semibold text-slate-800 dark:text-slate-200">{t('admin.lightThemeBackground')}</h4>
           </div>
 
           {/* Preview */}
@@ -310,7 +310,7 @@ export function BackgroundManager() {
         >
           <div className="flex items-center gap-2 mb-4">
             <Moon className="w-5 h-5 text-slate-400" />
-            <h4 className="font-semibold text-slate-800 dark:text-slate-200">Koyu Tema Arka Planı</h4>
+            <h4 className="font-semibold text-slate-800 dark:text-slate-200">{t('admin.darkThemeBackground')}</h4>
           </div>
 
           {/* Preview */}
