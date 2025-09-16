@@ -1,15 +1,22 @@
-name: 🐳 Docker Build & Deploy
+name: 🐳 Docker Build & Deploy [DISABLED]
 
+# TEMPORARILY DISABLED - Only enable when needed for production deployment
 on:
-  push:
-    branches: [ main, develop ]
-    tags: [ 'v*' ]
-    # Exclude feature branches from deployment
-    paths-ignore:
-      - 'docs/**'
-      - '*.md'
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: 'Force deployment (only use on main/develop)'
+        required: true
+        default: 'false'
+        type: choice
+        options:
+        - 'false'
+        - 'true'
+  # push:
+  #   branches: 
+  #     - main
+  #     - develop
+  #   tags: [ 'v*' ]
 
 env:
   REGISTRY: ghcr.io
