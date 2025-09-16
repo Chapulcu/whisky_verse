@@ -4,6 +4,10 @@ on:
   push:
     branches: [ main, develop ]
     tags: [ 'v*' ]
+    # Exclude feature branches from deployment
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
   pull_request:
     branches: [ main ]
 
@@ -37,7 +41,17 @@ jobs:
         fi
 
     - name: 🏗️ Build application
-      run: npm run build
+      run: |
+        echo "Building application for production..."
+        if [ -z "$VITE_SUPABASE_URL" ]; then
+          echo "Warning: VITE_SUPABASE_URL is not set, using fallback"
+          export VITE_SUPABASE_URL="https://example.supabase.co"
+        fi
+        if [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
+          echo "Warning: VITE_SUPABASE_ANON_KEY is not set, using fallback"
+          export VITE_SUPABASE_ANON_KEY="example-anon-key"
+        fi
+        npm run build
       env:
         NODE_ENV: production
         VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -89,6 +103,8 @@ jobs:
         cache-to: type=gha,mode=max
         build-args: |
           NODE_ENV=production
+          VITE_SUPABASE_URL=${{ secrets.SUPABASE_URL || 'https://example.supabase.co' }}
+          VITE_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY || 'example-anon-key' }}
 
   # Deploy to Railway (if enabled)
   deploy-railway:
