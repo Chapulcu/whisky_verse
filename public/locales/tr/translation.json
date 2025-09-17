@@ -489,6 +489,27 @@
         "untasted": "Tadılmamış"
       }
     },
+    "advancedFilters": {
+      "title": "Gelişmiş Filtreler",
+      "detailedFilters": "Detaylı Filtreler",
+      "clearAll": "Tümünü Temizle",
+      "sortBy": "Sıralama",
+      "newestFirst": "En Yeni",
+      "oldestFirst": "En Eski",
+      "nameAZ": "İsim A-Z",
+      "nameZA": "İsim Z-A",
+      "highestRated": "En Yüksek Puan",
+      "lowestRated": "En Düşük Puan",
+      "countryAZ": "Ülke A-Z",
+      "typeAZ": "Tür A-Z",
+      "countries": "Ülkeler",
+      "types": "Türler",
+      "minRating": "Min. Puan",
+      "allRatings": "Tüm Puanlar"
+    },
+    "results": "sonuç",
+    "page": "Sayfa",
+    "perPage": "sayfa başına",
     "empty": {
       "noResults": "Sonuç bulunamadı",
       "emptyCollection": "Koleksiyonunuz boş",
@@ -510,7 +531,13 @@
       "addedOn": "Eklenme",
       "dateUnknown": "Bilinmiyor",
       "notesPlaceholder": "Tadım notlarınızı yazın...",
-      "confirmRemove": "whisky'sini koleksiyondan kaldırmak istediğinizden emin misiniz?"
+      "confirmRemove": "whisky'sini koleksiyondan kaldırmak istediğinizden emin misiniz?",
+      "viewDetails": "Detayları Görüntüle",
+      "removeFromCollection": "Koleksiyondan Kaldır",
+      "editRating": "Puanı Düzenle",
+      "addRating": "Puan Ekle",
+      "editNotes": "Notu Düzenle",
+      "addNotes": "Not Ekle"
     },
     "modal": {
       "details": "Detaylar",

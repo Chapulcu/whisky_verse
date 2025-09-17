@@ -489,6 +489,27 @@
         "untasted": "Untasted"
       }
     },
+    "advancedFilters": {
+      "title": "Advanced Filters",
+      "detailedFilters": "Detailed Filters",
+      "clearAll": "Clear All",
+      "sortBy": "Sort By",
+      "newestFirst": "Newest First",
+      "oldestFirst": "Oldest First",
+      "nameAZ": "Name A-Z",
+      "nameZA": "Name Z-A",
+      "highestRated": "Highest Rated",
+      "lowestRated": "Lowest Rated",
+      "countryAZ": "Country A-Z",
+      "typeAZ": "Type A-Z",
+      "countries": "Countries",
+      "types": "Types",
+      "minRating": "Min. Rating",
+      "allRatings": "All Ratings"
+    },
+    "results": "results",
+    "page": "Page",
+    "perPage": "per page",
     "empty": {
       "noResults": "No results found",
       "emptyCollection": "Your collection is empty",
@@ -509,8 +530,14 @@
       "noNotes": "No notes added yet",
       "addedOn": "Added On",
       "dateUnknown": "Unknown",
-    "notesPlaceholder": "Write your tasting notes...",
-    "confirmRemove": "Are you sure you want to remove this whisky from your collection?"
+      "notesPlaceholder": "Write your tasting notes...",
+      "confirmRemove": "Are you sure you want to remove this whisky from your collection?",
+      "viewDetails": "View Details",
+      "removeFromCollection": "Remove from Collection",
+      "editRating": "Edit Rating",
+      "addRating": "Add Rating",
+      "editNotes": "Edit Notes",
+      "addNotes": "Add Notes"
     },
     "modal": {
       "details": "Details",

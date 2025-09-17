@@ -489,6 +489,27 @@
         "untasted": "Не продегустировано"
       }
     },
+    "advancedFilters": {
+      "title": "Расширенные фильтры",
+      "detailedFilters": "Детальные фильтры",
+      "clearAll": "Очистить все",
+      "sortBy": "Сортировать по",
+      "newestFirst": "Сначала новые",
+      "oldestFirst": "Сначала старые",
+      "nameAZ": "Название А-Я",
+      "nameZA": "Название Я-А",
+      "highestRated": "Лучшие оценки",
+      "lowestRated": "Худшие оценки",
+      "countryAZ": "Страна А-Я",
+      "typeAZ": "Тип А-Я",
+      "countries": "Страны",
+      "types": "Типы",
+      "minRating": "Мин. оценка",
+      "allRatings": "Все оценки"
+    },
+    "results": "результатов",
+    "page": "Страница",
+    "perPage": "на странице",
     "empty": {
       "noResults": "Результаты не найдены",
       "emptyCollection": "Ваша коллекция пуста",
@@ -510,7 +531,13 @@
       "addedOn": "Добавлено",
       "dateUnknown": "Неизвестно",
       "notesPlaceholder": "Напишите свои дегустационные заметки...",
-      "confirmRemove": "Вы уверены, что хотите удалить этот виски из своей коллекции?"
+      "confirmRemove": "Вы уверены, что хотите удалить этот виски из своей коллекции?",
+      "viewDetails": "Просмотр деталей",
+      "removeFromCollection": "Удалить из коллекции",
+      "editRating": "Редактировать оценку",
+      "addRating": "Добавить оценку",
+      "editNotes": "Редактировать заметки",
+      "addNotes": "Добавить заметки"
     },
     "modal": {
       "details": "Детали",
