@@ -44,7 +44,7 @@
   "vip": {
     "vipMembership": "VIP Membership",
     "vip": "VIP",
-    "upgradeToVip": "Upgrade to VIP",
+    "upgradeToVip": "Upgrade to VIP Membership",
     "createGroup": "Create Group",
     "organizeEvent": "Organize Event"
   },
@@ -57,65 +57,146 @@
   },
   "language": {
     "language": "Language",
-    "turkish": "Türkçe",
+    "turkish": "Turkish",
     "english": "English",
-    "russian": "Русский"
+    "russian": "Russian"
   },
   "profile": {
     "user": "User",
     "vipMember": "VIP Member",
-    "admin": "Administrator",
+    "admin": "Admin",
     "standardUser": "Standard User",
     "personalInformation": "Personal Information",
-    "notProvided": "Not provided",
+    "notProvided": "Not Provided",
     "emailCannotBeChanged": "Email address cannot be changed",
-    "memberSince": "Member since"
+    "memberSince": "Member Since"
   },
   "admin": {
-    "user": "User",
-    "role": "Role",
-    "registrationDate": "Registration Date",
-    "status": "Status",
-    "actions": "Actions",
-    "unauthorizedAccess": "Unauthorized Access",  
+    "usageGuidelines": "Usage Guidelines",
+    "usageGuidelines.image": "Image:",
+    "usageGuidelines.imageDescription": "Maximum 5MB, 1920x1080+ resolution recommended",
+    "usageGuidelines.video": "Video:",
+    "usageGuidelines.videoDescription": "Maximum 50MB, MP4 format recommended, short loops preferred",
+    "usageGuidelines.backgroundMediaImpact": "Background media may affect site performance",
+    "usageGuidelines.themeImages": "You can upload different images/videos for light and dark themes",
+    "usageGuidelines.videoPlayback": "Video backgrounds automatically play silently and on loop",
+    "usageGuidelines.defaultBackground": "Default grid background is shown when media is removed",
     "adminPanel": "Admin Panel",
+    "saveChanges": "Save Changes",
     "whiskyManagement": "Whisky Management",
     "userManagement": "User Management",
-    "groupManagement": "Group Management",
-    "eventManagement": "Event Management",
-    "totalUsers": "Total Users",
-    "totalWhiskies": "Total Whiskies",
-    "standardMember": "Standard Member",
     "addWhisky": "Add Whisky",
     "editWhisky": "Edit Whisky",
     "deleteWhisky": "Delete Whisky",
-    "editGroup": "Edit Group",
     "editEvent": "Edit Event",
     "translationManagement": "Translation Management",
     "saveAll": "Save All",
-    "translationsLoading": "Loading translations...",
+    "translationsLoading": "Translations loading...",
     "administrator": "Administrator",
     "vipUser": "VIP User",
     "regularUser": "User",
+    "overview": "Overview",
+    "groupManagement": "Group Management",
+    "eventManagement": "Event Management",
+    "background": "Background",
+    "accessDenied": "Access Denied",
+    "totalUsers": "Total Users",
+    "totalWhiskies": "Total Whiskies",
+    "addUser": "Add User",
+    "addAdmin": "Add Admin",
+    "editUser": "Edit User",
+    "deleteUser": "Delete User",
+    "refresh": "Refresh",
+    "fullName": "Full Name",
+    "role": "Role",
+    "registrationDate": "Registration Date",
+    "standardMember": "Standard Member",
+    "member": "Member",
+    "vipMember": "VIP Member",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "defaultPassword": "If left blank, default: Admin123!",
+    "adminUser": "Admin User",
+    "newUser": "New User",
+    "userName": "Username",
+    "csvImport": "CSV Import",
+    "csvExport": "CSV Export",
+    "importing": "Importing...",
+    "exporting": "Exporting...",
+    "refreshAllWhiskies": "Refresh All Whiskies",
+    "allCountries": "All Countries",
+    "allTypes": "All Types",
+    "alphabeticalFilter": "Alphabetical Filter",
+    "csvFormatInfo": "CSV Format Info",
+    "exampleCsv": "Example:",
+    "downloadCsvTemplate": "Download CSV Template",
+    "viewDetails": "View Details",
+    "whiskyDetails": "Whisky Details",
+    "basicInformation": "Basic Information",
+    "tastingNotes": "Tasting Notes",
+    "finish": "Finish",
+    "taste": "Taste",
+    "systemInformation": "System Information",
+    "creationDate": "Creation Date",
+    "lastUpdate": "Last Update",
+    "whiskyId": "Whisky ID",
+    "newGroup": "New Group",
+    "createNewGroup": "Create New Group",
+    "deleteGroup": "Delete Group",
+    "groupName": "Group Name",
+    "groupType": "Group Type",
+    "whiskyTasting": "Whisky Tasting",
+    "privacy": "Privacy",
+    "public": "Public",
+    "private": "Private",
+    "membersOnly": "Members Only",
+    "maxMembers": "Maximum Members",
+    "createGroup": "Create Group",
+    "newEvent": "New Event",
+    "createNewEvent": "Create New Event",
+    "deleteEvent": "Delete Event",
+    "eventTitle": "Event Title",
+    "eventType": "Event Type",
+    "linkedGroup": "Linked Group",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "onlineLink": "Online Link",
+    "maxParticipants": "Maximum Participants",
+    "createEvent": "Create Event",
+    "ongoing": "Ongoing",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "manageTranslations": "Manage Translations (TR/EN/RU)",
+    "imageUpload": "Image Upload",
+    "chooseFile": "Choose File",
+    "uploading": "Uploading...",
+    "chooseNewFile": "Choose New File",
+    "orImageUrl": "Or Image URL",
+    "addingWhisky": "Adding...",
+    "savingChanges": "Saving changes...",
+    "refreshGroups": "Refresh Groups",
+    "refreshEvents": "Refresh Events",
+    "firstGroupMessage": "Click the \"New Group\" button to create the first group",
+    "firstEventMessage": "Click the \"New Event\" button to create the first event",
     "systemManagementDescription": "System management and user control",
-    "adminAccessRequired": "Admin privileges required to access this page.",
+    "adminAccessRequired": "Admin access is required to access this page.",
     "emailAndNameRequired": "Email and name fields are required",
     "emailAndFullNameRequired": "Email and full name fields are required",
     "passwordRequired": "Password is required",
-    "nameTypeCountryRequired": "Name, type and country fields are required",
-    "imageUploadError": "Error uploading image",
+    "nameTypeCountryRequired": "Name, type, and country fields are required",
+    "imageUploadError": "An error occurred while uploading the image",
     "whiskyAddedSuccess": "Whisky added successfully!",
-    "whiskyAddError": "Error adding whisky",
+    "whiskyAddError": "An error occurred while adding the whisky",
     "whiskyUpdatedSuccess": "Whisky updated successfully!",
-    "whiskyUpdateError": "Error updating whisky",
+    "whiskyUpdateError": "An error occurred while updating the whisky",
     "whiskyDeletedSuccess": "Whisky deleted successfully!",
-    "whiskyDeleteError": "Error deleting whisky",
-    "selectWhiskiesToDelete": "Please select whiskies to delete",
+    "whiskyDeleteError": "An error occurred while deleting the whisky",
+    "selectWhiskiesToDelete": "Please select the whiskies you want to delete",
     "whiskiesDeletedSuccess": "whiskies deleted successfully!",
-    "whiskiesDeleteError": "Error deleting whiskies",
+    "whiskiesDeleteError": "An error occurred while deleting the whiskies",
     "groupNameRequired": "Group name is required",
     "groupCreatedSuccess": "Group created successfully!",
-    "groupCreateError": "Error creating group",
+    "groupCreateError": "Error while creating group",
     "groupNameCannotBeEmpty": "Group name cannot be empty",
     "groupUpdatedSuccess": "Group updated successfully!",
     "groupDeletedSuccess": "Group deleted successfully!",
@@ -124,24 +205,22 @@
     "eventNameAndDateCannotBeEmpty": "Event name and start date cannot be empty",
     "eventUpdatedSuccess": "Event updated successfully!",
     "eventDeletedSuccess": "Event deleted successfully!",
-    "csvExportSuccess": "whiskies exported to CSV successfully!",
-    "csvExportError": "Error exporting CSV",
+    "csvExportSuccess": "whiskies exported successfully in CSV format!",
+    "csvExportError": "An error occurred while exporting CSV",
     "selectValidCsvFile": "Please select a valid CSV file",
     "csvMinimumRowsError": "CSV file must contain at least 2 rows (header + data)",
-    "csvRowRequiredFields": "Name, type and country fields are required",
-    "csvBatchImportError": "error during import",
+    "csvRowRequiredFields": "Name, type, and country fields are required",
+    "csvBatchImportError": "An error occurred while importing",
     "csvImportSuccess": "whiskies imported successfully!",
-    "csvParsingError": "Error reading CSV file",
-    "fileReadError": "Error reading file",
+    "csvParsingError": "An error occurred while reading the CSV file",
+    "fileReadError": "An error occurred while reading the file",
     "csvTemplateDownloaded": "CSV template file downloaded!",
     "selectValidImageFile": "Please select a valid image file",
     "fileSizeLimit": "File size must be less than 10MB",
     "imageFileSelected": "Image file selected",
-    "fileInputNotFound": "File input not found. Please refresh the page.",
-    "groupsNotLoading": "Groups not loading...",
-    "eventsNotLoading": "Events not loading...",
-    "refreshGroups": "Refresh Groups",
-    "refreshEvents": "Refresh Events",
+    "fileInputNotFound": "File input not found. Refresh the page.",
+    "groupsNotLoading": "Groups are not loading...",
+    "eventsNotLoading": "Events are not loading...",
     "enterGroupName": "Enter group name",
     "groupsLoadError": "Could not load groups",
     "eventsLoadError": "Could not load events",
@@ -150,20 +229,14 @@
     "exampleLongWarm": "Long and warm",
     "csvExampleNote": "Macallan 18\",\"Single Malt\",\"Scotland\",\"Speyside\",43.0,\"Gold\",\"Vanilla\",\"Honey\",\"Long\",\"Premium whisky",
     "scotlandPlaceholder": "e.g. Scotland, USA, Japan",
-    "overview": "Overview",
-    "background": "Background",
     "lightTheme": "Light Theme",
-    "darkTheme": "Dark Theme", 
+    "darkTheme": "Dark Theme",
     "lightThemeBackground": "Light Theme Background",
     "darkThemeBackground": "Dark Theme Background",
     "statistics": "Statistics",
-    "actions": "Actions", 
+    "actions": "Actions",
     "edit": "Edit",
-    "allCountries": "All Countries",
-    "allTypes": "All Types",
-    "refreshAllWhiskies": "Refresh All Whiskies",
     "tip": "Tip",
-    "editUser": "Edit User",
     "addAdminUser": "Add Admin User",
     "whiskyNameRequired": "Whisky Name *",
     "countryRequired": "Country *",
@@ -176,11 +249,13 @@
     "describeTasteNotes": "Describe taste notes...",
     "describeFinishNotes": "Describe finish notes...",
     "nameCannotBeEmpty": "Name field cannot be empty",
-    "confirmDeleteUser": "Are you sure you want to delete user? This action cannot be undone.",
-    "passwordsMustMatch": "Passwords must match",
+    "confirmDeleteUser": "Are you sure you want to delete this user? This action cannot be undone.",
+    "passwordsMustMatch": "Passwords do not match",
     "passwordMinLength": "Password must be at least 6 characters",
     "whiskyNotFound": "Whisky to update not found",
-    "member":"Member"
+    "user": "User",
+    "users": "Users",
+    "editGroup": "Edit Group"
   },
   "forms": {
     "whiskyNameRequired": "Whisky name is required",
@@ -199,37 +274,37 @@
   },
   "ageVerification": {
     "pleaseEnterBirthDate": "Please enter your birth date",
-    "mustBe18OrOlder": "You must be 18 years or older",
+    "mustBe18OrOlder": "You must be 18 or older",
     "ageVerificationRequired": "Age Verification Required",
-    "ageVerificationMessage": "This website contains content related to alcoholic beverages. You must be 18 years or older to enter.",
+    "ageVerificationMessage": "This website contains content related to alcoholic beverages. You must be 18 or older to enter.",
     "enterBirthDate": "Enter your birth date",
     "selectBirthDate": "Select your birth date",
     "verifying": "Verifying...",
     "iam18OrOlder": "I am 18 or older",
     "iAmUnder18": "I am under 18",
-    "legalNotice": "By entering this site, you confirm that you are of legal drinking age in your jurisdiction and agree to our terms of use."
+    "legalNotice": "By entering this site, you confirm that you are of legal drinking age and agree to our terms of use."
   },
   "errors": {
     "errorOccurred": "An error occurred",
     "pageLoadError": "An error occurred while loading this page",
     "refreshPage": "Refresh Page",
     "operationFailed": "Operation failed",
-    "plansLoadingError": "Error loading plans",
+    "plansLoadingError": "An error occurred while loading plans",
     "paymentCancelled": "Payment cancelled. You can try again anytime!",
-    "loginRequiredVip": "You must sign in for VIP membership",
+    "loginRequiredVip": "You must be logged in for VIP membership",
     "existingMembership": "You already have an active membership",
-    "membershipCreationError": "Error creating membership",
+    "membershipCreationError": "An error occurred while creating membership",
     "userCollectionLoadError": "Could not load user collection",
-    "loginRequiredCollection": "You must sign in to add to collection",
+    "loginRequiredCollection": "You must be logged in to add to collection",
     "whiskyAlreadyInCollection": "This whisky is already in your collection",
-    "addToCollectionError": "Error adding to collection"
+    "addToCollectionError": "An error occurred while adding to collection"
   },
   "success": {
     "eventCreatedSuccess": "Event created successfully!",
-    "eventRegistrationSuccess": "Successfully registered for event!",
-    "eventRegistrationCancelled": "Event registration cancelled",
+    "eventRegistrationSuccess": "You have successfully registered for the event!",
+    "eventRegistrationCancelled": "Your event registration has been cancelled",
     "eventDeletedSuccess": "Event deleted",
-    "vipMembershipActivated": "🎉 Your VIP membership has been activated!"
+    "vipMembershipActivated": "🎉 Your VIP membership has been successfully activated!"
   },
   "modals": {
     "confirmLogout": "Are you sure you want to sign out?",
@@ -241,7 +316,7 @@
     "defaultGridBackground": "Default grid background",
     "uploadVideo": "Upload Video",
     "remove": "Remove",
-    "videoBackgroundActive": "Video background active",
+    "videoBackgroundActive": "Video background is active",
     "usingDefaultBackground": "Using default background"
   },
   "pluralization": {
@@ -257,26 +332,40 @@
     "daysAgo_other": "{{count}} days ago"
   },
   "dates": {
-    "timeFormat": "h:mm A",
-    "dateFormat": "MM/DD/YYYY",
-    "dateTimeFormat": "MM/DD/YYYY h:mm A",
-    "shortDateFormat": "MMM DD"
+    "timeFormat": "HH:mm",
+    "dateFormat": "DD/MM/YYYY",
+    "dateTimeFormat": "DD/MM/YYYY HH:mm",
+    "shortDateFormat": "DD MMM"
   },
   "home": {
+    "comprehensiveCollection": "Comprehensive Whisky Collection",
+    "comprehensiveCollectionDesc": "Discover, taste, and build your collection of the world's best whiskies.",
+    "whiskyCommunitiy": "Whisky Community",
+    "whiskyCommunityDesc": "Connect with other whisky lovers and share your experiences.",
+    "tastingEvents": "Tasting Events",
+    "tastingEventsDesc": "Join exclusive tasting events and expand your whisky knowledge.",
+    "vipExperience": "VIP Experience",
+    "vipExperienceDesc": "Enrich your whisky journey with exclusive privileges and premium content.",
+    "featuresTitle": "Explore the World of Whisky",
+    "featuresDescription": "Everything you need to become a whisky expert and connect with like-minded enthusiasts.",
+    "whiskiesCount": "Whiskies",
+    "usersCount": "Users",
+    "eventsCount": "Events",
+    "collectionsCount": "Collections",
     "heroTitle": "WhiskyVerse",
-    "heroDescription": "The ultimate platform for whisky enthusiasts. Discover, taste, and connect with the world's finest spirits.",
+    "heroDescription": "The most comprehensive platform for whisky enthusiasts. Discover, taste, and connect with the world's finest spirits.",
     "exploreWhiskies": "Explore Whiskies",
     "joinWhiskyVerse": "Join WhiskyVerse",
     "features": {
       "title": "Discover the Features",
-      "subtitle": "Everything you need to become a whisky connoisseur and connect with like-minded enthusiasts.",
+      "subtitle": "Everything you need to become a whisky expert and connect with like-minded enthusiasts.",
       "collection": {
         "title": "Comprehensive Whisky Collection",
         "description": "Discover, taste, and build your collection of the world's finest whiskies."
       },
       "community": {
         "title": "Whisky Community",
-        "description": "Connect with fellow whisky enthusiasts and share your experiences."
+        "description": "Connect with other whisky enthusiasts and share your experiences."
       },
       "events": {
         "title": "Tasting Events",
@@ -288,7 +377,7 @@
       }
     },
     "stats": {
-      "whiskies": "Whisky Varieties",
+      "whiskies": "Whisky Types",
       "members": "Active Members",
       "events": "Events",
       "countries": "Countries"
@@ -300,10 +389,10 @@
   },
   "whiskiesPage": {
     "title": "Whiskies",
-    "subtitle": "Discover the world's finest whiskies and build your collection",
+    "subtitle": "Discover the world's best whiskies and build your collection",
     "addNewWhisky": "Add New Whisky",
-    "searchPlaceholder": "Search whisky... (minimum 3 characters)",
-    "searchMinChars": "Minimum 3 characters required for search",
+    "searchPlaceholder": "Search for whisky... (min 3 characters)",
+    "searchMinChars": "At least 3 characters are required for search",
     "allCountries": "All Countries",
     "allTypes": "All Types",
     "clearFilters": "Clear Filters",
@@ -314,7 +403,7 @@
     "perPage": "Per page",
     "whiskiesFound": "whiskies found",
     "page": "Page",
-    "showing": "whiskies showing",
+    "showing": "showing whiskies",
     "previousPage": "Previous page",
     "nextPage": "Next page",
     "viewDetails": "View details",
@@ -323,16 +412,16 @@
     "tasted": "Tasted",
     "markTasted": "Mark as Tasted",
     "noWhiskiesFound": "No whiskies found",
-    "changeSearchCriteria": "Try changing your search criteria",
+    "changeSearchCriteria": "Try again by changing your search criteria",
     "whiskyDetails": "Whisky Details",
-    "basicInfo": "Basic Information",
+    "basicInfo": "Basic Info",
     "type": "Type",
     "rating": "Rating",
     "age": "Age",
     "years": "years",
     "collectionStatus": "Collection Status",
     "tastingNotes": "Tasting Notes",
-    "smell": "Nose",
+    "smell": "Smell",
     "palate": "Palate",
     "finish": "Finish",
     "noTastingNotes": "No tasting notes added yet",
@@ -345,18 +434,18 @@
       "whiskyImageRequired": "Whisky Image *",
       "preview": "Preview",
       "whiskyNameRequired": "Whisky Name *",
-      "whiskyNamePlaceholder": "e.g. Macallan 18",
+      "whiskyNamePlaceholder": "e.g: Macallan 18",
       "type": "Type",
-      "countryPlaceholder": "e.g. Scotland",
+      "countryPlaceholder": "e.g: Scotland",
       "region": "Region",
-      "regionPlaceholder": "e.g. Speyside",
+      "regionPlaceholder": "e.g: Speyside",
       "alcoholPercent": "Alcohol Percentage (%)",
       "ratingLabel": "Rating (1-100)",
       "ratingPlaceholder": "e.g. 85.5",
       "ageLabel": "Age (Years)",
-      "agePlaceholder": "e.g. 18 (leave empty for NAS)",
+      "agePlaceholder": "e.g. 18 (leave blank for NAS)",
       "color": "Color",
-      "colorPlaceholder": "e.g. Dark amber",
+      "colorPlaceholder": "e.g: Dark amber",
       "aroma": "Aroma",
       "aromaPlaceholder": "Describe aroma notes...",
       "taste": "Taste",
@@ -372,8 +461,8 @@
     "toasts": {
       "addedToCollection": "Added to collection!",
       "statusUpdated": "Status updated!",
-      "statusUpdateError": "Error updating status",
-      "loginRequiredAdd": "You must be signed in to add whisky",
+      "statusUpdateError": "An error occurred while updating status",
+      "loginRequiredAdd": "You must be logged in to add a whisky",
       "nameRequired": "Whisky name is required",
       "imageRequired": "Please select an image",
       "validImageFile": "Please select a valid image file",
@@ -404,7 +493,7 @@
       "noResults": "No results found",
       "emptyCollection": "Your collection is empty",
       "tryDifferentTerms": "Try searching with different terms",
-      "addFromWhiskies": "Add your favorites from the whiskies page",
+      "addFromWhiskies": "Add your favorites from the Whiskies page",
       "addWhisky": "Add Whisky"
     },
     "whiskyCard": {
@@ -418,10 +507,10 @@
       "save": "Save",
       "cancel": "Cancel",
       "noNotes": "No notes added yet",
-      "addedOn": "Added on",
+      "addedOn": "Added On",
       "dateUnknown": "Unknown",
-      "notesPlaceholder": "Write your tasting notes...",
-      "confirmRemove": "Are you sure you want to remove this whisky from your collection?"
+    "notesPlaceholder": "Write your tasting notes...",
+    "confirmRemove": "Are you sure you want to remove this whisky from your collection?"
     },
     "modal": {
       "details": "Details",
@@ -448,18 +537,18 @@
     "title": "Profile Settings",
     "subtitle": "Manage and update your personal information",
     "loading": "Loading profile...",
-    "loginRequired": "Please log in",
-    "adminBadge": "Administrator",
+    "loginRequired": "Please sign in",
+    "adminBadge": "Admin",
     "memberBadge": "Standard Member",
-    "joinDate": "Member since",
+    "joinDate": "Join date",
     "editButton": "Edit Profile",
-    "closeEditButton": "Close Editing",
-    "personalInfo": "Personal Information",
-    "contactInfo": "Contact Information",
+    "closeEditButton": "Close Edit",
+    "personalInfo": "Personal Info",
+    "contactInfo": "Contact Info",
     "forms": {
       "fullName": "Full Name",
       "fullNamePlaceholder": "Enter your first and last name",
-      "bio": "Biography",
+      "bio": "Bio",
       "bioPlaceholder": "A few words about yourself...",
       "location": "Location",
       "locationPlaceholder": "City, Country",
@@ -472,7 +561,7 @@
     },
     "placeholders": {
       "notSpecified": "Not specified",
-      "bioNotAdded": "No biography added",
+      "bioNotAdded": "Bio not added",
       "emailCannotChange": "Email address cannot be changed"
     },
     "buttons": {
@@ -482,20 +571,20 @@
     "toasts": {
       "nameRequired": "Name field cannot be empty",
       "profileUpdated": "Profile updated successfully",
-      "profileUpdateError": "Error occurred while updating profile",
+      "profileUpdateError": "An error occurred while updating profile",
       "avatarUpdated": "Profile photo updated!",
-      "avatarUploadError": "Error occurred while uploading photo"
+      "avatarUploadError": "An error occurred while uploading photo"
     }
   },
   "groupsPage": {
     "title": "Whisky Groups",
-    "subtitle": "Connect with whisky enthusiasts, create groups and share your experiences",
+    "subtitle": "Gather with whisky enthusiasts, create groups, and share your experiences",
     "tabs": {
       "discover": "Discover Groups",
       "myGroups": "My Groups"
     },
     "createButton": "Create New Group",
-    "searchPlaceholder": "Search groups...",
+    "searchPlaceholder": "Search for a group...",
     "joinButton": "Join",
     "leaveButton": "Leave Group",
     "manageButton": "Manage",
@@ -504,16 +593,16 @@
     "privateTooltip": "Private",
     "emptyStates": {
       "noGroupsFound": "No groups found",
-      "noGroupsCreated": "You haven't created any groups yet",
-      "tryDifferentSearch": "Try changing your search criteria",
-      "createFirstGroup": "Create your first group and connect with whisky lovers"
+      "noGroupsCreated": "You haven't created a group yet",
+      "tryDifferentSearch": "Try again by changing your search criteria",
+      "createFirstGroup": "Create your first group and meet with whisky lovers"
     },
     "createModal": {
       "title": "Create New Group",
       "groupName": "Group Name",
-      "groupNamePlaceholder": "e.g: London Whisky Lovers",
+      "groupNamePlaceholder": "e.g: Istanbul Whisky Lovers",
       "description": "Description",
-      "descriptionPlaceholder": "A brief description about your group...",
+      "descriptionPlaceholder": "A short description about your group...",
       "memberLimit": "Member Limit",
       "publicGroup": "Public group (Other users can see and join the group)",
       "cancelButton": "Cancel",
@@ -522,25 +611,25 @@
     "toasts": {
       "groupsLoadError": "Could not load groups",
       "groupCreated": "Group created successfully!",
-      "groupCreateError": "Error occurred while creating group",
-      "joinedGroup": "You joined the group!",
+      "groupCreateError": "An error occurred while creating group",
+      "joinedGroup": "You have joined the group!",
       "alreadyMember": "You are already a member of this group",
-      "joinError": "Error occurred while joining group",
-      "leftGroup": "You left the group",
-      "leaveError": "Error occurred while leaving group",
+      "joinError": "An error occurred while joining the group",
+      "leftGroup": "You have left the group",
+      "leaveError": "An error occurred while leaving the group",
       "deleteConfirm": "Are you sure you want to delete this group?",
-      "deleteError": "Error occurred while deleting group"
+      "deleteError": "An error occurred while deleting the group"
     }
   },
   "eventsPage": {
     "title": "Whisky Events",
-    "subtitle": "Organize whisky tasting events, participate and create unforgettable experiences",
+    "subtitle": "Organize whisky tasting events, join them, and have unforgettable experiences",
     "tabs": {
       "discover": "Discover Events",
       "myEvents": "My Events"
     },
     "createButton": "Create New Event",
-    "searchPlaceholder": "Search events...",
+    "searchPlaceholder": "Search for an event...",
     "joinButton": "Join",
     "cancelRegistrationButton": "Cancel Registration",
     "manageButton": "Manage",
@@ -550,26 +639,26 @@
     "publicTooltip": "Public",
     "privateTooltip": "Private",
     "deleteTooltip": "Delete Event",
-    "groupRequiredTitle": "You must create a group first to create an event",
+    "groupRequiredTitle": "You must first create a group to create an event",
     "groupRequired": {
       "title": "Group Required to Create Event",
-      "description": "To create an event, you must first create a group or have a group you manage."
+      "description": "To create an event, you must first create a group or be an administrator of an existing one."
     },
     "emptyStates": {
       "noEventsFound": "No events found",
-      "noEventsCreated": "You haven't created any events yet",
-      "tryDifferentSearch": "Try changing your search criteria",
-      "createFirstEvent": "Create your first event and connect with whisky lovers"
+      "noEventsCreated": "You haven't created an event yet",
+      "tryDifferentSearch": "Try again by changing your search criteria",
+      "createFirstEvent": "Create your first event and meet with whisky lovers"
     },
     "createModal": {
       "title": "Create New Event",
-      "selectGroup": "Select group",
+      "selectGroup": "Select a group",
       "eventTitle": "Event Title",
       "eventTitlePlaceholder": "e.g: Scotch Whisky Tasting Night",
       "description": "Description",
       "descriptionPlaceholder": "Detailed information about the event...",
       "location": "Location",
-      "locationPlaceholder": "e.g: London, Westminster - Whisky Bar",
+      "locationPlaceholder": "e.g: Istanbul, Besiktas - Whisky Bar",
       "maxParticipants": "Maximum Participants",
       "publicEvent": "Public event (Other users can see and join the event)",
       "cancelButton": "Cancel",
@@ -577,20 +666,20 @@
     },
     "toasts": {
       "eventsLoadError": "Could not load events",
-      "eventCreateError": "Error occurred while creating event",
+      "eventCreateError": "An error occurred while creating event",
       "alreadyRegistered": "You are already registered for this event",
-      "registrationError": "Error occurred while registering",
-      "cancelRegistrationError": "Error occurred while canceling registration",
+      "registrationError": "An error occurred while registering",
+      "cancelRegistrationError": "An error occurred while cancelling registration",
       "deleteConfirm": "Are you sure you want to delete this event?",
-      "deleteError": "Error occurred while deleting event"
+      "deleteError": "An error occurred while deleting the event"
     }
   },
   "upgradePage": {
     "title": "VIP Membership Plans",
-    "subtitle": "Experience the premium journey at WhiskyVerse and take your whisky passion to the next level",
+    "subtitle": "Experience the premium in WhiskyVerse and take your whisky passions to the next level",
     "vipFeatures": [
       "Unlimited whisky collection",
-      "Access to exclusive VIP events",
+      "Participation in exclusive VIP events",
       "Premium whisky recommendations",
       "Detailed analytics reports",
       "VIP badges and status",
@@ -598,117 +687,178 @@
     ],
     "premiumFeatures": [
       "All VIP features",
-      "Create private groups",
+      "Exclusive group creation",
       "Event planning tools",
       "Advanced filtering options",
-      "CSV export/import access",
+      "CSV export/import privileges",
       "Premium badges and titles",
       "24/7 premium support"
     ],
     "activeSubscription": {
       "title": "Your Active VIP Membership",
-      "description": "plan is active",
+      "description": "Your plan is active",
       "monthlyLimit": "Monthly limit",
       "vipMembership": "VIP Membership",
       "premiumVip": "Premium VIP"
     },
     "popularBadge": "Most Popular",
     "pricing": {
-      "monthly": "/month",
-      "transactions": "transactions"
+      "monthly": "/mo",
+      "transactions": "transaction"
     },
     "buttons": {
       "processing": "Processing...",
-      "upgrade": "Subscribe",
+      "upgrade": "Become a Member",
       "current": "Current Plan"
     },
-    "loginRequired": "You must log in first for VIP membership",
+    "loginRequired": "You must be logged in first for VIP membership",
     "benefits": {
       "title": "VIP Membership Benefits",
       "community": {
         "title": "Exclusive Community",
-        "description": "Private groups and events for VIP members. Connect with other whisky enthusiasts."
+        "description": "Exclusive groups and events for VIP members. Connect with other whisky enthusiasts."
       },
       "events": {
         "title": "Exclusive Events",
-        "description": "VIP-only tasting events, masterclasses and limited edition whisky launches."
+        "description": "VIP-only tasting events, masterclasses, and special edition whisky launches."
       },
       "content": {
         "title": "Premium Content",
-        "description": "Detailed whisky analysis, expert recommendations and personalized suggestions."
+        "description": "Detailed whisky analyses, expert advice, and personalized recommendations."
       }
     },
-    "security": "🔒 All payments are processed securely through Stripe. Your credit card information is not stored.",
+    "security": "🔒 All payments are processed securely with Stripe. Your credit card details are not stored.",
     "toasts": {
       "redirectingToPayment": "Redirecting to payment page...",
-      "checkoutUrlError": "Could not get checkout URL"
-    }
-  },
-  "seo": {
-    "default": {
-      "title": "WhiskyVerse - Whisky Enthusiasts Community",
-      "description": "The meeting point for whisky lovers. Build your collection, join events, and explore the whisky world.",
-      "keywords": "whisky, collection, community, events, tasting"
-    },
-    "home": {
-      "title": "Home - WhiskyVerse",
-      "description": "Welcome to WhiskyVerse! Build your whisky collection and share with our community.",
-      "keywords": "home, whisky community, collection"
-    },
-    "whiskies": {
-      "title": "Whisky Catalog - WhiskyVerse",
-      "description": "Explore our extensive whisky catalog. Browse single malts, blends, and other whisky types.",
-      "keywords": "whisky catalog, single malt, blended, database"
-    },
-    "collection": {
-      "title": "My Collection - WhiskyVerse",
-      "description": "Manage and organize your personal whisky collection.",
-      "keywords": "whisky collection, personal collection"
-    },
-    "events": {
-      "title": "Events - WhiskyVerse",
-      "description": "Join whisky tasting events and meet the community.",
-      "keywords": "whisky events, tasting, community events"
-    },
-    "profile": {
-      "title": "Profile - WhiskyVerse",
-      "description": "Manage your user profile and settings.",
-      "keywords": "profile, user, settings"
+      "checkoutUrlError": "Could not get Checkout URL"
     }
   },
   "adminPage": {
-    "whiskyManagement": {
-      "loading": "Loading...",
-      "refreshAll": "Refresh All Whiskies",
-      "tableHeaders": {
-        "name": "Name",
-        "type": "Type",
-        "country": "Country",
-        "creation": "Creation",
+    "groupManagement": {
+      "title": "Group Management",
+      "description": "Manage community groups",
+      "loading": "Loading groups...",
+      "noGroups": "No groups yet",
+      "firstGroupMessage": "Click the 'New Group' button to create the first group",
+      "deleteConfirm": "Are you sure you want to delete this group? This action cannot be undone.",
+      "labels": {
+        "groupName": "Group Name",
+        "category": "Category",
+        "privacy": "Privacy",
+        "maxMembers": "Maximum Members",
+        "membersCount": "Member Count",
         "actions": "Actions"
       },
-      "filters": {
-        "allTypes": "All Types",
-        "all": "All",
-        "totalLoaded": "Total loaded",
-        "showing": "showing",
-        "between": "between",
-        "perPage": "Per page:",
-        "previousPage": "Previous page",
-        "nextPage": "Next page",
-        "clearFilters": "Clear Filters",
-        "alphabetical": "Alphabetical",
-        "whiskitotalsFound":" whiskies found"
+      "privacy": {
+        "membersOnly": "Members Only",
+        "private": "Private",
+        "public": "Public"
       },
-      "emptyStates": {
-        "noMatchingWhiskies": "No whiskies matching your search criteria.",
-        "noWhiskiesYet": "No whiskies added yet.",
-        "noWhiskiesOnPage": "No whiskies to display on this page. Select a different page or increase items per page."
+      "members": "members",
+      "buttons": {
+        "createGroup": "Create New Group"
       },
-      "importSection": {
-        "requiredColumns": "Required columns:",
-        "optionalColumns": "Optional columns:",
-        "downloadTemplate": "Download Sample CSV Template"
+      "titles": {
+        "createGroup": "Create New Group"
+      },
+      "placeholders": {
+        "description": "Short description about the group...",
+        "eventType": "Event Type"
+      },
+      "options": {
+        "selectCategory": "Select Category",
+        "whiskyTasting": "Whisky Tasting",
+        "public": "Public",
+        "membersOnly": "Members Only",
+        "private": "Private",
+        "competition": "Competition"
+      }
+    },
+    "eventManagement": {
+      "title": "Event Management",
+      "createEvent": "Create New Event",
+      "participants": "participants",
+      "free": "Free",
+      "paid": "Paid",
+      "loading": "Loading events...",
+      "noEvents": "No events yet",
+      "firstEventMessage": "Click the 'New Event' button to create the first event",
+      "description": "Manage community events",
+      "deleteConfirm": "Are you sure you want to delete this event? This action cannot be undone.",
+      "labels": {
+        "eventTitle": "Event Title",
+        "group": "Group",
+        "date": "Date & Time",
+        "location": "Location",
+        "participants": "Participant Count",
+        "maxParticipants": "Maximum Participants",
+        "title": "Title",
+        "description": "Description",
+        "status": "Status",
+        "privacy": "Privacy",
+        "actions": "Actions",
+        "eventType": "Event Type",
+        "virtualLink": "Virtual Event Link",
+        "endDate": "End Date",
+        "startDate": "Start Date"
+      },
+      "placeholders": {
+        "eventTypes": "Select Event Type",
+        "selectGroup": "Select Group",
+        "eventTitle": "e.g: Scotch Whisky Tasting Night",
+        "description": "Detailed information about the event...",
+        "location": "e.g: Istanbul, Besiktas - Whisky Bar",
+        "maxParticipants": "Maximum Participants",
+        "eventType": "Event Type",
+        "group": "Select Group"
+      },
+      "buttons": {
+        "createEvent": "Create New Event"
+      },
+      "options": {
+        "tasting": "Tasting",
+        "workshop": "Workshop",
+        "meetup": "Meetup",
+        "competition": "Competition",
+        "seminar": "Seminar"
+      },
+      "status": {
+        "upcoming": "Upcoming",
+        "past": "Past"
+      }
+    },
+    "userManagement": {
+      "placeholders": {
+        "userName": "Username",
+        "email": "Email",
+        "password": "Password",
+        "confirmPassword": "Confirm Password",
+        "adminUser": "Admin Username",
+        "role": "Role"
+      },
+      "labels": {
+        "adminUser": "Admin Username",
+        "userName": "Username",
+        "email": "Email",
+        "role": "Role",
+        "actions": "Actions",
+        "password": "Password",
+        "confirmPassword": "Confirm Password",
+        "passwordOptional": "Password (Leave blank to not change)"
+      },
+      "options": {
+        "turkish": "Turkish",
+        "english": "English",
+        "russian": "Russian",
+        "selectRole": "Select Role",
+        "admin": "Admin",
+        "standard": "Standard",
+        "user": "User"
+      },
+      "titles": {
+        "addUser": "Add User",
+        "editUser": "Edit User",
+        "addAdmin": "Add Admin User"
       }
     },
     "whiskyForm": {
@@ -718,7 +868,6 @@
         "country": "Country",
         "region": "Region",
         "alcoholPercentage": "Alcohol Percentage %",
-        "score": "Score",
         "age": "Age (Years)",
         "color": "Color",
         "aroma": "Aroma",
@@ -726,222 +875,214 @@
         "finish": "Finish",
         "description": "Description",
         "imageUpload": "Image Upload",
+        "selectedFile": "Selected file",
+        "uploading": "Uploading...",
+        "selectFile": "Select File",
+        "selectNewFile": "Select New File",
+        "or": "or",
+        "imageUrl": "Image URL",
         "translationManagement": "Translation Management",
-        "manageTranslations": "Manage Translations (TR/EN/RU)"
+        "manageTranslations": "Manage Translations (TR/EN/RU)",
+        "score": "Score",
+        "currentImage": "Current Image"
       },
       "placeholders": {
-        "whiskyNameExample": "e.g. Macallan 18",
-        "typeExample": "e.g. Single Malt, Bourbon, Rye",
-        "regionExample": "e.g. Speyside, Highland, Kentucky",
-        "scoreExample": "e.g. 85.5",
-        "ageExample": "e.g. 18 (leave blank for NAS)",
-        "colorExample": "e.g. Golden, Amber, Dark Copper",
-        "aromaDescription": "Describe aroma notes...",
-        "tasteDescription": "Describe taste notes...",
-        "finishDescription": "Describe finish notes...",
-        "generalDescription": "General description..."
+        "name": "Enter whisky name...",
+        "type": "e.g: Single Malt, Blended...",
+        "color": "e.g: Dark amber...",
+        "aroma": "Describe aroma notes...",
+        "taste": "Describe taste notes...",
+        "finish": "Describe finish notes...",
+        "adminUser": "Admin Username",
+        "userName": "Username",
+        "password": "Password",
+        "confirmPassword": "Confirm Password",
+        "whiskyName": "Whisky Name",
+        "region": "Region",
+        "age": "Age (Years)",
+        "score": "Score",
+        "description": "General Description"
+      },
+      "options": {
+        "turkish": "Turkish",
+        "english": "English",
+        "selectCountry": "Select Country",
+        "selectType": "Select Type",
+        "selectLanguage": "Select Language"
       },
       "buttons": {
-        "chooseFile": "Choose File",
-        "selectNewFile": "Select New File",
         "cancel": "Cancel",
-        "create": "Create",
-        "update": "Update",
-        "creating": "Creating...",
         "updating": "Updating...",
-        "uploading": "Uploading..."
+        "update": "Update",
+        "adding": "Adding...",
+        "addWhisky": "Add Whisky",
+        "create": "Create",
+        "creating": "Creating...",
+        "selectFile": "Select File",
+        "save": "Save",
+        "selectNewFile": "Select New File"
       },
-      "fileSelection": {
-        "selectedFile": "Selected file:"
-      }
+      "whiskyName": "Whisky Name",
+      "whiskyNamePlaceholder": "e.g. Macallan 18",
+      "type": "Type",
+      "typePlaceholder": "e.g. Single Malt, Bourbon, Rye",
+      "country": "Country",
+      "region": "Region",
+      "regionPlaceholder": "e.g. Speyside, Highland, Kentucky",
+      "translationManagement": "Translation Management",
+      "manageTranslations": "Manage Translations (TR/EN/RU)",
+      "alcoholPercentage": "Alcohol Percentage %",
+      "score": "Score",
+      "scorePlaceholder": "e.g. 85.5",
+      "age": "Age (Years)",
+      "agePlaceholder": "e.g. 18 (leave blank for NAS)",
+      "color": "Color",
+      "colorPlaceholder": "e.g. Gold, Amber, Dark Copper",
+      "aroma": "Aroma",
+      "aromaPlaceholder": "Describe aroma notes...",
+      "taste": "Taste",
+      "tastePlaceholder": "Describe taste notes...",
+      "finish": "Finish",
+      "finishPlaceholder": "Describe finish notes...",
+      "description": "Description",
+      "descriptionPlaceholder": "General description...",
+      "imageUpload": "Image Upload",
+      "selectedFile": "Selected file",
+      "uploading": "Uploading...",
+      "selectFile": "Select File",
+      "selectNewFile": "Select New File",
+      "updating": "Updating...",
+      "update": "Update"
     },
     "whiskyDetails": {
       "title": "Whisky Details",
       "labels": {
+        "tastingNotes": "Tasting Notes",
+        "aroma": "Aroma",
+        "taste": "Taste",
+        "finish": "Finish",
+        "createdDate": "Creation Date",
+        "lastUpdated": "Last Update",
+        "close": "Close",
+        "metadata": "Metadata"
+      },
+      "buttons": {
+        "edit": "Edit",
+        "close": "Close"
+      }
+    },
+     "whiskyManagement":{
+      "refreshAll": "Refresh All",
+      "loading": "Loading whiskies...",
+      "error": "An Error Occurred",
+      "tryAgain": "Try Again",
+      "noWhiskies": "No whiskies found",
+      "firstWhiskyMessage": "Click the 'Add New Whisky' button to add your first whisky",
+      "filters":{
+        "alphabetical": "Alphabetical",
+        "all": "All",
         "country": "Country",
-        "region": "Region"
+        "type": "Type",
+        "age": "Age (Years)",
+        "rating": "Rating",
+        "ascending": "Asc",
+        "descending": "Dsc",
+        "perPage": "Per Page",
+        "between": "Between",
+        "column": "Column",
+        "searchPlaceholder": "Search whisky... (min 3 characters)",
+        "searchMinChars": "At least 3 characters are required for search",
+        "allTypes": "All Types",
+        "allCountries": "All Countries",
+        "clearFilters": "Clear Filters",
+        "clearAllFilters": "Clear all filters",
+        "whiskitotalsFound": "Whiskies found",
+        "page": "Page",
+        "previousPage": "Previous page",
+        "nextPage": "Next page",
+        "addNewWhisky": "Add New Whisky",
+        "deleteSelected": "Delete Selected",
+        "deleteSelectedConfirm": "Are you sure you want to delete the selected whiskies? This action cannot be undone.",
+        "noWhiskiesFound": "No whiskies found",
+        "changeSearchCriteria": "Change your search criteria and try again",
+        "importWhiskies": "Import Whiskies",
+        "totalLoaded": "Total Loaded",
+       "showing": "showing",
+       "whiskiesFound": "whiskies found"
       },
-      "tastingNotes": "Tasting Notes",
-      "noTastingNotes": "No tasting notes added yet",
-      "creationDate": "Creation Date:",
-      "lastUpdate": "Last Update:",
-      "editButton": "Edit"
+      "tableHeaders":{
+        "name":"Name",
+        "type":"Type",
+        "country":"Country",
+        "age":"Age (Years)",
+        "alcoholPercentage":"Alcohol Percentage %",
+        "actions":"Actions",
+        "creation":"Creation Date",
+        "lastUpdated":"Last Update"
+      },
+     "importSection": {
+      "requiredColumns": "Required Columns: name, type, country, alcohol_percentage",
+      "optionalColumns": "Optional Columns: imageUrl",
+      "csvFile": "CSV File",
+      "downloadTemplate": "Download Template"
+     }
     },
-    "groupManagement": {
-      "title": "Group Management",
-      "description": "Manage community groups",
-      "groupsLoaded": "groups loaded",
-      "loadingError": "Groups not loading...",
-      "noGroups": {
-        "title": "No groups yet",
-        "description": "Click 'New Group' button to create the first group"
-      },
-      "privacyTypes": {
-        "public": "Public",
-        "private": "Private",
-        "membersOnly": "Members Only"
-      },
-      "memberCount": "members"
+    "country": "Country",
+    "region": "Region",
+    "tastingNotes": "Tasting Notes",
+    "aroma": "Aroma",
+    "taste": "Taste",
+    "finish": "Finish",
+    "noTastingNotes": "No tasting notes added yet",
+    "createdDate": "Creation Date",
+    "lastUpdated": "Last Update",
+    "close": "Close"
+  },
+  "toasts": {
+    "whiskiesLoadError": "Could not load whiskies",
+    "nameRequired": "Name field cannot be empty",
+    "deleteConfirm": "Are you sure you want to delete this whisky? This action cannot be undone.",
+    "multipleDeleteConfirm": "Are you sure you want to delete these whiskies? This action cannot be undone.",
+    "whiskyInCollections": "This whisky is in some users' collections. If you continue with the deletion, it will also be removed from user collections. Are you sure you want to proceed?",
+    "whiskyNotFound": "Whisky to update not found",
+    "csvColumnsError": "Required columns are missing",
+    "csvInvalidAlcohol": "Invalid alcohol percentage",
+    "csvDataError": "Data format error",
+    "csvNoValidWhiskies": "No valid whiskies found to import",
+    "csvImportConfirm": "whiskies will be imported. errors will be ignored. Do you want to continue?"
+  },
+  "seo": {
+    "default": {
+      "title": "WhiskyVerse - Whisky Enthusiasts Community",
+      "description": "The meeting point for whisky lovers. Build your collection, join events, and explore the world of whisky.",
+      "keywords": "whisky, collection, community, events, tasting"
     },
-    "groupForm": {
-      "createTitle": "Create New Group",
-      "editTitle": "Edit Group",
-      "labels": {
-        "groupName": "Group Name",
-        "description": "Description",
-        "category": "Category",
-        "privacy": "Privacy",
-        "maxMembers": "Maximum Members"
-      },
-      "placeholders": {
-        "groupName": "Enter group name",
-        "description": "Brief description about the group"
-      },
-      "categories": {
-        "select": "Select category",
-        "whiskyTasting": "Whisky Tasting",
-        "social": "Social",
-        "educational": "Educational",
-        "competition": "Competition"
-      },
-      "privacy": {
-        "public": "Public",
-        "membersOnly": "Members Only",
-        "private": "Private"
-      },
-      "buttons": {
-        "createGroup": "Create Group",
-        "updateGroup": "Update Group",
-        "cancel": "Cancel"
-      }
+    "home": {
+      "title": "Home - WhiskyVerse",
+      "description": "Welcome to WhiskyVerse! Build your whisky collection and share it with our community.",
+      "keywords": "home, whisky community, whisky collection"
     },
-    "eventManagement": {
-      "title": "Event Management",
-      "description": "Manage community events",
-      "eventsLoaded": "events loaded",
-      "loadingError": "Events not loading...",
-      "noEvents": {
-        "title": "No events yet",
-        "description": "Click 'New Event' button to create the first event"
-      },
-      "statusTypes": {
-        "upcoming": "Upcoming",
-        "ongoing": "Ongoing",
-        "completed": "Completed",
-        "cancelled": "Cancelled"
-      },
-      "participantCount": "participants",
-      "free": "Free"
+    "whiskies": {
+      "title": "Whisky Catalog - WhiskyVerse",
+      "description": "Explore our extensive whisky catalog. Browse single malt, blended, and other whisky types.",
+      "keywords": "whisky catalog, single malt, blended, whisky database"
     },
-    "eventForm": {
-      "createTitle": "Create New Event",
-      "editTitle": "Edit Event",
-      "labels": {
-        "eventTitle": "Event Title",
-        "description": "Description",
-        "eventType": "Event Type",
-        "linkedGroup": "Linked Group",
-        "startDate": "Start Date",
-        "endDate": "End Date",
-        "location": "Location",
-        "maxParticipants": "Max Participants"
-      },
-      "placeholders": {
-        "eventTitle": "Enter event title",
-        "description": "Brief description about the event"
-      },
-      "eventTypes": {
-        "select": "Select type",
-        "tasting": "Tasting",
-        "workshop": "Workshop",
-        "meetup": "Meetup",
-        "competition": "Competition"
-      },
-      "groupSelect": {
-        "optional": "Select group (optional)"
-      },
-      "buttons": {
-        "createEvent": "Create Event",
-        "updateEvent": "Update Event",
-        "cancel": "Cancel"
-      }
+    "collection": {
+      "title": "My Collection - WhiskyVerse",
+      "description": "Manage and organize your personal whisky collection.",
+      "keywords": "whisky collection, personal collection, whisky collection"
     },
-    "userManagement": {
-      "editUser": {
-        "title": "Edit User",
-        "roles": {
-          "user": "User",
-          "vip": "VIP Member",
-          "admin": "Admin"
-        },
-        "languages": {
-          "turkish": "Turkish",
-          "english": "English",
-          "russian": "Russian"
-        }
-      },
-      "createAdmin": {
-        "title": "Add Admin User",
-        "placeholder": "Admin User",
-        "passwordLabel": "Password (Optional)",
-        "passwordPlaceholder": "Default: Admin123! if left blank",
-        "createButton": "Create"
-      },
-      "createUser": {
-        "title": "Add New User",
-        "labels": {
-          "username": "Username",
-          "email": "Email",
-          "fullName": "Full Name",
-          "role": "Role",
-          "language": "Language",
-          "password": "Password",
-          "confirmPassword": "Confirm Password"
-        },
-        "placeholders": {
-          "username": "Username",
-          "confirmPassword": "Re-enter password"
-        },
-        "roles": {
-          "user": "User",
-          "vip": "VIP",
-          "admin": "Admin"
-        },
-        "languages": {
-          "turkish": "Turkish",
-          "english": "English",
-          "russian": "Russian"
-        }
-      }
+    "events": {
+      "title": "Events - WhiskyVerse",
+      "description": "Join whisky tasting events and meet with the community.",
+      "keywords": "whisky events, tasting, whisky events, tasting"
     },
-    "toasts": {
-      "errors": {
-        "whiskiesLoadError": "Could not load whiskies: ",
-        "eventsTableNotCreated": "Events table not yet created",
-        "nameFieldEmpty": "Name field cannot be empty",
-        "passwordsMismatch": "Passwords do not match",
-        "passwordTooShort": "Password must be at least 6 characters",
-        "whiskyNotFound": "Whisky to update not found",
-        "groupUpdateError": "Error updating group: ",
-        "groupIdNotFound": "Group ID not found",
-        "eventCreateError": "Error creating event: ",
-        "eventUpdateError": "Error updating event: ",
-        "eventIdNotFound": "Event ID not found",
-        "missingColumns": "Missing required columns: ",
-        "invalidAlcoholPercentage": "Invalid alcohol percentage",
-        "dataFormatError": "Data format error",
-        "noValidWhiskies": "No valid whiskies to import",
-        "importErrors": "errors will be ignored"
-      },
-      "confirmations": {
-        "deleteUser": "Are you sure you want to delete user {{email}}? This action cannot be undone.",
-        "deleteWhisky": "Are you sure you want to delete whisky '{{name}}'? This action cannot be undone.",
-        "whiskyInCollections": "This whisky is in some users' collections. If you proceed with deletion, it will be removed from user collections too. Are you sure you want to continue?",
-        "deleteBulkWhiskies": "Are you sure you want to delete {{count}} whiskies? This action cannot be undone.",
-        "deleteGroup": "Are you sure you want to delete group '{{name}}'? All members and events will also be deleted. This action cannot be undone.",
-        "deleteEvent": "Are you sure you want to delete event '{{title}}'? All participants will also be deleted. This action cannot be undone.",
-        "importWhiskies": "{{count}} whiskies will be imported.{{errors}} Do you want to continue?"
-      }
+    "profile": {
+      "title": "Profile - WhiskyVerse",
+      "description": "Manage your user profile and edit your settings.",
+      "keywords": "profile, user, settings, profile"
     }
-  }
+  },
+  "themeVideoBackground": "Theme Video Background",
+  "usingDefaultBackground": "Using Default Background"
 }

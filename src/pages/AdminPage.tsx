@@ -2772,7 +2772,7 @@ export function AdminPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                      Renk
+                      {t('adminPage.whiskyForm.labels.color')}
                     </label>
                     <input
                       type="text"
@@ -2785,7 +2785,7 @@ export function AdminPage() {
 
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                      Koku
+                      {t('adminPage.whiskyForm.labels.aroma')}
                     </label>
                     <textarea
                       value={whiskyForm.aroma}
@@ -2873,7 +2873,7 @@ export function AdminPage() {
                               />
                               <div className="flex-1">
                                 <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                  Mevcut resim URL
+                                 {t('adminPage.whiskyForm.labels.currentImage')}: {whiskyForm.name}
                                 </p>
                                 <p className="text-xs text-slate-500 dark:text-slate-400 break-all">
                                   {whiskyForm.image_url.substring(0, 50)}...
@@ -2906,7 +2906,7 @@ export function AdminPage() {
                         </button>
                         
                         <div className="text-center text-sm text-slate-500 dark:text-slate-400 py-3">
-                          veya
+                          {t('adminPage.whiskyForm.labels.or')}
                         </div>
                       </div>
                       
@@ -2928,7 +2928,7 @@ export function AdminPage() {
 
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                      Veya Resim URL
+                      {t('adminPage.whiskyForm.labels.imageUrl')}
                     </label>
                     <input
                       type="url"
@@ -2958,7 +2958,8 @@ export function AdminPage() {
                         finish: '',
                         description: '',
                         image_url: '',
-                        selectedImageFile: null
+                        selectedImageFile: null,
+                        language_code: "tr"
                       })
                     }}
                     className="flex-1 px-4 py-2 bg-slate-500/20 hover:bg-slate-500/30 text-slate-600 dark:text-slate-400 rounded-lg transition-colors"
@@ -3009,7 +3010,7 @@ export function AdminPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                      Tip *
+                      {t('adminPage.whiskyForm.labels.type')} *
                     </label>
                     <input
                       type="text"
@@ -3082,7 +3083,7 @@ export function AdminPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                      Puanlama (1-100)
+                     {t('adminPage.whiskyForm.labels.score')}
                     </label>
                     <input
                       type="number"
@@ -3113,7 +3114,7 @@ export function AdminPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                      Renk
+                     {t('adminPage.whiskyForm.labels.color')}
                     </label>
                     <input
                       type="text"
@@ -3126,7 +3127,7 @@ export function AdminPage() {
 
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                      Koku
+                     {t('adminPage.whiskyForm.labels.aroma')}
                     </label>
                     <textarea
                       value={whiskyForm.aroma}
@@ -3214,7 +3215,7 @@ export function AdminPage() {
                               />
                               <div className="flex-1">
                                 <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                  Mevcut resim
+                                  {t('adminPage.whiskyForm.labels.currentImage')}: {whiskyForm.name}
                                 </p>
                                 <p className="text-xs text-slate-500 dark:text-slate-400 break-all">
                                   {whiskyForm.image_url.length > 50 ? whiskyForm.image_url.substring(0, 50) + '...' : whiskyForm.image_url}
@@ -3247,7 +3248,7 @@ export function AdminPage() {
                         </button>
                         
                         <div className="text-center text-sm text-slate-500 dark:text-slate-400 py-3">
-                          veya
+                          { t('adminPage.whiskyForm.labels.or')}
                         </div>
                       </div>
                       
@@ -3269,7 +3270,7 @@ export function AdminPage() {
 
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                      Veya Resim URL
+                      {t('adminPage.whiskyForm.labels.imageUrl')}
                     </label>
                     <input
                       type="url"
@@ -3449,7 +3450,7 @@ export function AdminPage() {
 
                     {/* Metadata */}
                     <div className="bg-white/50 dark:bg-slate-700/50 rounded-xl p-4">
-                      <h4 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">Sistem Bilgileri</h4>
+                      <h4 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">{t('adminPage.whiskyDetails.labels.metadata')}</h4>
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
                           <span className="text-slate-600 dark:text-slate-400">{t('adminPage.whiskyDetails.labels.createdDate')}:</span>
@@ -3501,7 +3502,7 @@ export function AdminPage() {
                     onClick={() => setViewingWhisky(null)}
                     className="flex-1 px-4 py-2 bg-slate-500/20 hover:bg-slate-500/30 text-slate-600 dark:text-slate-400 rounded-lg transition-colors"
                   >
-                    Kapat
+                    {t('adminPage.whiskyDetails.buttons.close')}
                   </button>
                 </div>
               </motion.div>
@@ -3532,14 +3533,14 @@ export function AdminPage() {
                   title={t('admin.refreshGroups')}
                 >
                   <Search className="w-4 h-4" />
-                  Yenile
+                  {t('admin.refresh')}
                 </button>
                 <button
                   onClick={() => setIsCreatingGroup(true)}
                   className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-lg transition-all duration-200"
                 >
                   <Plus className="w-4 h-4" />
-                  Yeni Grup
+                  {t('adminPage.groupManagement.buttons.createGroup')}
                 </button>
               </div>
             </div>
@@ -3596,7 +3597,7 @@ export function AdminPage() {
                           <button
                             onClick={() => handleDeleteGroup(group.id, group.name)}
                             className="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                            title="Grubu Sil"
+                            title="{t('admin.deleteGroup')}"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -3672,10 +3673,10 @@ export function AdminPage() {
                           >
                             <option value="">{t('adminPage.groupManagement.options.selectCategory')}</option>
                             <option value="whisky_tasting">{t('adminPage.groupManagement.options.whiskyTasting')}</option>
-                            <option value="social">Sosyal</option>
+                            <option value="social">{t('adminPage.groupManagement.options.social')}</option>
                             <option value="educational">{t('adminPage.groupManagement.options.educational')}</option>
                             <option value="competition">{t('adminPage.groupManagement.options.competition')}</option>
-                            <option value="networking">Networking</option>
+                            <option value="networking">{t('adminPage.groupManagement.options.networking')}</option>
                           </select>
                         </div>
 
@@ -3787,10 +3788,10 @@ export function AdminPage() {
                           >
                             <option value="">{t('adminPage.groupManagement.options.selectCategory')}</option>
                             <option value="whisky_tasting">{t('adminPage.groupManagement.options.whiskyTasting')}</option>
-                            <option value="social">Sosyal</option>
+                            <option value="social">{t('adminPage.groupManagement.options.social')}</option>
                             <option value="educational">{t('adminPage.groupManagement.options.educational')}</option>
                             <option value="competition">{t('adminPage.groupManagement.options.competition')}</option>
-                            <option value="networking">Networking</option>
+                            <option value="networking">{t('adminPage.groupManagement.options.networking')}</option>
                           </select>
                         </div>
 
@@ -3825,7 +3826,7 @@ export function AdminPage() {
                           onClick={handleSaveGroup}
                           className="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white py-2 px-4 rounded-lg transition-all duration-200"
                         >
-                          Kaydet
+                          {t('admin.saveChanges')}
                         </button>
                         <button
                           onClick={() => setEditingGroup(null)}
@@ -3865,14 +3866,14 @@ export function AdminPage() {
                   title={t('admin.refreshEvents')}
                 >
                   <Search className="w-4 h-4" />
-                  Yenile
+                  {t('admin.refresh')}
                 </button>
                 <button
                   onClick={() => setIsCreatingEvent(true)}
                   className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-lg transition-all duration-200"
                 >
                   <Plus className="w-4 h-4" />
-                  Yeni Etkinlik
+                  {t('adminPage.eventManagement.buttons.createEvent')}
                 </button>
               </div>
             </div>
@@ -3886,13 +3887,13 @@ export function AdminPage() {
                     <div className="h-4 bg-slate-300 dark:bg-slate-600 rounded w-32 mx-auto mb-2"></div>
                     <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-48 mx-auto"></div>
                   </div>
-                  <p className="text-slate-500 mt-4">Etkinlikler yüklenmeyor...</p>
+                  <p className="text-slate-500 mt-4">{t('admin.loadingEvents')}</p>
                 </div>
               ) : events.length === 0 ? (
                 <div className="text-center py-8">
                   <CalendarDays className="w-16 h-16 mx-auto mb-4 text-slate-400" />
-                  <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400 mb-2">Henüz etkinlik yok</h3>
-                  <p className="text-slate-500">İlk etkinliği oluşturmak için "Yeni Etkinlik" butonuna tıklayın</p>
+                  <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400 mb-2">{t('adminPage.eventManagement.noEvents')}</h3>
+                  <p className="text-slate-500">{t('adminPage.eventManagement.noEventsDescription')}</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -3908,16 +3909,16 @@ export function AdminPage() {
                               event.status === 'completed' ? 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400' :
                               'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
                             }`}>
-                              {event.status === 'upcoming' ? 'Yaklaşan' :
-                               event.status === 'ongoing' ? 'Devam Ediyor' :
-                               event.status === 'completed' ? 'Tamamlandı' : 'İptal'}
+                              {event.status === 'upcoming' ? t("adminPage.eventManagement.status.upcoming") :
+                               event.status === 'ongoing' ? t("adminPage.eventManagement.status.ongoing") :
+                               event.status === 'completed' ? t("adminPage.eventManagement.status.completed") : t("adminPage.eventManagement.status.cancelled")}
                             </span>
                           </div>
                           <p className="text-slate-600 dark:text-slate-400 mb-2">{event.description}</p>
                           <div className="flex items-center gap-4 text-sm text-slate-500">
                             <span>📅 {new Date(event.start_date).toLocaleDateString('tr-TR')}</span>
-                            <span>📊 {event.participant_count} katılımcı</span>
-                            <span>💰 Ücretsiz</span>
+                            <span>📊 {event.participant_count} {t('adminPage.eventManagement.participants')}</span>
+                            <span>💰 {t('adminPage.eventManagement.free')}</span>
                             {event.group_name && <span>👥 {event.group_name}</span>}
                           </div>
                         </div>
@@ -3955,7 +3956,7 @@ export function AdminPage() {
                     className="glass-strong rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
                   >
                     <div className="flex items-center justify-between mb-6">
-                      <h3 className="text-xl font-bold text-slate-800 dark:text-white">Yeni Etkinlik Oluştur</h3>
+                      <h3 className="text-xl font-bold text-slate-800 dark:text-white">{t('adminPage.eventManagement.createEvent')}</h3>
                       <button
                         onClick={() => {
                           setIsCreatingEvent(false)
@@ -3983,7 +3984,7 @@ export function AdminPage() {
 
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Etkinlik Başlığı *</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('adminPage.eventManagement.labels.eventTitle')} *</label>
                         <input
                           type="text"
                           value={eventForm.title}
@@ -3994,7 +3995,7 @@ export function AdminPage() {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Açıklama</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('adminPage.eventManagement.labels.description')}</label>
                         <textarea
                           value={eventForm.description}
                           onChange={(e) => setEventForm(prev => ({ ...prev, description: e.target.value }))}
@@ -4006,29 +4007,29 @@ export function AdminPage() {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Etkinlik Türü</label>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('adminPage.eventManagement.labels.eventType')}</label>
                           <select
                             value={eventForm.event_type}
                             onChange={(e) => setEventForm(prev => ({ ...prev, event_type: e.target.value }))}
                             className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
                           >
-                            <option value="">Tür seçin</option>
-                            <option value="tasting">Tadım</option>
-                            <option value="workshop">Workshop</option>
-                            <option value="meetup">Buluşma</option>
+                            <option value="">{t('adminPage.eventManagement.placeholders.eventType')}</option>
+                            <option value="tasting">{t('adminPage.eventManagement.options.tasting')}</option>
+                            <option value="workshop">{t('adminPage.eventManagement.options.workshop')}</option>
+                            <option value="meetup">{t('adminPage.eventManagement.options.meetup')}</option>
                             <option value="competition">{t('adminPage.groupManagement.options.competition')}</option>
-                            <option value="seminar">Seminer</option>
+                            <option value="seminar">{t('adminPage.eventManagement.options.seminar')}</option>
                           </select>
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Bağlı Grup</label>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('adminPage.eventManagement.labels.group')}</label>
                           <select
                             value={eventForm.group_id}
                             onChange={(e) => setEventForm(prev => ({ ...prev, group_id: e.target.value }))}
                             className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
                           >
-                            <option value="">Grup seçin (opsiyonel)</option>
+                            <option value="">{t('adminPage.eventManagement.placeholders.group')}</option>
                             {groups.map(group => (
                               <option key={group.id} value={group.id}>{group.name}</option>
                             ))}
@@ -4038,7 +4039,7 @@ export function AdminPage() {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Başlangıç Tarihi *</label>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('adminPage.eventManagement.labels.startDate')} *</label>
                           <input
                             type="datetime-local"
                             value={eventForm.start_date}
@@ -4048,7 +4049,7 @@ export function AdminPage() {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Bitiş Tarihi</label>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('adminPage.eventManagement.labels.endDate')}</label>
                           <input
                             type="datetime-local"
                             value={eventForm.end_date}
@@ -4060,7 +4061,7 @@ export function AdminPage() {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Konum</label>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('adminPage.eventManagement.labels.location')}</label>
                           <input
                             type="text"
                             value={eventForm.location}
@@ -4071,7 +4072,7 @@ export function AdminPage() {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Online Link</label>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('adminPage.eventManagement.labels.virtualLink')}</label>
                           <input
                             type="url"
                             value={eventForm.virtual_link}
@@ -4084,7 +4085,7 @@ export function AdminPage() {
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Max Katılımcı</label>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('adminPage.eventManagement.labels.maxParticipants')}</label>
                           <input
                             type="number"
                             min="1"
@@ -4103,7 +4104,7 @@ export function AdminPage() {
                           onClick={handleCreateEvent}
                           className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white py-2 px-4 rounded-lg transition-all duration-200"
                         >
-                          Etkinlik Oluştur
+                          {t('adminPage.eventManagement.buttons.createEvent')}
                         </button>
                         <button
                           onClick={() => {
@@ -4157,7 +4158,7 @@ export function AdminPage() {
 
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Etkinlik Başlığı *</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('adminPage.eventManagement.labels.title')} *</label>
                         <input
                           type="text"
                           value={eventForm.title}
@@ -4167,7 +4168,7 @@ export function AdminPage() {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Açıklama</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('adminPage.eventManagement.labels.description')}</label>
                         <textarea
                           value={eventForm.description}
                           onChange={(e) => setEventForm(prev => ({ ...prev, description: e.target.value }))}
@@ -4178,29 +4179,29 @@ export function AdminPage() {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Etkinlik Türü</label>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('adminPage.eventManagement.labels.eventType')}</label>
                           <select
                             value={eventForm.event_type}
                             onChange={(e) => setEventForm(prev => ({ ...prev, event_type: e.target.value }))}
                             className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
                           >
-                            <option value="">Tür seçin</option>
-                            <option value="tasting">Tadım</option>
-                            <option value="workshop">Workshop</option>
-                            <option value="meetup">Buluşma</option>
+                            <option value="">{t('adminPage.eventManagement.placeholders.eventType')}</option>
+                            <option value="tasting">{t('adminPage.eventManagement.options.tasting')}</option>
+                            <option value="workshop">{t('adminPage.eventManagement.options.workshop')}</option>
+                            <option value="meetup">{t('adminPage.eventManagement.options.meetup')}</option>
                             <option value="competition">{t('adminPage.groupManagement.options.competition')}</option>
-                            <option value="seminar">Seminer</option>
+                            <option value="seminar">{t('adminPage.eventManagement.options.seminar')}</option>
                           </select>
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Bağlı Grup</label>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('adminPage.eventManagement.labels.group')}</label>
                           <select
                             value={eventForm.group_id}
                             onChange={(e) => setEventForm(prev => ({ ...prev, group_id: e.target.value }))}
                             className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
                           >
-                            <option value="">Grup seçin (opsiyonel)</option>
+                            <option value="">{t('adminPage.eventManagement.placeholders.group')}</option>
                             {groups.map(group => (
                               <option key={group.id} value={group.id}>{group.name}</option>
                             ))}
@@ -4210,7 +4211,7 @@ export function AdminPage() {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Başlangıç Tarihi *</label>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('adminPage.eventManagement.labels.startDate')} *</label>
                           <input
                             type="datetime-local"
                             value={eventForm.start_date}
@@ -4220,7 +4221,7 @@ export function AdminPage() {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Bitiş Tarihi</label>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('adminPage.eventManagement.labels.endDate')}</label>
                           <input
                             type="datetime-local"
                             value={eventForm.end_date}
@@ -4242,7 +4243,7 @@ export function AdminPage() {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Online Link</label>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('adminPage.eventManagement.labels.virtualLink')}</label>
                           <input
                             type="url"
                             value={eventForm.virtual_link}
@@ -4254,7 +4255,7 @@ export function AdminPage() {
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Max Katılımcı</label>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('adminPage.eventManagement.labels.maxParticipants')}</label>
                           <input
                             type="number"
                             min="1"
@@ -4273,7 +4274,7 @@ export function AdminPage() {
                           onClick={handleSaveEvent}
                           className="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white py-2 px-4 rounded-lg transition-all duration-200"
                         >
-                          Kaydet
+                          {t('admin.saveChanges')}
                         </button>
                         <button
                           onClick={() => setEditingEvent(null)}

@@ -395,14 +395,14 @@ export function BackgroundManager() {
         <div className="flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
           <div className="text-sm text-blue-800 dark:text-blue-200">
-            <h4 className="font-semibold mb-2">Kullanım Önerileri:</h4>
+            <h4 className="font-semibold mb-2">{t('admin.usageGuidelines')}</h4>
             <ul className="space-y-1 list-disc list-inside">
-              <li><strong>Resim:</strong> Maksimum 5MB, 1920x1080+ çözünürlük önerilir</li>
-              <li><strong>Video:</strong> Maksimum 50MB, MP4 formatı önerilir, kısa döngüler tercih edilir</li>
-              <li>Arka plan medyaları site performansını etkileyebilir</li>
-              <li>Açık ve koyu tema için farklı resim/video yükleyebilirsiniz</li>
-              <li>Video arka planlar otomatik olarak sessiz ve döngülü oynatılır</li>
-              <li>Medya kaldırıldığında varsayılan grid arka plan gösterilir</li>
+              <li><strong>{t('admin.usageGuidelines.image')}</strong> {t('admin.usageGuidelines.imageDescription')}</li>
+              <li><strong>{t('admin.usageGuidelines.video')}</strong> {t('admin.usageGuidelines.videoDescription')}</li>
+              <li>{t('admin.usageGuidelines.backgroundMediaImpact')}</li>
+              <li>{t('admin.usageGuidelines.themeImages')}</li>
+              <li>{t('admin.usageGuidelines.videoPlayback')}</li>
+              <li>{t('admin.usageGuidelines.defaultBackground')}</li>
             </ul>
           </div>
         </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
-import { Calendar, AlertTriangle, CheckCircle, X } from 'lucide-react'
+import { AlertTriangle, CheckCircle, X } from 'lucide-react'
 
 interface AgeVerificationProps {
   onVerified: () => void
@@ -10,8 +10,6 @@ interface AgeVerificationProps {
 export function AgeVerification({ onVerified }: AgeVerificationProps) {
   const { t, i18n } = useTranslation()
   const [isVisible, setIsVisible] = useState(false)
-  const [birthDate, setBirthDate] = useState('')
-  const [error, setError] = useState('')
   const [isValidating, setIsValidating] = useState(false)
 
   // Check if user already verified age (stored in localStorage)
@@ -35,43 +33,17 @@ export function AgeVerification({ onVerified }: AgeVerificationProps) {
     setIsVisible(true)
   }, [onVerified])
 
-  const calculateAge = (birthDate: string): number => {
-    const birth = new Date(birthDate)
-    const today = new Date()
-    let age = today.getFullYear() - birth.getFullYear()
-    const monthDiff = today.getMonth() - birth.getMonth()
-    
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-      age--
-    }
-    
-    return age
-  }
-
-  const handleVerification = () => {
-    if (!birthDate) {
-      setError(t('ageVerification.pleaseEnterBirthDate'))
-      return
-    }
-
+  const handleConfirmAge = () => {
     setIsValidating(true)
-    setError('')
 
     // Simulate validation delay
     setTimeout(() => {
-      const age = calculateAge(birthDate)
-      
-      if (age >= 18) {
-        // Store verification in localStorage
-        localStorage.setItem('whiskyverse_age_verified', 'true')
-        localStorage.setItem('whiskyverse_age_verification_date', Date.now().toString())
-        
-        setIsVisible(false)
-        setTimeout(() => onVerified(), 300)
-      } else {
-        setError(t('ageVerification.mustBe18OrOlder'))
-      }
-      
+      // Store verification in localStorage
+      localStorage.setItem('whiskyverse_age_verified', 'true')
+      localStorage.setItem('whiskyverse_age_verification_date', Date.now().toString())
+
+      setIsVisible(false)
+      setTimeout(() => onVerified(), 300)
       setIsValidating(false)
     }, 1000)
   }
@@ -113,38 +85,11 @@ export function AgeVerification({ onVerified }: AgeVerificationProps) {
               </p>
             </div>
 
-            {/* Birth Date Input */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                <Calendar className="w-4 h-4 inline mr-2" />
-                {t('ageVerification.enterBirthDate')}
-              </label>
-              <input
-                type="date"
-                value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
-                max={new Date().toISOString().split('T')[0]}
-                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
-                placeholder={t('ageVerification.selectBirthDate')}
-              />
-              
-              {error && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-2 text-red-400 text-sm flex items-center gap-1"
-                >
-                  <X className="w-4 h-4" />
-                  {error}
-                </motion.div>
-              )}
-            </div>
-
             {/* Action Buttons */}
             <div className="space-y-3">
               <button
-                onClick={handleVerification}
-                disabled={isValidating || !birthDate}
+                onClick={handleConfirmAge}
+                disabled={isValidating}
                 className="w-full px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg hover:shadow-emerald-500/25"
               >
                 {isValidating ? (
@@ -152,7 +97,7 @@ export function AgeVerification({ onVerified }: AgeVerificationProps) {
                 ) : (
                   <CheckCircle className="w-5 h-5" />
                 )}
-                {isValidating 
+                {isValidating
                   ? t('ageVerification.verifying')
                   : t('ageVerification.iam18OrOlder')
                 }
@@ -163,7 +108,7 @@ export function AgeVerification({ onVerified }: AgeVerificationProps) {
                 className="w-full px-6 py-3 bg-slate-600/50 hover:bg-slate-600/70 text-slate-300 hover:text-white font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
               >
                 <X className="w-5 h-5" />
-{t('ageVerification.iAmUnder18')}
+                {t('ageVerification.iAmUnder18')}
               </button>
             </div>
 
