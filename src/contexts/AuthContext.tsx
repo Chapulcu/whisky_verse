@@ -146,10 +146,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         if (error) {
           console.error('Error getting session:', error.message)
-          // Retry once for HMR issues
-          if (!isRetry && import.meta.env.DEV) {
-            console.log('🔄 Retrying session recovery after HMR...')
-            sessionCheckTimeout = setTimeout(() => getInitialSession(true), 500)
+          // Retry logic for both development and production
+          if (!isRetry) {
+            console.log('🔄 Retrying session recovery...')
+            sessionCheckTimeout = setTimeout(() => getInitialSession(true), import.meta.env.DEV ? 500 : 2000)
             return
           }
           setLoading(false)
