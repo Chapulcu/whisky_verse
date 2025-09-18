@@ -186,7 +186,6 @@ export function AdminPage() {
     finish: string
     description: string
     image_url: string
-    language_code: 'tr' | 'en'
     selectedImageFile: File | null
   }>({
     name: '',
@@ -202,7 +201,6 @@ export function AdminPage() {
     finish: '',
     description: '',
     image_url: '',
-    language_code: 'tr',
     selectedImageFile: null
   })
 
@@ -703,53 +701,91 @@ export function AdminPage() {
   }
 
   const handleCreateWhisky = async () => {
+    console.log('🚀 handleCreateWhisky started', { whiskyForm })
+
     const validationErrors = validateWhiskyForm()
     if (validationErrors.length > 0) {
+      console.log('❌ Validation errors:', validationErrors)
       toast.error('Form hatası: ' + validationErrors.join(', '))
       return
     }
 
+    console.log('✅ Validation passed, starting creation...')
     setIsWhiskyLoading(true)
     try {
       let imageUrl = whiskyForm.image_url.trim() || null
-      
+      console.log('🖼️ Image URL from form:', imageUrl)
+
       // Upload image if a file is selected
       if (whiskyForm.selectedImageFile) {
-        setUploadingImage(true)
-        try {
-          const uploadResult = await uploadWhiskyImage(whiskyForm.selectedImageFile)
-          imageUrl = uploadResult.publicUrl
-        } catch (uploadError: any) {
-          toast.error(t('admin.imageUploadError') + ': ' + (uploadError.message || 'Unknown error'))
-          setUploadingImage(false)
-          return
-        }
-        setUploadingImage(false)
+        console.log('📁 File selected for upload:', whiskyForm.selectedImageFile.name)
+        console.log('⚠️ GEÇICI: Image upload Edge Function çalışmıyor, atlıyoruz...')
+        // TODO: Fix Edge Function upload işlemi
+        imageUrl = null // Geçici olarak null
+      } else {
+        console.log('🚫 No file selected, using URL or null')
       }
 
-      const { data, error } = await supabase
+      console.log('📊 Inserting whisky data...')
+      const insertData = {
+        name: whiskyForm.name.trim(),
+        type: whiskyForm.type.trim(),
+        country: whiskyForm.country.trim(),
+        region: whiskyForm.region.trim() || null,
+        alcohol_percentage: parseNumber(whiskyForm.alcohol_percentage) || 40,
+        rating: parseNumber(whiskyForm.rating),
+        age_years: parsePositiveInteger(whiskyForm.age_years),
+        color: whiskyForm.color.trim() || null,
+        aroma: whiskyForm.aroma.trim() || null,
+        taste: whiskyForm.taste.trim() || null,
+        finish: whiskyForm.finish.trim() || null,
+        description: whiskyForm.description.trim() || null,
+        image_url: imageUrl,
+        created_by: user?.id
+      }
+      console.log('📝 Insert data:', insertData)
+      console.log('👤 Current user:', user?.id)
+
+      // Test database connection first
+      console.log('🔌 Testing database connection...')
+      try {
+        const connectionTest = await supabase.from('whiskies').select('count').limit(1)
+        console.log('✅ Database connection OK:', connectionTest)
+      } catch (connError) {
+        console.error('❌ Database connection failed:', connError)
+        throw new Error('Database connection failed')
+      }
+
+      console.log('🔄 Calling supabase.from(whiskies).insert()...')
+
+      // Add timeout to detect hanging requests
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Database request timeout (10s)')), 10000)
+      })
+
+      const insertPromise = supabase
         .from('whiskies')
-        .insert({
-          name: whiskyForm.name.trim(),
-          type: whiskyForm.type.trim(),
-          country: whiskyForm.country.trim(),
-          region: whiskyForm.region.trim() || null,
-          alcohol_percentage: parseNumber(whiskyForm.alcohol_percentage) || 40,
-          rating: parseNumber(whiskyForm.rating),
-          age_years: parsePositiveInteger(whiskyForm.age_years),
-          color: whiskyForm.color.trim() || null,
-          aroma: whiskyForm.aroma.trim() || null,
-          taste: whiskyForm.taste.trim() || null,
-          finish: whiskyForm.finish.trim() || null,
-          description: whiskyForm.description.trim() || null,
-          image_url: imageUrl,
-          created_by: user?.id
-        })
+        .insert(insertData)
         .select()
         .single()
 
-      if (error) throw error
+      const response = await Promise.race([insertPromise, timeoutPromise]) as any
 
+      console.log('📡 Supabase response:', response)
+      const { data, error } = response
+
+      if (error) {
+        console.error('💥 Supabase error:', error)
+        console.error('💥 Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        })
+        throw error
+      }
+
+      console.log('✅ Whisky created successfully:', data)
       setIsCreatingWhisky(false)
       setWhiskyForm({
         name: '',
@@ -765,7 +801,6 @@ export function AdminPage() {
         finish: '',
         description: '',
         image_url: '',
-        language_code: 'tr',
         selectedImageFile: null
       })
       await loadWhiskies()
@@ -794,7 +829,6 @@ export function AdminPage() {
       finish: whisky.finish || '',
       description: whisky.description || '',
       image_url: whisky.image_url || '',
-      language_code: 'tr', // Default language for editing
       selectedImageFile: null
     })
   }
@@ -819,19 +853,10 @@ export function AdminPage() {
     try {
       let imageUrl = whiskyForm.image_url.trim() || null
       
-      // Upload new image if a file is selected
+      // GEÇICI: Image upload Edge Function çalışmıyor
       if (whiskyForm.selectedImageFile) {
-        setUploadingImage(true)
-        try {
-          const uploadResult = await uploadWhiskyImage(whiskyForm.selectedImageFile)
-          imageUrl = uploadResult.publicUrl
-        } catch (uploadError: any) {
-          console.error('Image upload error:', uploadError)
-          toast.error(t('admin.imageUploadError') + ': ' + (uploadError.message || 'Unknown error'))
-          setUploadingImage(false)
-          return
-        }
-        setUploadingImage(false)
+        console.warn('⚠️ Image upload geçici olarak devre dışı - Edge Function problemi')
+        imageUrl = null
       }
 
       const updateData = {
@@ -878,7 +903,6 @@ export function AdminPage() {
         finish: '',
         description: '',
         image_url: '',
-        language_code: 'tr',
         selectedImageFile: null
       })
       
@@ -2885,19 +2909,6 @@ export function AdminPage() {
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                      Dil / Language *
-                    </label>
-                    <select
-                      value={whiskyForm.language_code}
-                      onChange={(e) => setWhiskyForm(prev => ({ ...prev, language_code: e.target.value as 'tr' | 'en' }))}
-                      className="w-full px-4 py-3 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-slate-900 dark:text-white"
-                    >
-                      <option value="tr">{t('adminPage.whiskyForm.options.turkish')}</option>
-                      <option value="en">🇺🇸 English</option>
-                    </select>
-                  </div>
 
                   <div>
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
@@ -3134,8 +3145,7 @@ export function AdminPage() {
                         description: '',
                         image_url: '',
                         selectedImageFile: null,
-                        language_code: "tr"
-                      })
+                                      })
                     }}
                     className="flex-1 px-4 py-2 bg-slate-500/20 hover:bg-slate-500/30 text-slate-600 dark:text-slate-400 rounded-lg transition-colors"
                   >

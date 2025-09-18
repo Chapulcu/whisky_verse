@@ -121,7 +121,8 @@ export function HomePage() {
                   {t('signUp')}
                   <ArrowRight className="w-4 h-4" />
                 </Link>
-                <Link to="/whiskies" className="btn-glass">
+                <Link to="/whiskies" className="btn-secondary flex items-center gap-2 backdrop-blur-md bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg transition-all duration-300 px-6 py-3 text-slate-800 dark:text-white font-medium">
+                  <Wine className="w-4 h-4" />
                   {t('whiskies')}
                 </Link>
               </>
