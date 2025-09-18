@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
-import type { User as SupabaseUser, Session } from '@supabase/supabase-js'
+import type { User as SupabaseUser } from '@supabase/supabase-js'
 
 interface Profile {
   id: string
@@ -19,10 +19,14 @@ interface Profile {
   updated_at: string
 }
 
-interface AuthContextType {
+// Split context into multiple contexts for better performance
+interface AuthState {
   user: SupabaseUser | null
   profile: Profile | null
   loading: boolean
+}
+
+interface AuthActions {
   signIn: (email: string, password: string) => Promise<{ error?: any }>
   signUp: (email: string, password: string, metadata?: { full_name?: string }) => Promise<{ error?: any }>
   signOut: () => Promise<void>
@@ -31,43 +35,27 @@ interface AuthContextType {
   updateProfile: (updates: Partial<Profile>) => Promise<void>
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+const AuthStateContext = createContext<AuthState | undefined>(undefined)
+const AuthActionsContext = createContext<AuthActions | undefined>(undefined)
 
-// Map Supabase auth errors to user-friendly messages
-function mapAuthError(error: any) {
-  const code = error?.code || error?.status || ''
-  const message = (error?.message || '').toLowerCase()
-  if (code === 'invalid_credentials' || message.includes('invalid login credentials')) {
-    return { ...error, message: 'E-posta veya şifre hatalı' }
-  }
-  if (message.includes('email not confirmed') || message.includes('email not confirmed')) {
-    return { ...error, message: 'E-posta doğrulanmamış. Lütfen e-postanızı kontrol edin.' }
-  }
-  if (message.includes('otp') || message.includes('one-time') || message.includes('magic')) {
-    return { ...error, message: 'Tek kullanımlık giriş kodu doğrulanamadı.' }
-  }
-  if (message.includes('rate') || message.includes('too many')) {
-    return { ...error, message: 'Çok fazla deneme yaptınız. Lütfen kısa bir süre sonra tekrar deneyin.' }
-  }
-  if (typeof error === 'string') {
-    return { message: error }
-  }
-  return error
-}
-
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function OptimizedAuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<SupabaseUser | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
-  
-  // Development mode session persistence
   const [isHMRRecovering, setIsHMRRecovering] = useState(false)
+
+  // Memoize the auth state to prevent unnecessary re-renders
+  const authState = useMemo<AuthState>(() => ({
+    user,
+    profile,
+    loading
+  }), [user, profile, loading])
 
   // Load user profile from database
   const loadUserProfile = useCallback(async (userId: string) => {
     try {
       console.log('📝 Loading profile for user ID:', userId)
-      
+
       const { data: profileData, error } = await supabase
         .from('profiles')
         .select('*')
@@ -78,13 +66,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error('❌ Error loading profile:', error.message)
-        
+
         // Check current user email for fallback logic
         const currentUser = await supabase.auth.getUser()
         const userEmail = currentUser.data.user?.email
         console.log('📧 Current user email:', userEmail)
-        
-        // Special handling for admin users - create temp profile for admin or akhantalip
+
+        // Special handling for admin users
         if (userEmail === 'admin@whiskyverse.com' || userEmail === 'akhantalip@gmail.com') {
           console.log('🔑 Creating temporary admin profile for:', userEmail)
           const tempProfile: Profile = {
@@ -118,12 +106,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error) {
       console.error('❌ Exception loading profile:', error)
-      
+
       // Fallback for admin users
       const currentUser = await supabase.auth.getUser()
       const userEmail = currentUser.data.user?.email
       console.log('📧 Fallback: Current user email:', userEmail)
-      
+
       if (userEmail === 'admin@whiskyverse.com' || userEmail === 'akhantalip@gmail.com') {
         console.log('🔑 Creating fallback admin profile for:', userEmail)
         const tempProfile: Profile = {
@@ -158,17 +146,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         if (isRetry) {
           setIsHMRRecovering(true)
-          // Small delay to allow Supabase to stabilize after HMR
           await new Promise(resolve => setTimeout(resolve, 100))
         }
-        
+
         const { data: { session }, error } = await supabase.auth.getSession()
-        
+
         if (!mounted) return
-        
+
         if (error) {
           console.error('Error getting session:', error.message)
-          // Retry logic for both development and production
           if (!isRetry) {
             console.log('🔄 Retrying session recovery...')
             sessionCheckTimeout = setTimeout(() => getInitialSession(true), import.meta.env.DEV ? 500 : 2000)
@@ -186,7 +172,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else if (isRetry) {
           console.log('⚠️ No session after retry - user may be logged out')
         }
-        
+
         setLoading(false)
         setIsHMRRecovering(false)
       } catch (error) {
@@ -204,10 +190,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('🔐 Auth state changed:', event, session?.user?.id)
-        
+
         if (!mounted) return
 
-        // Skip SIGNED_IN events during HMR recovery to avoid double-processing
+        // Skip SIGNED_IN events during HMR recovery
         if (event === 'SIGNED_IN' && isHMRRecovering) {
           console.log('🔄 Skipping SIGNED_IN during HMR recovery')
           return
@@ -220,7 +206,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(null)
           setProfile(null)
         }
-        
+
         setLoading(false)
       }
     )
@@ -232,174 +218,176 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       subscription.unsubscribe()
     }
-  }, [])
+  }, [loadUserProfile])
 
-  // Sign in method
-  const signIn = async (email: string, password: string) => {
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      })
+  // Memoize auth actions to prevent re-renders
+  const authActions = useMemo<AuthActions>(() => ({
+    signIn: async (email: string, password: string) => {
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        })
 
-      if (error) {
-        return { error: mapAuthError(error) }
-      }
-
-      return { data, error: null }
-    } catch (error) {
-      return { error }
-    }
-  }
-
-  // Sign up method
-  const signUp = async (email: string, password: string, metadata?: { full_name?: string }) => {
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: metadata?.full_name || email
-          }
+        if (error) {
+          return { error }
         }
-      })
 
-      if (error) {
-        return { error: mapAuthError(error) }
+        return { data, error: null }
+      } catch (error) {
+        return { error }
+      }
+    },
+
+    signUp: async (email: string, password: string, metadata?: { full_name?: string }) => {
+      try {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              full_name: metadata?.full_name || email
+            }
+          }
+        })
+
+        if (error) {
+          return { error }
+        }
+
+        return { data, error: null }
+      } catch (error) {
+        return { error }
+      }
+    },
+
+    signOut: async () => {
+      console.log('🔥 OptimizedAuthContext: signOut called')
+
+      // Force clear state immediately
+      console.log('🔥 OptimizedAuthContext: Force clearing state immediately')
+      setUser(null)
+      setProfile(null)
+      setLoading(false)
+
+      // Clear storage immediately
+      console.log('🔥 OptimizedAuthContext: Clearing localStorage and sessionStorage')
+      localStorage.clear()
+      sessionStorage.clear()
+
+      try {
+        console.log('🔥 OptimizedAuthContext: Calling supabase.auth.signOut()')
+        supabase.auth.signOut().catch(err => {
+          console.warn('🔥 OptimizedAuthContext: Supabase signOut failed but continuing:', err)
+        })
+      } catch (error) {
+        console.warn('🔥 OptimizedAuthContext: Supabase signOut error, but continuing:', error)
       }
 
-      return { data, error: null }
-    } catch (error) {
-      return { error }
-    }
-  }
+      // Force reload to clear everything
+      console.log('🔥 OptimizedAuthContext: Force reloading page')
+      setTimeout(() => {
+        window.location.href = '/'
+      }, 100)
+    },
 
-  // Sign out method
-  const signOut = async () => {
-    console.log('🔥 AuthContext: signOut called')
-    
-    // Force clear state immediately, regardless of Supabase response
-    console.log('🔥 AuthContext: Force clearing state immediately')
-    setUser(null)
-    setProfile(null)
-    setLoading(false)
-    
-    // Clear storage immediately
-    console.log('🔥 AuthContext: Clearing localStorage and sessionStorage')
-    localStorage.clear()
-    sessionStorage.clear()
-    
-    try {
-      console.log('🔥 AuthContext: Calling supabase.auth.signOut()')
-      // Try to sign out from Supabase but don't wait for it
-      supabase.auth.signOut().catch(err => {
-        console.warn('🔥 AuthContext: Supabase signOut failed but continuing:', err)
-      })
-    } catch (error) {
-      console.warn('🔥 AuthContext: Supabase signOut error, but continuing:', error)
-    }
-    
-    // Force reload to clear everything
-    console.log('🔥 AuthContext: Force reloading page')
-    setTimeout(() => {
-      window.location.href = '/'
-    }, 100)
-  }
+    resetPassword: async (email: string) => {
+      try {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password`
+        })
 
-  // Reset password method
-  const resetPassword = async (email: string) => {
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`
-      })
+        if (error) {
+          return { error }
+        }
 
-      if (error) {
-        return { error: mapAuthError(error) }
+        return { error: null }
+      } catch (error) {
+        return { error }
+      }
+    },
+
+    updatePassword: async (password: string) => {
+      try {
+        const { error } = await supabase.auth.updateUser({ password })
+
+        if (error) {
+          return { error }
+        }
+
+        return { error: null }
+      } catch (error) {
+        return { error }
+      }
+    },
+
+    updateProfile: async (updates: Partial<Profile>) => {
+      if (!user) {
+        throw new Error('No user logged in')
       }
 
-      return { error: null }
-    } catch (error) {
-      return { error }
-    }
-  }
+      try {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ ...updates, updated_at: new Date().toISOString() })
+          .eq('id', user.id)
 
-  // Update password method
-  const updatePassword = async (password: string) => {
-    try {
-      const { error } = await supabase.auth.updateUser({ password })
+        if (error) {
+          console.error('Profile update error:', error)
 
-      if (error) {
-        return { error: mapAuthError(error) }
-      }
+          // For admin user, update local state even if DB update fails
+          if (user.email === 'admin@whiskyverse.com') {
+            console.log('Admin user - updating local profile state only')
+            setProfile(prev => prev ? { ...prev, ...updates } : null)
+            return
+          }
 
-      return { error: null }
-    } catch (error) {
-      return { error }
-    }
-  }
+          throw error
+        }
 
-  // Update profile method
-  const updateProfile = async (updates: Partial<Profile>) => {
-    if (!user) {
-      throw new Error('No user logged in')
-    }
-
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ ...updates, updated_at: new Date().toISOString() })
-        .eq('id', user.id)
-
-      if (error) {
-        console.error('Profile update error:', error)
-        
-        // For admin user, update local state even if DB update fails
+        // Update local state
+        setProfile(prev => prev ? { ...prev, ...updates } : null)
+      } catch (error) {
+        // For admin user, still update local state
         if (user.email === 'admin@whiskyverse.com') {
-          console.log('Admin user - updating local profile state only')
+          console.log('Admin user - fallback to local update only')
           setProfile(prev => prev ? { ...prev, ...updates } : null)
           return
         }
-        
         throw error
       }
-
-      // Update local state
-      setProfile(prev => prev ? { ...prev, ...updates } : null)
-    } catch (error) {
-      // For admin user, still update local state
-      if (user.email === 'admin@whiskyverse.com') {
-        console.log('Admin user - fallback to local update only')
-        setProfile(prev => prev ? { ...prev, ...updates } : null)
-        return
-      }
-      throw error
     }
-  }
-
-  const value: AuthContextType = {
-    user,
-    profile,
-    loading,
-    signIn,
-    signUp,
-    signOut,
-    resetPassword,
-    updatePassword,
-    updateProfile
-  }
+  }), [user])
 
   return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
+    <AuthStateContext.Provider value={authState}>
+      <AuthActionsContext.Provider value={authActions}>
+        {children}
+      </AuthActionsContext.Provider>
+    </AuthStateContext.Provider>
   )
 }
 
-export function useAuth() {
-  const context = useContext(AuthContext)
+// Separate hooks for state and actions to prevent unnecessary re-renders
+export function useAuthState() {
+  const context = useContext(AuthStateContext)
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider')
+    throw new Error('useAuthState must be used within an OptimizedAuthProvider')
   }
   return context
+}
+
+export function useAuthActions() {
+  const context = useContext(AuthActionsContext)
+  if (context === undefined) {
+    throw new Error('useAuthActions must be used within an OptimizedAuthProvider')
+  }
+  return context
+}
+
+// Convenience hook that combines both (use sparingly)
+export function useAuth() {
+  const state = useAuthState()
+  const actions = useAuthActions()
+  return { ...state, ...actions }
 }

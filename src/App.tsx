@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { queryClient } from '@/lib/queryClient'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { AgeVerification } from '@/components/AgeVerification'
@@ -58,8 +60,9 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <Router>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <Router>
           <Routes>
             <Route path="/" element={<Layout />}>
               <Route index element={
@@ -119,8 +122,9 @@ function App() {
               } />
             </Route>
           </Routes>
-        </Router>
-      </AuthProvider>
+          </Router>
+        </AuthProvider>
+      </QueryClientProvider>
     </ErrorBoundary>
   )
 }

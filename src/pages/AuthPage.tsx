@@ -14,6 +14,7 @@ export function AuthPage() {
   const [showForgotPassword, setShowForgotPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -29,6 +30,8 @@ export function AuthPage() {
     }
   }, [searchParams])
 
+  // Only email/password flow, no OTP or social handlers
+
   // Redirect if already logged in
   if (user) {
     return <Navigate to="/" replace />
@@ -41,22 +44,22 @@ export function AuthPage() {
 
   const validateForm = () => {
     if (!formData.email || !formData.password) {
-      toast.error(t('email') + ' ve ' + t('password') + ' gereklidir')
+      toast.error(t('auth.email') + ' ve ' + t('auth.password') + ' gereklidir')
       return false
     }
 
     if (formData.password.length < 6) {
-      toast.error('Şifre en az 6 karakter olmalıdır')
+      toast.error(t('admin.passwordMinLength'))
       return false
     }
 
     if (isSignUp) {
       if (!formData.fullName) {
-        toast.error(t('fullName') + ' gereklidir')
+        toast.error(t('auth.fullName') + ' gereklidir')
         return false
       }
       if (formData.password !== formData.confirmPassword) {
-        toast.error('Şifreler eşleşmiyor')
+        toast.error(t('admin.passwordsMustMatch'))
         return false
       }
     }
@@ -100,7 +103,7 @@ export function AuthPage() {
     setLoading(true)
     try {
       if (isSignUp) {
-        const { error } = await signUp(formData.email, formData.password, formData.fullName)
+        const { error } = await signUp(formData.email, formData.password, { full_name: formData.fullName })
         if (error) {
           throw error
         }
@@ -137,14 +140,14 @@ export function AuthPage() {
               </div>
             </div>
             <h1 className="text-2xl font-cyber font-bold text-gradient mb-2">
-              {showForgotPassword ? 'Şifre Sıfırlama' : isSignUp ? t('signUp') : t('signIn')}
+              {showForgotPassword ? t('auth.resetPasswordTitle') : isSignUp ? t('auth.signUp') : t('auth.signIn')}
             </h1>
             <p className="text-slate-600 dark:text-slate-300">
               {showForgotPassword 
-                ? 'E-posta adresinizi girin, size şifre sıfırlama bağlantısı gönderelim'
+                ? t('auth.resetSubtitle')
                 : isSignUp 
-                  ? 'WhiskyVerse topluluğuna katılın'
-                  : 'Hesabınıza giriş yapın'
+                  ? t('auth.signUpSubtitle')
+                  : t('auth.signInSubtitle')
               }
             </p>
           </div>
@@ -155,7 +158,7 @@ export function AuthPage() {
             {isSignUp && !showForgotPassword && (
               <div className="form-group">
                 <label className="form-label">
-                  {t('fullName')}
+                  {t('auth.fullName')}
                 </label>
                 <div className="relative">
                   <User className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-whiskey-bronze dark:text-whiskey-amber/70" />
@@ -165,7 +168,7 @@ export function AuthPage() {
                     value={formData.fullName}
                     onChange={handleInputChange}
                     className="input-field pl-14"
-                    placeholder="Adınız ve soyadınız"
+                    placeholder={t('auth.fullNamePlaceholder')}
                     required={isSignUp}
                   />
                 </div>
@@ -175,7 +178,7 @@ export function AuthPage() {
             {/* Email */}
             <div className="form-group">
               <label className="form-label">
-                {t('email')}
+                {t('auth.email')}
               </label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-whiskey-bronze dark:text-whiskey-amber/70" />
@@ -185,7 +188,7 @@ export function AuthPage() {
                   value={formData.email}
                   onChange={handleInputChange}
                   className="input-field pl-14"
-                  placeholder="ornek@email.com"
+                  placeholder={t('auth.emailPlaceholder')}
                   required
                 />
               </div>
@@ -195,7 +198,7 @@ export function AuthPage() {
             {!showForgotPassword && (
               <div className="form-group">
                 <label className="form-label">
-                  {t('password')}
+                  {t('auth.password')}
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-whiskey-bronze dark:text-whiskey-amber/70" />
@@ -219,11 +222,13 @@ export function AuthPage() {
               </div>
             )}
 
+            {/* Only email/password login is enabled */}
+
             {/* Confirm Password (Sign Up only) */}
             {isSignUp && !showForgotPassword && (
               <div className="form-group">
                 <label className="form-label">
-                  Şifre Tekrarı
+                  {t('auth.confirmPassword')}
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-whiskey-bronze dark:text-whiskey-amber/70" />
@@ -258,12 +263,12 @@ export function AuthPage() {
                   ) : isSignUp ? (
                     <>
                       <CheckCircle className="w-5 h-5" />
-                      {t('signUp')}
+                      {t('auth.signUp')}
                     </>
                   ) : (
                     <>
                       <Wine className="w-5 h-5" />
-                      {t('signIn')}
+                      {t('auth.signIn')}
                     </>
                   )}
                 </>
@@ -278,7 +283,7 @@ export function AuthPage() {
                   onClick={() => setShowForgotPassword(true)}
                   className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
                 >
-                  Şifremi Unuttum
+                  {t('auth.forgotPassword')}
                 </button>
               </div>
             )}
@@ -288,9 +293,7 @@ export function AuthPage() {
           <div className="mt-6 text-center">
             {showForgotPassword ? (
               <>
-                <p className="text-slate-600 dark:text-slate-300">
-                  Giriş sayfasına dönmek ister misiniz?
-                </p>
+                <p className="text-slate-600 dark:text-slate-300">{t('auth.signIn')}</p>
                 <button
                   onClick={() => {
                     setShowForgotPassword(false)
@@ -298,13 +301,13 @@ export function AuthPage() {
                   }}
                   className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium transition-colors"
                 >
-                  Giriş Yap
+                  {t('auth.signIn')}
                 </button>
               </>
             ) : (
               <>
                 <p className="text-slate-600 dark:text-slate-300">
-                  {isSignUp ? 'Zaten hesabınız var mı?' : 'Hesabınız yok mu?'}
+                  {isSignUp ? t('auth.haveAccountQuestion') : t('auth.noAccountQuestion')}
                 </p>
                 <button
                   onClick={() => {
@@ -313,11 +316,15 @@ export function AuthPage() {
                   }}
                   className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium transition-colors"
                 >
-                  {isSignUp ? t('signIn') : t('signUp')}
+                  {isSignUp ? t('auth.signIn') : t('auth.signUp')}
                 </button>
               </>
             )}
           </div>
+
+          {/* Social provider login disabled as requested */}
+
+          {/* Resend verification disabled for now */}
         </div>
       </motion.div>
     </div>

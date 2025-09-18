@@ -14,7 +14,18 @@
     "email": "Email",
     "password": "Password",
     "fullName": "Full Name",
-    "pleaseSignIn": "Please sign in"
+    "pleaseSignIn": "Please sign in",
+    "forgotPassword": "Forgot Password",
+    "sendResetLink": "Send Reset Link",
+    "resetPasswordTitle": "Reset Password",
+    "resetSubtitle": "Enter your email address and we'll send you a reset link",
+    "signUpSubtitle": "Join the WhiskyVerse community",
+    "signInSubtitle": "Sign in to your account",
+    "emailPlaceholder": "example@email.com",
+    "fullNamePlaceholder": "Your full name",
+    "confirmPassword": "Confirm Password",
+    "haveAccountQuestion": "Already have an account?",
+    "noAccountQuestion": "Don't have an account?"
   },
   "whisky": {
     "whiskyName": "Whisky Name",

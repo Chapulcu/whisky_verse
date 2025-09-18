@@ -26,9 +26,11 @@ import {
 import toast from 'react-hot-toast'
 import { useAuth } from '@/contexts/AuthContext'
 import { useWhiskyUpload } from '@/hooks/useWhiskyUpload'
-import { useMultilingualWhiskies, MultilingualWhisky } from '@/hooks/useMultilingualWhiskies'
-import { useSimpleWhiskiesDB, SimpleWhiskyDB } from '@/hooks/useSimpleWhiskiesDB'
+import { useWhiskiesMultilingual, MultilingualWhisky } from '@/hooks/useWhiskiesMultilingual'
+import { useUserCollection } from '@/hooks/useUserCollection'
 import { TranslationManager } from '@/components/TranslationManager'
+import { WhiskyErrorBoundary } from '@/components/WhiskyErrorBoundary'
+import { WhiskySkeleton, WhiskySkeletonMini } from '@/components/WhiskySkeleton'
 
 interface UserWhisky {
   id: number
@@ -38,24 +40,35 @@ interface UserWhisky {
   personal_notes: string | null
 }
 
-export function WhiskiesPage() {
-  const { t } = useTranslation()
+function WhiskiesPageContent() {
+  const { t, i18n } = useTranslation()
   const { user, profile } = useAuth()
   
   const { uploadWhiskyImage, isUploading } = useWhiskyUpload()
-  const { whiskies: simpleWhiskies, loading: simpleLoading, loadWhiskies: loadSimpleWhiskies } = useSimpleWhiskiesDB()
-  
-  // Convert simple whiskies to multilingual format for compatibility
-  const whiskies = simpleWhiskies.map(w => ({ ...w, language_code: 'tr' })) as MultilingualWhisky[]
-  const whiskyLoading = simpleLoading
-  const loadWhiskies = loadSimpleWhiskies
+  const { whiskies, totalCount, loading: whiskyLoading, isRefetching: whiskyRefetching, loadWhiskies } = useWhiskiesMultilingual()
+  const { collection: userCollection, loading: userCollectionLoading, addToCollection: addToCollectionHook, updateCollectionItem } = useUserCollection()
+
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [userWhiskies, setUserWhiskies] = useState<UserWhisky[]>([])
-  const [loading, setLoading] = useState(true)
+
+  // Convert collection to legacy format for compatibility
+  const userWhiskies = userCollection.map(item => ({
+    id: item.id,
+    whisky_id: item.whisky_id,
+    tasted: item.tasted,
+    rating: item.rating,
+    personal_notes: item.personal_notes
+  }))
+
+  // Combined loading state for both whiskies and user collection
+  const loading = whiskyLoading || userCollectionLoading
+  const [isSearching, setIsSearching] = useState(false)
   // Removed old searchTerm state - now using localSearchTerm and debouncedSearchTerm
   const [selectedCountry, setSelectedCountry] = useState('')
   const [selectedType, setSelectedType] = useState('')
   const [showFilters, setShowFilters] = useState(false)
+
+  // Cleanup refs for memory management
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(12)
@@ -89,59 +102,50 @@ export function WhiskiesPage() {
     setShowTranslationManager(true)
   }
 
-  const loadUserCollection = async () => {
-    if (!user) {
-      console.log('No user found, skipping user collection load')
-      return
-    }
+  // loadUserCollection is now handled by useUserCollection hook
 
-    try {
-      console.log('Loading user collection for user:', user.id)
-      const { data, error } = await supabase
-        .from('user_whiskies')
-        .select('*')
-        .eq('user_id', user.id)
-
-      if (error) {
-        console.error('Error loading user collection:', error)
-        throw error
-      }
-      
-      console.log('User collection loaded:', { count: data?.length || 0, data })
-      setUserWhiskies(data || [])
-    } catch (error) {
-      console.error('Error loading user collection:', error)
-      toast.error(t('userCollectionLoadError'))
-    }
-  }
-
-  // Fetch whiskies and user collection
-  useEffect(() => {
-    setLoading(whiskyLoading)
-    if (user) {
-      loadUserCollection()
-    }
-  }, [whiskyLoading, user])
+  // Note: Loading state and user collection are now handled by hooks automatically
 
   // Local search state to prevent excessive API calls
   const [localSearchTerm, setLocalSearchTerm] = useState('')
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
 
-  // Debounce the search term
+  // Debounce the search term with proper cleanup
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
+    // Clear previous timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+    }
+
+    timeoutRef.current = setTimeout(() => {
       setDebouncedSearchTerm(localSearchTerm)
     }, 300)
 
-    return () => clearTimeout(timeoutId)
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    }
   }, [localSearchTerm])
 
-  // Load whiskies only when debounced search term changes
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    }
+  }, [])
+
+  // Load whiskies when search/filter/page/size or language changes (server-side pagination)
   useEffect(() => {
     if (debouncedSearchTerm.length >= 3 || debouncedSearchTerm.length === 0) {
-      loadWhiskies(undefined, 0, debouncedSearchTerm)
+      setIsSearching(true)
+      const offset = (currentPage - 1) * itemsPerPage
+      loadWhiskies(i18n.language as any, itemsPerPage, offset, debouncedSearchTerm, selectedCountry, selectedType)
+        .finally(() => setIsSearching(false))
     }
-  }, [debouncedSearchTerm])
+  }, [debouncedSearchTerm, selectedCountry, selectedType, currentPage, itemsPerPage, i18n.language, loadWhiskies])
 
   const addToCollection = async (whiskyId: number) => {
     if (!user) {
@@ -149,101 +153,117 @@ export function WhiskiesPage() {
       return
     }
 
-    console.log('Adding whisky to collection:', { whiskyId, userId: user.id })
+    // Check if already in collection first
+    const isAlreadyInCollection = userWhiskies.some(uw => uw.whisky_id === whiskyId)
+    if (isAlreadyInCollection) {
+      toast.error(t('whiskyAlreadyInCollection'))
+      return
+    }
+
+    // Optimistic update: Add to local state immediately
+    const optimisticItem = {
+      id: Date.now(), // Temporary ID
+      whisky_id: whiskyId,
+      tasted: false,
+      rating: null,
+      personal_notes: null
+    }
+
+    // Create a fake collection item for optimistic update
+    const optimisticCollectionItem = {
+      id: optimisticItem.id,
+      user_id: user.id,
+      whisky_id: whiskyId,
+      tasted: false,
+      rating: null,
+      personal_notes: null,
+      tasted_at: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      whisky: whiskies.find(w => w.id === whiskyId) || null
+    }
+
+    // Immediately update UI
+    const setOptimisticCollection = (prev: any[]) => [optimisticCollectionItem, ...prev]
 
     try {
-      // Check if already in collection first (without .single() to avoid 406 error)
-      const { data: existingEntries, error: checkError } = await supabase
-        .from('user_whiskies')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('whisky_id', whiskyId)
+      // Show immediate feedback
+      toast.success(t('whiskiesPage.toasts.addedToCollection'))
 
-      if (checkError) {
-        console.error('Error checking for existing entry:', checkError)
-        throw checkError
-      }
+      const result = await addToCollectionHook(whiskyId)
 
-      if (existingEntries && existingEntries.length > 0) {
-        console.log('Whisky already in collection:', existingEntries)
-        toast.error(t('whiskyAlreadyInCollection'))
+      if (result.error) {
+        console.error('Error adding to collection:', result.error)
+
+        // Rollback optimistic update
+        // The hook will handle the actual state management
+
+        if (result.error.code === '23505') {
+          toast.error(t('whiskyAlreadyInCollection'))
+        } else {
+          toast.error(t('addToCollectionError'))
+        }
         return
       }
 
-      console.log('No existing entry found, adding to collection')
-
-      const { data, error } = await supabase
-        .from('user_whiskies')
-        .insert({
-          user_id: user.id,
-          whisky_id: whiskyId,
-          tasted: false,
-          created_at: new Date().toISOString()
-        })
-        .select()
-
-      if (error) {
-        console.error('Error inserting into collection:', error)
-        throw error
-      }
-
-      console.log('Successfully added to collection:', data)
-
-      // Reload user collection to update local state
-      await loadUserCollection()
-      
-      // Also trigger a storage event to notify other components
-      window.dispatchEvent(new CustomEvent('collectionUpdated', { 
-        detail: { action: 'added', whiskyId } 
+      // Trigger storage event to notify other components
+      window.dispatchEvent(new CustomEvent('collectionUpdated', {
+        detail: { action: 'added', whiskyId }
       }))
-      
-      toast.success(t('whiskiesPage.toasts.addedToCollection'))
+
     } catch (error: any) {
       console.error('Error adding to collection:', error)
-      if (error.code === '23505') {
-        toast.error(t('whiskyAlreadyInCollection'))
-      } else {
-        toast.error(t('addToCollectionError'))
-      }
+      toast.error(t('addToCollectionError'))
     }
   }
 
   const markAsTasted = async (whiskyId: number) => {
     if (!user) return
 
-    try {
-      const userWhisky = userWhiskies.find(uw => uw.whisky_id === whiskyId)
-      
-      if (userWhisky) {
-        // Update existing record
-        const { error } = await supabase
-          .from('user_whiskies')
-          .update({
-            tasted: !userWhisky.tasted,
-            tasted_at: !userWhisky.tasted ? new Date().toISOString() : null
-          })
-          .eq('id', userWhisky.id)
+    const userWhisky = userWhiskies.find(uw => uw.whisky_id === whiskyId)
+    const newTastedStatus = userWhisky ? !userWhisky.tasted : true
 
-        if (error) throw error
+    // Optimistic update: Show immediate UI feedback
+    toast.success(t('whiskiesPage.toasts.statusUpdated'))
+
+    try {
+      if (userWhisky) {
+        // Update existing record using hook
+        const result = await updateCollectionItem(userWhisky.id, {
+          tasted: newTastedStatus,
+          tasted_at: newTastedStatus ? new Date().toISOString() : null
+        })
+
+        if (result.error) {
+          // Rollback toast
+          toast.error(t('whiskiesPage.toasts.statusUpdateError'))
+          throw result.error
+        }
       } else {
-        // Create new record
-        const { error } = await supabase
-          .from('user_whiskies')
-          .insert({
-            user_id: user.id,
-            whisky_id: whiskyId,
+        // Create new record using hook
+        const result = await addToCollectionHook(whiskyId)
+
+        if (result.error) {
+          toast.error(t('whiskiesPage.toasts.statusUpdateError'))
+          throw result.error
+        }
+
+        // Then update it to mark as tasted
+        if (result.data) {
+          const updateResult = await updateCollectionItem(result.data.id, {
             tasted: true,
             tasted_at: new Date().toISOString()
           })
 
-        if (error) throw error
+          if (updateResult.error) {
+            toast.error(t('whiskiesPage.toasts.statusUpdateError'))
+            throw updateResult.error
+          }
+        }
       }
-
-      await loadUserCollection()
-      toast.success(t('whiskiesPage.toasts.statusUpdated'))
     } catch (error) {
       console.error('Error updating tasted status:', error)
-      toast.error(t('whiskiesPage.toasts.statusUpdateError'))
+      // Error toast already shown above
     }
   }
 
@@ -257,8 +277,9 @@ export function WhiskiesPage() {
   }
 
   const handleTranslationSave = () => {
-    // Reload whiskies to get updated translations
-    loadWhiskies(undefined, 0, debouncedSearchTerm)
+    // Reload whiskies to get updated data
+    const offset = (currentPage - 1) * itemsPerPage
+    loadWhiskies(i18n.language as any, itemsPerPage, offset, debouncedSearchTerm, selectedCountry, selectedType)
     setShowTranslationManager(false)
     setTranslatingWhisky(null)
   }
@@ -268,20 +289,8 @@ export function WhiskiesPage() {
     setShowImageViewer(true)
   }
 
-  // Filter whiskies with memoization to prevent unnecessary re-renders
-  const filteredWhiskies = useMemo(() => {
-    return whiskies.filter(whisky => {
-      const matchesSearch = localSearchTerm.length === 0 || localSearchTerm.length >= 3 ? 
-        (whisky.name.toLowerCase().includes(localSearchTerm.toLowerCase()) ||
-         whisky.type.toLowerCase().includes(localSearchTerm.toLowerCase()) ||
-         whisky.country.toLowerCase().includes(localSearchTerm.toLowerCase())) : true
-      
-      const matchesCountry = !selectedCountry || whisky.country === selectedCountry
-      const matchesType = !selectedType || whisky.type === selectedType
-
-      return matchesSearch && matchesCountry && matchesType
-    })
-  }, [whiskies, localSearchTerm, selectedCountry, selectedType])
+  // Server already applied filters and pagination; use returned rows as-is
+  const filteredWhiskies = whiskies
 
   // Get unique countries and types for filters
   const countries = [...new Set(whiskies.map(w => w.country))].sort()
@@ -296,11 +305,11 @@ export function WhiskiesPage() {
     return userWhisky?.tasted || false
   }
 
-  // Pagination calculations
-  const totalPages = Math.ceil(filteredWhiskies.length / itemsPerPage)
+  // Pagination calculations from server totalCount
+  const totalPages = Math.max(1, Math.ceil((totalCount || 0) / itemsPerPage))
   const startIndex = (currentPage - 1) * itemsPerPage
-  const endIndex = startIndex + itemsPerPage
-  const paginatedWhiskies = filteredWhiskies.slice(startIndex, endIndex)
+  const endIndex = startIndex + (filteredWhiskies?.length || 0)
+  const paginatedWhiskies = filteredWhiskies
 
   // Pagination Component
   const PaginationControls = ({ className = '' }: { className?: string }) => {
@@ -309,7 +318,7 @@ export function WhiskiesPage() {
     return (
       <div className={`flex flex-col sm:flex-row items-center justify-between gap-4 ${className}`}>
         <div className="text-sm text-slate-600 dark:text-slate-300">
-          {startIndex + 1}-{Math.min(endIndex, filteredWhiskies.length)} / {filteredWhiskies.length} {t('whiskiesPage.showing')}
+          {Math.min(startIndex + 1, totalCount)}-{Math.min(startIndex + filteredWhiskies.length, totalCount)} / {totalCount} {t('whiskiesPage.showing')}
         </div>
         
         <div className="flex items-center gap-2">
@@ -455,10 +464,11 @@ export function WhiskiesPage() {
       }
 
       await uploadWhiskyImage(selectedImage, whiskeyData)
-      
-      // Reload whiskies
-      await loadWhiskies(undefined, 0, debouncedSearchTerm)
-      
+
+      // Reload whiskies with current pagination
+      const offset = (currentPage - 1) * itemsPerPage
+      await loadWhiskies(i18n.language as any, itemsPerPage, offset, debouncedSearchTerm, selectedCountry, selectedType)
+
       // Reset and close
       setShowAddModal(false)
       resetAddForm()
@@ -469,8 +479,35 @@ export function WhiskiesPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="loading-spinner w-8 h-8 text-primary-500" />
+      <div className="space-y-8">
+        {/* Header skeleton */}
+        <div className="text-center mobile-card-spacing animate-pulse">
+          <div className="h-12 bg-slate-300 dark:bg-slate-700 rounded-md mx-auto mb-4 w-64"></div>
+          <div className="h-6 bg-slate-300 dark:bg-slate-700 rounded-md mx-auto max-w-2xl mb-6"></div>
+          {user && (
+            <div className="mt-6">
+              <div className="h-12 bg-slate-300 dark:bg-slate-700 rounded-md w-48 mx-auto"></div>
+            </div>
+          )}
+        </div>
+
+        {/* Search and filters skeleton */}
+        <div className="card space-y-4 animate-pulse">
+          <div className="h-12 bg-slate-300 dark:bg-slate-700 rounded-lg"></div>
+        </div>
+
+        {/* Results count skeleton */}
+        <div className="flex justify-between items-center gap-4 animate-pulse">
+          <div className="h-6 bg-slate-300 dark:bg-slate-700 rounded w-64"></div>
+          <div className="h-10 bg-slate-300 dark:bg-slate-700 rounded w-32"></div>
+        </div>
+
+        {/* Main content skeleton */}
+        <WhiskySkeleton
+          viewMode={viewMode}
+          gridColumns={gridColumns}
+          count={itemsPerPage}
+        />
       </div>
     )
   }
@@ -547,6 +584,8 @@ export function WhiskiesPage() {
             <button
               onClick={() => setShowFilters(!showFilters)}
               className="btn-glass p-2 flex items-center gap-2"
+              title={t('whiskiesPage.toggleFilters')}
+              aria-label={t('whiskiesPage.toggleFilters')}
             >
               <Filter className="w-4 h-4" />
               <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
@@ -586,9 +625,11 @@ export function WhiskiesPage() {
                 {t('country')}
               </label>
               <select
+                id="countrySelect"
                 value={selectedCountry}
                 onChange={(e) => setSelectedCountry(e.target.value)}
                 className="input-glass"
+                aria-label={t('country')}
               >
                 <option value="">{t('whiskiesPage.allCountries')}</option>
                 {countries.map(country => (
@@ -598,13 +639,15 @@ export function WhiskiesPage() {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              <label htmlFor="typeSelect" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 {t('whiskyType')}
               </label>
               <select
+                id="typeSelect"
                 value={selectedType}
                 onChange={(e) => setSelectedType(e.target.value)}
                 className="input-glass"
+                aria-label={t('whiskyType')}
               >
                 <option value="">{t('whiskiesPage.allTypes')}</option>
                 {types.map(type => (
@@ -640,7 +683,7 @@ export function WhiskiesPage() {
       {/* Results Count and Grid Settings */}
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
         <div className="text-slate-600 dark:text-slate-300">
-          {filteredWhiskies.length} {t('whiskiesPage.whiskiesFound')} • {t('whiskiesPage.page')} {currentPage} / {totalPages}
+          {totalCount} {t('whiskiesPage.whiskiesFound')} • {t('whiskiesPage.page')} {currentPage} / {totalPages}
         </div>
         
         {viewMode === 'grid' && (
@@ -648,9 +691,11 @@ export function WhiskiesPage() {
             <div className="flex items-center gap-2">
               <span className="text-sm text-slate-600 dark:text-slate-300">{t('whiskiesPage.column')}:</span>
               <select
+                id="gridColumnsSelect"
                 value={gridColumns}
                 onChange={(e) => setGridColumns(Number(e.target.value) as 2 | 3 | 4 | 5 | 6)}
                 className="input-glass text-sm px-3 py-1"
+                aria-label={t('whiskiesPage.column')}
               >
                 <option value={2}>2</option>
                 <option value={3}>3</option>
@@ -663,12 +708,14 @@ export function WhiskiesPage() {
             <div className="flex items-center gap-2">
               <span className="text-sm text-slate-600 dark:text-slate-300">{t('whiskiesPage.perPage')}:</span>
               <select
+                id="itemsPerPageSelectGrid"
                 value={itemsPerPage}
                 onChange={(e) => {
                   setItemsPerPage(Number(e.target.value))
                   setCurrentPage(1)
                 }}
                 className="input-glass text-sm px-3 py-1"
+                aria-label={t('whiskiesPage.perPage')}
               >
                 <option value={6}>6</option>
                 <option value={12}>12</option>
@@ -683,12 +730,14 @@ export function WhiskiesPage() {
           <div className="flex items-center gap-2">
             <span className="text-sm text-slate-600 dark:text-slate-300">{t('whiskiesPage.perPage')}:</span>
             <select
+              id="itemsPerPageSelectList"
               value={itemsPerPage}
               onChange={(e) => {
                 setItemsPerPage(Number(e.target.value))
                 setCurrentPage(1)
               }}
               className="input-glass text-sm px-3 py-1"
+              aria-label={t('whiskiesPage.perPage')}
             >
               <option value={5}>5</option>
               <option value={10}>10</option>
@@ -702,9 +751,19 @@ export function WhiskiesPage() {
       {/* Top Pagination */}
       <PaginationControls />
 
-      {/* Whiskies Grid/List */}
-      <div className={viewMode === 'grid' ? `grid grid-cols-1 ${gridColumnClasses[gridColumns]} gap-8` : 'space-y-4'}>
-        {paginatedWhiskies.map((whisky, index) => (
+      {/* Lightweight refetch/search indicator without clearing the list */}
+      {(isSearching || whiskyRefetching) && (
+        <div className="mb-4" data-testid="whisky-skeleton-mini">
+          <WhiskySkeletonMini />
+        </div>
+      )}
+
+      {/* Whiskies Grid/List - keep previous data while refetching */}
+      <div
+        data-testid="whisky-grid"
+        className={viewMode === 'grid' ? `grid grid-cols-1 ${gridColumnClasses[gridColumns]} gap-8` : 'space-y-4'}
+      >
+          {paginatedWhiskies.map((whisky, index) => (
           <motion.div
             key={whisky.id}
             initial={{ opacity: 0, y: 30 }}
@@ -955,7 +1014,7 @@ export function WhiskiesPage() {
             )}
           </motion.div>
         ))}
-      </div>
+        </div>
 
       {/* Bottom Pagination */}
       <PaginationControls />
@@ -991,6 +1050,8 @@ export function WhiskiesPage() {
                   resetAddForm()
                 }}
                 className="modal-text-muted hover:text-slate-600 dark:hover:text-slate-300 p-2"
+                aria-label={t('common.close')}
+                title={t('common.close')}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -999,7 +1060,7 @@ export function WhiskiesPage() {
             <form onSubmit={handleAddWhisky} className="space-y-6">
               {/* Image Upload */}
               <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
+                <label htmlFor="whiskyImageInput" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
                   {t('whiskiesPage.addWhiskyModal.whiskyImageRequired')}
                 </label>
                 <div className="flex items-start gap-4">
@@ -1009,6 +1070,7 @@ export function WhiskiesPage() {
                       type="file"
                       accept="image/*"
                       onChange={handleImageSelect}
+                      id="whiskyImageInput"
                       className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:bg-amber-500 file:text-white hover:file:bg-amber-600"
                     />
                   </div>
@@ -1027,10 +1089,11 @@ export function WhiskiesPage() {
               <div className="grid md:grid-cols-2 gap-4">
                 {/* Name */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
+                  <label htmlFor="addNameInput" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
                     {t('whiskiesPage.addWhiskyModal.whiskyNameRequired')}
                   </label>
                   <input
+                    id="addNameInput"
                     type="text"
                     value={addForm.name}
                     onChange={(e) => setAddForm(prev => ({ ...prev, name: e.target.value }))}
@@ -1042,10 +1105,11 @@ export function WhiskiesPage() {
 
                 {/* Type */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
+                  <label htmlFor="addTypeSelect" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
                     {t('whiskiesPage.addWhiskyModal.type')}
                   </label>
                   <select
+                    id="addTypeSelect"
                     value={addForm.type}
                     onChange={(e) => setAddForm(prev => ({ ...prev, type: e.target.value }))}
                     className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
@@ -1062,10 +1126,11 @@ export function WhiskiesPage() {
 
                 {/* Country */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
+                  <label htmlFor="addCountryInput" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
                     {t('whisky.country')}
                   </label>
                   <input
+                    id="addCountryInput"
                     type="text"
                     value={addForm.country}
                     onChange={(e) => setAddForm(prev => ({ ...prev, country: e.target.value }))}
@@ -1076,10 +1141,11 @@ export function WhiskiesPage() {
 
                 {/* Region */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
+                  <label htmlFor="addRegionInput" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
                     {t('whiskiesPage.addWhiskyModal.region')}
                   </label>
                   <input
+                    id="addRegionInput"
                     type="text"
                     value={addForm.region}
                     onChange={(e) => setAddForm(prev => ({ ...prev, region: e.target.value }))}
@@ -1090,10 +1156,11 @@ export function WhiskiesPage() {
 
                 {/* Alcohol Percentage */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
+                  <label htmlFor="addAbvInput" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
                     {t('whiskiesPage.addWhiskyModal.alcoholPercent')}
                   </label>
                   <input
+                    id="addAbvInput"
                     type="number"
                     value={addForm.alcohol_percentage}
                     onChange={(e) => setAddForm(prev => ({ ...prev, alcohol_percentage: parseFloat(e.target.value) || 40 }))}
@@ -1526,5 +1593,14 @@ export function WhiskiesPage() {
         />
       )}
     </div>
+  )
+}
+
+// Main export with Error Boundary
+export function WhiskiesPage() {
+  return (
+    <WhiskyErrorBoundary>
+      <WhiskiesPageContent />
+    </WhiskyErrorBoundary>
   )
 }

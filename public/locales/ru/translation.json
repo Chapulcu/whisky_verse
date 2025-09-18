@@ -14,7 +14,18 @@
     "email": "Электронная почта",
     "password": "Пароль",
     "fullName": "Полное имя",
-    "pleaseSignIn": "Пожалуйста, войдите"
+    "pleaseSignIn": "Пожалуйста, войдите",
+    "forgotPassword": "Забыли пароль",
+    "sendResetLink": "Отправить ссылку для сброса",
+    "resetPasswordTitle": "Сброс пароля",
+    "resetSubtitle": "Введите адрес электронной почты, и мы отправим вам ссылку для сброса",
+    "signUpSubtitle": "Присоединяйтесь к сообществу WhiskyVerse",
+    "signInSubtitle": "Войдите в свою учетную запись",
+    "emailPlaceholder": "example@email.com",
+    "fullNamePlaceholder": "Ваше полное имя",
+    "confirmPassword": "Подтвердить пароль",
+    "haveAccountQuestion": "Уже есть учетная запись?",
+    "noAccountQuestion": "Нет учетной записи?"
   },
   "whisky": {
     "whiskyName": "Название виски",

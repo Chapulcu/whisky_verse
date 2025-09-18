@@ -310,7 +310,8 @@ export function useBackgroundManagement() {
         setTimeout(() => reject(new Error('Upload timeout - video dosyası çok büyük olabilir')), 300000) // 5 minutes
       })
 
-      const { data: uploadData, error: uploadError } = await Promise.race([uploadPromise, timeoutPromise])
+      const uploadResult = await Promise.race([uploadPromise, timeoutPromise])
+      const { data: uploadData, error: uploadError } = uploadResult as any
 
       console.log('📤 Video upload completed:', { uploadData, uploadError })
 

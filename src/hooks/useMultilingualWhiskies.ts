@@ -1,7 +1,11 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
+import { requestCache } from '@/utils/requestCache'
+
+// Retry configuration at module scope to avoid re-creating on each render
+const RETRY_DELAYS = [300, 800, 1500] // ms
 
 export interface MultilingualWhisky {
   id: number
@@ -40,7 +44,45 @@ export function useMultilingualWhiskies() {
   const { i18n } = useTranslation()
   const [whiskies, setWhiskies] = useState<MultilingualWhisky[]>([])
   const [loading, setLoading] = useState(true)
+  const [isRefetching, setIsRefetching] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const requestIdRef = useRef(0)
+
+  // Generic retry with backoff helper
+  const retryWithBackoff = useCallback(async (
+    operation: () => Promise<any>,
+    currentRequestId: number,
+    retryCount = 0
+  ): Promise<any> => {
+    try {
+      return await operation()
+    } catch (err: any) {
+      // If another request started, cancel
+      if (currentRequestId !== requestIdRef.current) {
+        throw new Error('Request cancelled')
+      }
+
+      const isRetryable =
+        err?.code === 'PGRST301' ||
+        err?.code === 'PGRST302' ||
+        err?.message?.includes('fetch') ||
+        err?.message?.includes('timeout') ||
+        (typeof err?.status === 'number' && err.status >= 500 && err.status < 600)
+
+      if (!isRetryable || retryCount >= RETRY_DELAYS.length) {
+        throw err
+      }
+
+      const delay = RETRY_DELAYS[retryCount]
+      await new Promise(r => setTimeout(r, delay))
+
+      if (currentRequestId !== requestIdRef.current) {
+        throw new Error('Request cancelled during retry')
+      }
+
+      return retryWithBackoff(operation, currentRequestId, retryCount + 1)
+    }
+  }, [])
 
   const loadWhiskies = useCallback(async (
     limit?: number,
@@ -48,33 +90,65 @@ export function useMultilingualWhiskies() {
     searchTerm?: string,
     languageCode: string = i18n.language
   ) => {
+    // Race condition guard: capture request ID
+    const currentRequestId = ++requestIdRef.current
+
     try {
-      setLoading(true)
+      // Keep previous data if exists; reduce flicker
+      if (whiskies.length === 0) {
+        setLoading(true)
+      } else {
+        setIsRefetching(true)
+      }
       setError(null)
-      
+
       // Use original whiskies table (multilingual system not set up yet)
       console.log('Using original whiskies table')
-        
-      let query = supabase
-        .from('whiskies')
-        .select('*')
-        .order('created_at', { ascending: false })
 
-      if (searchTerm) {
-        query = query.or(`name.ilike.%${searchTerm}%,type.ilike.%${searchTerm}%,country.ilike.%${searchTerm}%`)
+      // Build base query factory to ensure fresh builder per attempt
+      const buildBaseQuery = () => {
+        let q = supabase
+          .from('whiskies')
+          .select('*')
+          .order('created_at', { ascending: false })
+        if (searchTerm) {
+          q = q.or(`name.ilike.%${searchTerm}%,type.ilike.%${searchTerm}%,country.ilike.%${searchTerm}%`)
+        }
+        return q
       }
 
-      if (limit) {
-        query = query.range(offset, offset + limit - 1)
-        const { data, error } = await query
+      // Default pagination: if limit is undefined, use 24
+      const effectiveLimit = (typeof limit === 'number' && limit >= 0) ? limit : 24
+
+      if (effectiveLimit >= 0) {
+        const cacheKey = {
+          type: 'multilingual_whiskies',
+          limit: effectiveLimit,
+          offset,
+          searchTerm,
+          languageCode
+        }
+
+        const { data, error } = await requestCache.deduplicate(
+          cacheKey,
+          () => retryWithBackoff(async () => {
+            const result = await buildBaseQuery().range(offset, offset + effectiveLimit - 1)
+            return result
+          }, currentRequestId),
+          10000
+        )
+
+        if (currentRequestId !== requestIdRef.current) {
+          return
+        }
+
         if (error) throw error
-        
-        // Convert to MultilingualWhisky format
+
         const convertedWhiskies: MultilingualWhisky[] = (data || []).map(whisky => ({
           id: whisky.id,
           alcohol_percentage: whisky.alcohol_percentage,
-          rating: null, // Not available in current schema
-          age_years: null, // Not available in current schema
+          rating: null,
+          age_years: null,
           image_url: whisky.image_url,
           country: whisky.country,
           region: whisky.region,
@@ -88,62 +162,82 @@ export function useMultilingualWhiskies() {
           color: whisky.color,
           language_code: languageCode
         }))
-        
+
         setWhiskies(convertedWhiskies)
       } else {
-        // No limit specified - load all whiskies using chunked approach
         console.log('useMultilingualWhiskies: Loading all whiskies with chunked approach...')
-        
-        // Get total count first
-        const { count, error: countError } = await supabase
-          .from('whiskies')
-          .select('*', { count: 'exact', head: true })
+
+        const { count, error: countError } = await requestCache.deduplicate(
+          { type: 'multilingual_whiskies_count', searchTerm },
+          () => retryWithBackoff(async () => {
+            const res = await supabase
+              .from('whiskies')
+              .select('*', { count: 'exact', head: true })
+            return res
+          }, currentRequestId),
+          10000
+        ) as any
+
+        if (currentRequestId !== requestIdRef.current) {
+          return
+        }
 
         if (countError) throw countError
-        
+
         const totalRecords = count || 0
         console.log(`useMultilingualWhiskies: Database has ${totalRecords} total whiskies`)
-        
+
         if (totalRecords === 0) {
           setWhiskies([])
           return
         }
 
-        // Load in chunks
         const chunkSize = 1000
         const chunks = Math.ceil(totalRecords / chunkSize)
         let allWhiskies: any[] = []
 
         for (let i = 0; i < chunks; i++) {
+          if (currentRequestId !== requestIdRef.current) {
+            throw new Error('Request cancelled')
+          }
+
           const start = i * chunkSize
           const end = start + chunkSize - 1
-          
-          let chunkQuery = supabase
-            .from('whiskies')
-            .select('*')
-            .range(start, end)
-            .order('created_at', { ascending: false })
 
-          if (searchTerm) {
-            chunkQuery = chunkQuery.or(`name.ilike.%${searchTerm}%,type.ilike.%${searchTerm}%,country.ilike.%${searchTerm}%`)
+          const cacheKey = {
+            type: 'multilingual_whiskies_chunk',
+            start,
+            end,
+            searchTerm
           }
 
-          const { data, error } = await chunkQuery
-          if (error) throw error
+          const { data: chunkData, error } = await requestCache.deduplicate(
+            cacheKey,
+            () => retryWithBackoff(async () => {
+              const chunkQuery = buildBaseQuery().range(start, end)
+              const res = await chunkQuery
+              return res
+            }, currentRequestId),
+            10000
+          ) as any
 
-          if (data) {
-            allWhiskies = [...allWhiskies, ...data]
+          if (currentRequestId !== requestIdRef.current) {
+            throw new Error('Request cancelled')
+          }
+
+          if (error) throw error
+          if (chunkData) {
+            allWhiskies = [...allWhiskies, ...chunkData]
           }
         }
-        
+
         console.log(`useMultilingualWhiskies: Loaded ${allWhiskies.length} whiskies total`)
-        
-        // Convert to MultilingualWhisky format
+
         const convertedWhiskies: MultilingualWhisky[] = allWhiskies.map(whisky => ({
           id: whisky.id,
           alcohol_percentage: whisky.alcohol_percentage,
-          rating: null, // Not available in current schema
-          age_years: null, // Not available in current schema
+          rating: null,
+          age_years: null,
           image_url: whisky.image_url,
           country: whisky.country,
           region: whisky.region,
@@ -157,17 +251,25 @@ export function useMultilingualWhiskies() {
           color: whisky.color,
           language_code: languageCode
         }))
-        
+
         setWhiskies(convertedWhiskies)
       }
     } catch (err: any) {
-      console.error('Error loading whiskies:', err)
-      setError(err.message)
-      toast.error('Viskiler yüklenemedi')
+      if (currentRequestId === requestIdRef.current) {
+        console.error('Error loading whiskies:', err)
+        const message = err?.message === 'Request cancelled' ? 'İstek iptal edildi' : err?.message
+        setError(message)
+        if (err?.message !== 'Request cancelled') {
+          toast.error('Viskiler yüklenemedi')
+        }
+      }
     } finally {
-      setLoading(false)
+      if (currentRequestId === requestIdRef.current) {
+        setLoading(false)
+        setIsRefetching(false)
+      }
     }
-  }, [i18n.language])
+  }, [i18n.language, retryWithBackoff, whiskies.length])
 
   const loadWhiskyById = useCallback(async (
     whiskyId: number,
@@ -228,11 +330,37 @@ export function useMultilingualWhiskies() {
 
   useEffect(() => {
     loadWhiskies()
-  }, [i18n.language]) // Only reload when language changes, not when loadWhiskies function changes
+  }, [loadWhiskies, i18n.language]) // Reload when language or loader changes
+
+  // Optional: refetch on window focus/online/visibility
+  useEffect(() => {
+    const handleFocus = () => {
+      loadWhiskies()
+    }
+    const handleOnline = () => {
+      loadWhiskies()
+    }
+    const handleVisibility = () => {
+      if (!document.hidden) {
+        loadWhiskies()
+      }
+    }
+
+    window.addEventListener('focus', handleFocus)
+    window.addEventListener('online', handleOnline)
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+      window.removeEventListener('online', handleOnline)
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
+  }, [loadWhiskies])
 
   return {
     whiskies,
     loading,
+    isRefetching,
     error,
     loadWhiskies,
     loadWhiskyById,
@@ -364,95 +492,63 @@ export function useWhiskyTranslations() {
             console.error('useMultilingualWhiskies: Update error:', error)
             throw error
           }
-          
+
+          // Also upsert into whisky_translations for TR to keep multilingual table in sync
+          try {
+            await supabase
+              .from('whisky_translations')
+              .upsert({
+                whisky_id: whiskyId,
+                language_code: 'tr',
+                source_language_code: 'tr',
+                translation_status: 'human',
+                name: translations.name || currentWhisky.name || '',
+                type: translations.type ?? currentWhisky.type ?? '',
+                description: translations.description ?? currentWhisky.description ?? '',
+                aroma: translations.aroma ?? currentWhisky.aroma ?? '',
+                taste: translations.taste ?? currentWhisky.taste ?? '',
+                finish: translations.finish ?? currentWhisky.finish ?? '',
+                color: translations.color ?? currentWhisky.color ?? ''
+              }, { onConflict: 'whisky_id,language_code' })
+          } catch (e) {
+            console.warn('useMultilingualWhiskies: TR upsert to whisky_translations failed (non-fatal):', e)
+          }
+
           console.log('useMultilingualWhiskies: Turkish update successful')
           toast.success('Türkçe veriler güncellendi!')
           return { success: true }
         } else {
-          // Non-Turkish: Save directly as completed translation
-          console.log(`useMultilingualWhiskies: Saving direct translation for ${languageCode}`)
-          
-          const translatedText = {
-            name: translations.name || '',
-            type: translations.type || '',
-            description: translations.description || '',
-            aroma: translations.aroma || '',
-            taste: translations.taste || '',
-            finish: translations.finish || '',
-            color: translations.color || ''
-          }
+          // Non-Turkish: Upsert directly into whisky_translations as human translation
+          console.log(`useMultilingualWhiskies: Upserting translation into whisky_translations for ${languageCode}`)
 
-          // Check if translation job exists for this whisky/language
-          console.log(`useMultilingualWhiskies: Checking existing translation for ${languageCode}`)
-          
-          const checkPromise = supabase
-            .from('translation_jobs')
-            .select('id')
-            .eq('whisky_id', whiskyId)
-            .eq('target_language', languageCode)
-            .maybeSingle()
-            
-          const checkTimeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('Check timeout')), 15000)
+          const upsertPromise = supabase
+            .from('whisky_translations')
+            .upsert({
+              whisky_id: whiskyId,
+              language_code: languageCode,
+              source_language_code: 'tr',
+              translation_status: 'human',
+              name: translations.name || '',
+              type: translations.type || '',
+              description: translations.description || '',
+              aroma: translations.aroma || '',
+              taste: translations.taste || '',
+              finish: translations.finish || '',
+              color: translations.color || ''
+            }, { onConflict: 'whisky_id,language_code' })
+
+          const upsertTimeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Upsert timeout')), 15000)
           })
 
-          const { data: existing, error: existingError } = await Promise.race([checkPromise, checkTimeoutPromise]) as any
+          const { error } = await Promise.race([upsertPromise, upsertTimeoutPromise]) as any
 
-          console.log(`useMultilingualWhiskies: Check result for ${languageCode}:`, { existing, existingError })
-
-          if (existing) {
-            // Update existing translation
-            console.log(`useMultilingualWhiskies: Updating existing translation for ${languageCode}`)
-            
-            const updateJobPromise = supabase
-              .from('translation_jobs')
-              .update({
-                translated_text: translatedText,
-                status: 'completed',
-                updated_at: new Date().toISOString()
-              })
-              .eq('id', existing.id)
-              
-            const updateJobTimeoutPromise = new Promise((_, reject) => {
-              setTimeout(() => reject(new Error('Update job timeout')), 15000)
-            })
-
-            const { error } = await Promise.race([updateJobPromise, updateJobTimeoutPromise]) as any
-
-            if (error) {
-              console.error(`useMultilingualWhiskies: Update error for ${languageCode}:`, error)
-              throw error
-            }
-            console.log(`useMultilingualWhiskies: Update successful for ${languageCode}`)
-          } else {
-            // Create new completed translation
-            console.log(`useMultilingualWhiskies: Creating new translation for ${languageCode}`)
-            
-            const insertJobPromise = supabase
-              .from('translation_jobs')
-              .insert({
-                whisky_id: whiskyId,
-                source_language: 'tr',
-                target_language: languageCode,
-                source_text: {}, // Empty since we're directly providing translation
-                translated_text: translatedText,
-                status: 'completed'
-              })
-              
-            const insertJobTimeoutPromise = new Promise((_, reject) => {
-              setTimeout(() => reject(new Error('Insert job timeout')), 15000)
-            })
-
-            const { error } = await Promise.race([insertJobPromise, insertJobTimeoutPromise]) as any
-
-            if (error) {
-              console.error(`useMultilingualWhiskies: Insert error for ${languageCode}:`, error)
-              throw error
-            }
-            console.log(`useMultilingualWhiskies: Insert successful for ${languageCode}`)
+          if (error) {
+            console.error(`useMultilingualWhiskies: Upsert error for ${languageCode}:`, error)
+            throw error
           }
-          
-          console.log(`useMultilingualWhiskies: Direct translation saved for ${languageCode}`)
+
+          console.log(`useMultilingualWhiskies: Translation saved for ${languageCode}`)
           toast.success(`${languageCode.toUpperCase()} çevirisi kaydedildi!`)
           return { success: true }
         }
@@ -468,109 +564,63 @@ export function useWhiskyTranslations() {
 
   const getAllTranslations = async (whiskyId: number): Promise<WhiskyTranslation[]> => {
     try {
-      // Check if multilingual structure exists
+      // 1) Prefer direct read from whisky_translations (fast path)
       try {
-        const { data, error } = await supabase.rpc(
-          'get_whisky_all_translations',
-          { p_whisky_id: whiskyId }
-        )
-
-        if (error) throw error
-        
-        // If we have translations, return them
-        if (data && data.length > 0) {
-          return data
-        }
-        
-        // If no translations exist, fall back to original whisky data
-        throw new Error('No translations found, falling back to original data')
-      } catch (rpcError: any) {
-        // If multilingual structure doesn't exist, get data from whiskies table + translation_jobs
-        console.log('Multilingual functions not available, getting data from whiskies + translation_jobs')
-        
-        const { data: whiskyData, error: whiskyError } = await supabase
-          .from('whiskies')
-          .select('*')
-          .eq('id', whiskyId)
-          .single()
-
-        if (whiskyError) throw whiskyError
-        if (!whiskyData) return []
-
-        // Get completed translations from translation_jobs
-        const { data: translations, error: translationsError } = await supabase
-          .from('translation_jobs')
-          .select('target_language, translated_text')
+        const wtTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Translations table timeout')), 8000))
+        const wtFetch = supabase
+          .from('whisky_translations')
+          .select('language_code, name, type, description, aroma, taste, finish, color')
           .eq('whisky_id', whiskyId)
-          .eq('status', 'completed')
 
-        if (translationsError) {
-          console.warn('Error fetching translations:', translationsError)
-        }
+        const { data: wtRows, error: wtErr } = await Promise.race([wtFetch, wtTimeout]) as any
+        if (wtErr) throw wtErr
 
-        const result: WhiskyTranslation[] = []
+        if (wtRows && wtRows.length > 0) {
+          const mapped: WhiskyTranslation[] = wtRows.map((r: any) => ({
+            whisky_id: whiskyId,
+            language_code: r.language_code,
+            language_name: r.language_code === 'en' ? 'English' : r.language_code === 'ru' ? 'Русский' : 'Türkçe',
+            name: r.name || '',
+            type: r.type || '',
+            description: r.description || '',
+            aroma: r.aroma || '',
+            taste: r.taste || '',
+            finish: r.finish || '',
+            color: r.color || '',
+            is_complete: Boolean((r.name || '').trim() && (r.type || '').trim())
+          }))
 
-        // Add Turkish (main data)
-        result.push({
-          whisky_id: whiskyData.id,
-          language_code: 'tr',
-          language_name: 'Türkçe',
-          name: whiskyData.name,
-          type: whiskyData.type,
-          description: whiskyData.description,
-          aroma: whiskyData.aroma,
-          taste: whiskyData.taste,
-          finish: whiskyData.finish,
-          color: whiskyData.color,
-          is_complete: Boolean(whiskyData.name && whiskyData.type)
-        })
-
-        // Add other language translations
-        if (translations) {
-          for (const translation of translations) {
-            const translatedText = translation.translated_text as any
-            const langName = translation.target_language === 'en' ? 'English' : 
-                           translation.target_language === 'ru' ? 'Русский' : translation.target_language
-
-            result.push({
-              whisky_id: whiskyData.id,
-              language_code: translation.target_language,
-              language_name: langName,
-              name: translatedText?.name || '',
-              type: translatedText?.type || '',
-              description: translatedText?.description || '',
-              aroma: translatedText?.aroma || '',
-              taste: translatedText?.taste || '',
-              finish: translatedText?.finish || '',
-              color: translatedText?.color || '',
-              is_complete: Boolean(translatedText?.name && translatedText?.type)
-            })
+          // Ensure entries for missing languages exist in UI (empty placeholders)
+          for (const lang of ['tr','en','ru']) {
+            if (!mapped.find(m => m.language_code === lang)) {
+              mapped.push({
+                whisky_id: whiskyId,
+                language_code: lang,
+                language_name: lang === 'en' ? 'English' : lang === 'ru' ? 'Русский' : 'Türkçe',
+                name: '', type: '', description: '', aroma: '', taste: '', finish: '', color: '', is_complete: false
+              })
+            }
           }
-        }
 
-        // Add empty entries for missing languages
-        const languages = ['en', 'ru']
-        for (const lang of languages) {
-          if (!result.find(r => r.language_code === lang)) {
-            const langName = lang === 'en' ? 'English' : 'Русский'
-            result.push({
-              whisky_id: whiskyData.id,
-              language_code: lang,
-              language_name: langName,
-              name: '',
-              type: '',
-              description: '',
-              aroma: '',
-              taste: '',
-              finish: '',
-              color: '',
-              is_complete: false
-            })
-          }
+          return mapped.sort((a, b) => ['tr','en','ru'].indexOf(a.language_code) - ['tr','en','ru'].indexOf(b.language_code))
         }
-
-        return result
+      } catch (wtPathErr: any) {
+        const msg = String(wtPathErr?.message || '')
+        const code = (wtPathErr as any)?.code || ''
+        const missing = code === '42P01' || msg.includes('relation') && msg.includes('whisky_translations')
+        if (!missing) {
+          console.warn('whisky_translations read failed, falling back:', wtPathErr)
+        }
       }
+
+      // 2) Fallback: return placeholders only (no base fetch) to avoid timeouts entirely
+      const placeholders: WhiskyTranslation[] = ['tr','en','ru'].map((lang) => ({
+        whisky_id: whiskyId,
+        language_code: lang,
+        language_name: lang === 'en' ? 'English' : lang === 'ru' ? 'Русский' : 'Türkçe',
+        name: '', type: '', description: '', aroma: '', taste: '', finish: '', color: '', is_complete: false
+      }))
+      return placeholders
     } catch (error: any) {
       console.error('Error loading translations:', error)
       toast.error('Çeviriler yüklenemedi')

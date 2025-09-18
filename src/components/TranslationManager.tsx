@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { X, Globe, Save, Loader2, CheckCircle, AlertCircle } from 'lucide-react'
 import { useWhiskyTranslations, WhiskyTranslation } from '@/hooks/useMultilingualWhiskies'
@@ -22,19 +22,12 @@ export function TranslationManager({ whiskyId, onClose, onSave }: TranslationMan
   const { t } = useTranslation()
   const { user, profile } = useAuth()
   const { updateTranslation, getAllTranslations, loading } = useWhiskyTranslations()
-  
-  // Admin check - if not admin, close modal immediately
-  if (!user || profile?.role !== 'admin') {
-    console.warn('Translation manager accessed by non-admin user')
-    onClose()
-    return null
-  }
   const [activeLanguage, setActiveLanguage] = useState('tr')
   const [translations, setTranslations] = useState<Record<string, Partial<WhiskyTranslation>>>({})
   const [loadingTranslations, setLoadingTranslations] = useState(true)
   const [savingLanguages, setSavingLanguages] = useState<Set<string>>(new Set())
 
-  const loadTranslations = async () => {
+  const loadTranslations = useCallback(async () => {
     setLoadingTranslations(true)
     try {
       const result = await getAllTranslations(whiskyId)
@@ -42,18 +35,27 @@ export function TranslationManager({ whiskyId, onClose, onSave }: TranslationMan
         acc[translation.language_code] = translation
         return acc
       }, {} as Record<string, WhiskyTranslation>)
-      
+
       setTranslations(translationMap)
     } catch (error) {
       console.error('Error loading translations:', error)
     } finally {
       setLoadingTranslations(false)
     }
-  }
+  }, [getAllTranslations, whiskyId])
 
   useEffect(() => {
-    loadTranslations()
-  }, [whiskyId])
+    if (user && profile?.role === 'admin') {
+      loadTranslations()
+    }
+  }, [whiskyId, loadTranslations, user, profile?.role])
+
+  // Admin check - if not admin, close modal immediately
+  if (!user || profile?.role !== 'admin') {
+    console.warn('Translation manager accessed by non-admin user')
+    onClose()
+    return null
+  }
 
   const handleSave = async (languageCode: string) => {
     const translation = translations[languageCode]

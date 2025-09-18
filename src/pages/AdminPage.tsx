@@ -365,7 +365,7 @@ export function AdminPage() {
           console.warn('Events table does not exist - creating empty array')
           setEvents([])
           localStorage.setItem('admin_events_cache', JSON.stringify([]))
-          toast.info(t('admin.eventsNotLoading'))
+          toast(t('admin.eventsNotLoading'))
           return
         }
         
@@ -3595,7 +3595,7 @@ export function AdminPage() {
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => handleDeleteGroup(group.id, group.name)}
+                            onClick={() => handleDeleteGroup(String(group.id), group.name)}
                             className="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                             title="{t('admin.deleteGroup')}"
                           >
@@ -3931,7 +3931,7 @@ export function AdminPage() {
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => handleDeleteEvent(event.id, event.title)}
+                            onClick={() => handleDeleteEvent(String(event.id), event.title)}
                             className="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                             title="Etkinliği Sil"
                           >

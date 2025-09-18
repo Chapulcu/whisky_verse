@@ -14,7 +14,18 @@
     "email": "E-posta",
     "password": "Şifre",
     "fullName": "Ad Soyad",
-    "pleaseSignIn": "Lütfen giriş yapın"
+    "pleaseSignIn": "Lütfen giriş yapın",
+    "forgotPassword": "Şifremi Unuttum",
+    "sendResetLink": "Şifre Sıfırlama Bağlantısı Gönder",
+    "resetPasswordTitle": "Şifre Sıfırlama",
+    "resetSubtitle": "E-posta adresinizi girin, size şifre sıfırlama bağlantısı gönderelim",
+    "signUpSubtitle": "WhiskyVerse topluluğuna katılın",
+    "signInSubtitle": "Hesabınıza giriş yapın",
+    "emailPlaceholder": "ornek@email.com",
+    "fullNamePlaceholder": "Adınız ve soyadınız",
+    "confirmPassword": "Şifre Tekrarı",
+    "haveAccountQuestion": "Zaten hesabınız var mı?",
+    "noAccountQuestion": "Hesabınız yok mu?"
   },
   "whisky": {
     "whiskyName": "Viski Adı",
