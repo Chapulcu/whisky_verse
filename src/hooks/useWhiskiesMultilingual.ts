@@ -86,12 +86,20 @@ export function useWhiskiesMultilingual() {
         .from('whiskies')
         .select(`
           id,
+          name,
           image_url,
           alcohol_percentage,
           rating,
           age_years,
           country,
+          region,
           type,
+          description,
+          aroma,
+          taste,
+          finish,
+          color,
+          created_at,
           whisky_translations:whisky_translations (
             language_code,
             name,
@@ -115,10 +123,10 @@ export function useWhiskiesMultilingual() {
         query = query.eq('type', typeFilter)
       }
 
-      // NOTE: Searching across translated name/type requires foreign table filters.
-      // For the first iteration, apply search on base columns only (country/type).
+      // NOTE: Searching across translated name/type would require foreign table filters.
+      // As a reliable baseline, search on base columns including name/type/country.
       if (searchTerm && searchTerm.trim().length >= 3) {
-        query = query.or(`type.ilike.%${searchTerm}%,country.ilike.%${searchTerm}%`)
+        query = query.or(`name.ilike.%${searchTerm}%,type.ilike.%${searchTerm}%,country.ilike.%${searchTerm}%`)
       }
 
       // Pagination

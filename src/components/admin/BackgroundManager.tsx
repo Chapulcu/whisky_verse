@@ -110,46 +110,19 @@ export function BackgroundManager() {
           </div>
           <div>
             <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200">
-              Arka Plan Yönetimi
+              {t('admin.backgroundManagement')}
             </h3>
             <p className="text-sm text-slate-600 dark:text-slate-400">
-              Site arka planını özelleştirin - tema bazlı ayarlar
+              {t('admin.backgroundManagementDescription')}
             </p>
           </div>
         </div>
 
         {/* Preview Mode Toggle */}
         <div className="flex items-center gap-4 mb-4">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Önizleme:</span>
-            <div className="flex rounded-lg border border-slate-300 dark:border-slate-600 overflow-hidden">
-              <button
-                onClick={() => setPreviewMode('light')}
-                className={`px-3 py-1.5 flex items-center gap-1.5 text-sm font-medium transition-colors ${
-                  previewMode === 'light'
-                    ? 'bg-amber-500 text-white'
-                    : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600'
-                }`}
-              >
-                <Sun className="w-4 h-4" />
-                {t('admin.lightTheme')}
-              </button>
-              <button
-                onClick={() => setPreviewMode('dark')}
-                className={`px-3 py-1.5 flex items-center gap-1.5 text-sm font-medium transition-colors ${
-                  previewMode === 'dark'
-                    ? 'bg-slate-700 text-white'
-                    : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600'
-                }`}
-              >
-                <Moon className="w-4 h-4" />
-                {t('admin.darkTheme')}
-              </button>
-            </div>
-          </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Medya Türü:</span>
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{t('admin.mediaType')}:</span>
             <div className="flex rounded-lg border border-slate-300 dark:border-slate-600 overflow-hidden">
               <button
                 onClick={() => setMediaType('image')}
@@ -160,7 +133,7 @@ export function BackgroundManager() {
                 }`}
               >
                 <Image className="w-4 h-4" />
-                Resim
+                {t('admin.image')}
               </button>
               <button
                 onClick={() => setMediaType('video')}
@@ -171,7 +144,7 @@ export function BackgroundManager() {
                 }`}
               >
                 <Video className="w-4 h-4" />
-                Video
+                {t('admin.video')}
               </button>
             </div>
           </div>

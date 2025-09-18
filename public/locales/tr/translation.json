@@ -83,6 +83,11 @@
     "memberSince": "Üyelik Tarihi"
   },
   "admin": {
+    "mediaType": "Medya Türü",
+    "image": "Resim",
+    "video": "Video",
+    "backgroundManagement":"Arka Plan Yönetimi",
+    "backgroundManagementDescription":"Site arka planını özelleştirin - tema bazlı ayarlar",
     "usageGuidelines":"Kullanım Önerileri",
     "usageGuidelines.image":"Resim:",
     "usageGuidelines.imageDescription":"Maksimum 5MB, 1920x1080+ çözünürlük önerilir",
@@ -872,7 +877,8 @@
         "password": "Şifre",
         "confirmPassword": "Şifreyi Onayla",
         "adminUser": "Admin Kullanıcı Adı",
-        "role": "Rol"
+        "role": "Rol",
+        "defaultPassword": "Varsayılan şifre 'password123' ile oluşturulur"
       },
       "labels":{
         "adminUser": "Admin Kullanıcı Adı",

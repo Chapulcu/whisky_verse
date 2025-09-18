@@ -83,6 +83,11 @@
     "memberSince": "Дата вступления"
   },
   "admin": {
+    "mediaType": "Тип медиа",
+    "image": "Изображение",
+    "video": "Видео",
+    "backgroundManagement": "Управление фоном",
+    "backgroundManagementDescription": "Настройте фон сайта - настройки на основе темы",
     "usageGuidelines": "Руководство по использованию",
     "usageGuidelines.image": "Изображение:",
     "usageGuidelines.imageDescription": "Максимум 5 МБ, рекомендуется разрешение 1920x1080+",
@@ -872,7 +877,8 @@
         "password": "Пароль",
         "confirmPassword": "Подтвердить пароль",
         "adminUser": "Имя пользователя-админа",
-        "role": "Роль"
+        "role": "Роль",
+        "defaultPassword": "Пароль по умолчанию: Password123!"
       },
       "labels": {
         "adminUser": "Имя пользователя-админа",

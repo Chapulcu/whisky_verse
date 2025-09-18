@@ -83,6 +83,11 @@
     "memberSince": "Member Since"
   },
   "admin": {
+    "mediaType": "Media Type",
+    "image": "Image",
+    "video": "Video",
+    "backgroundManagement": "Background Management",
+    "backgroundManagementDescription": "Customize the site background - theme-based settings",
     "usageGuidelines": "Usage Guidelines",
     "usageGuidelines.image": "Image:",
     "usageGuidelines.imageDescription": "Maximum 5MB, 1920x1080+ resolution recommended",
@@ -872,7 +877,8 @@
         "password": "Password",
         "confirmPassword": "Confirm Password",
         "adminUser": "Admin Username",
-        "role": "Role"
+        "role": "Role",
+        "defaultPassword": "Default password is 'password123'"
       },
       "labels": {
         "adminUser": "Admin Username",
