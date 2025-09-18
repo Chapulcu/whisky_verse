@@ -776,6 +776,59 @@
       "checkoutUrlError": "Could not get Checkout URL"
     }
   },
+  "analytics": {
+    "dashboard": {
+      "title": "Analytics Dashboard",
+      "subtitle": "Advanced analytics dashboard with interactive charts",
+      "lastUpdated": "Last updated",
+      "refresh": "Refresh",
+      "export": "Export",
+      "loading": "Loading data..."
+    },
+    "cards": {
+      "totalCollection": "Total Collection",
+      "activeUsers": "Active Users",
+      "averageCollection": "Average Collection",
+      "notesRatio": "Notes Writing Ratio",
+      "items": "items",
+      "collectors": "collectors",
+      "itemsPerUser": "items/user",
+      "notes": "notes",
+      "vsPreviousPeriod": "vs previous period"
+    },
+    "charts": {
+      "dailyTrend": "Daily Trend (Last 30 Days)",
+      "whiskyTypeDistribution": "Whisky Type Distribution",
+      "topWhiskies": "Most Popular Whiskies",
+      "countryDistribution": "Country Distribution",
+      "total": "Total",
+      "average": "Average",
+      "itemsAdded": "items added"
+    },
+    "tooltips": {
+      "clickToView": "Click to view details",
+      "average": "Average",
+      "items": "items",
+      "whiskyDetails": "Whisky details",
+      "collectionCount": "Collection count"
+    },
+    "accessibility": {
+      "chartDescription": "Analytics charts",
+      "barChart": "Bar chart",
+      "lineChart": "Line chart",
+      "donutChart": "Donut chart",
+      "refreshButton": "Refresh data",
+      "exportButton": "Export data",
+      "chartNavigation": "Use arrow keys to navigate the chart",
+      "dataVisualization": "Data visualization"
+    },
+    "errors": {
+      "loadingFailed": "Failed to load data",
+      "refreshFailed": "Failed to refresh data",
+      "exportFailed": "Failed to export data",
+      "unauthorized": "You don't have access to this data"
+    }
+  },
   "adminPage": {
     "groupManagement": {
       "title": "Group Management",

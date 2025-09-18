@@ -39,6 +39,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
 import { TranslationManager } from '@/components/TranslationManager'
 import { BackgroundManager } from '@/components/admin/BackgroundManager'
+import { AnalyticsDashboard } from '@/components/analytics/AnalyticsDashboard'
 
 interface User {
   id: string
@@ -52,7 +53,7 @@ interface User {
 }
 
 interface Whisky {
-  age_years: number
+  age_years: number | null
   id: number
   name: string
   type: string
@@ -119,7 +120,7 @@ export function AdminPage() {
   const [whiskies, setWhiskies] = useState<Whisky[]>([])
   const [groups, setGroups] = useState<Group[]>([])
   const [events, setEvents] = useState<Event[]>([])
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'whiskies' | 'groups' | 'events' | 'background'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'whiskies' | 'groups' | 'events' | 'analytics' | 'background'>('overview')
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCountry, setSelectedCountry] = useState('')
   const [selectedType, setSelectedType] = useState('')
@@ -142,6 +143,7 @@ export function AdminPage() {
   const [isExporting, setIsExporting] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
   const [showTranslationManager, setShowTranslationManager] = useState(false)
+  const [isWhiskyLoading, setIsWhiskyLoading] = useState(false)
   const [translatingWhisky, setTranslatingWhisky] = useState<Whisky | null>(null)
   // const [selectedWhiskies, setSelectedWhiskies] = useState<number[]>([])
   // const [isBulkDeleting, setIsBulkDeleting] = useState(false)
@@ -658,12 +660,56 @@ export function AdminPage() {
     }
   }
 
+  // Safe number conversion utilities
+  const parseNumber = (value: any): number | null => {
+    if (value === null || value === undefined || value === '') return null
+    const parsed = typeof value === 'string' ? parseFloat(value) : Number(value)
+    return isNaN(parsed) ? null : parsed
+  }
+
+  const parsePositiveInteger = (value: any): number | null => {
+    if (value === null || value === undefined || value === '') return null
+    const parsed = typeof value === 'string' ? parseInt(value, 10) : Number(value)
+    return isNaN(parsed) || parsed <= 0 ? null : parsed
+  }
+
+  const validateWhiskyForm = () => {
+    const errors: string[] = []
+
+    if (!whiskyForm.name.trim()) errors.push('Viski adı gerekli')
+    if (!whiskyForm.type.trim()) errors.push('Viski tipi gerekli')
+    if (!whiskyForm.country.trim()) errors.push('Ülke gerekli')
+
+    // Number validation according to database constraints
+    if (whiskyForm.alcohol_percentage < 0 || whiskyForm.alcohol_percentage > 100) {
+      errors.push('Alkol oranı 0-100 arasında olmalıdır')
+    }
+
+    // Database constraint: rating >= 1.0 AND rating <= 100.0 (or null)
+    if (whiskyForm.rating !== null && whiskyForm.rating !== undefined) {
+      if (whiskyForm.rating < 1 || whiskyForm.rating > 100) {
+        errors.push('Puan 1-100 arasında olmalıdır veya boş bırakılmalıdır')
+      }
+    }
+
+    // Database constraint: age_years > 0 AND age_years <= 100 (or null)
+    if (whiskyForm.age_years !== null && whiskyForm.age_years !== undefined) {
+      if (whiskyForm.age_years <= 0 || whiskyForm.age_years > 100) {
+        errors.push('Yaş 1-100 arasında olmalıdır veya boş bırakılmalıdır')
+      }
+    }
+
+    return errors
+  }
+
   const handleCreateWhisky = async () => {
-    if (!whiskyForm.name.trim() || !whiskyForm.type.trim() || !whiskyForm.country.trim()) {
-      toast.error(t('admin.nameTypeCountryRequired'))
+    const validationErrors = validateWhiskyForm()
+    if (validationErrors.length > 0) {
+      toast.error('Form hatası: ' + validationErrors.join(', '))
       return
     }
 
+    setIsWhiskyLoading(true)
     try {
       let imageUrl = whiskyForm.image_url.trim() || null
       
@@ -688,9 +734,9 @@ export function AdminPage() {
           type: whiskyForm.type.trim(),
           country: whiskyForm.country.trim(),
           region: whiskyForm.region.trim() || null,
-          alcohol_percentage: whiskyForm.alcohol_percentage,
-          rating: whiskyForm.rating,
-          age_years: whiskyForm.age_years,
+          alcohol_percentage: parseNumber(whiskyForm.alcohol_percentage) || 40,
+          rating: parseNumber(whiskyForm.rating),
+          age_years: parsePositiveInteger(whiskyForm.age_years),
           color: whiskyForm.color.trim() || null,
           aroma: whiskyForm.aroma.trim() || null,
           taste: whiskyForm.taste.trim() || null,
@@ -727,6 +773,8 @@ export function AdminPage() {
     } catch (error: any) {
       console.error('Error creating whisky:', error)
       toast.error(t('admin.whiskyAddError') + ': ' + (error.message || 'Unknown error'))
+    } finally {
+      setIsWhiskyLoading(false)
     }
   }
 
@@ -760,27 +808,25 @@ export function AdminPage() {
       toast.error(t('adminPage.toasts.whiskyNotFound'))
       return
     }
-    
-    if (!whiskyForm.name.trim() || !whiskyForm.type.trim() || !whiskyForm.country.trim()) {
-      toast.error(t('admin.nameTypeCountryRequired'))
+
+    const validationErrors = validateWhiskyForm()
+    if (validationErrors.length > 0) {
+      toast.error('Form hatası: ' + validationErrors.join(', '))
       return
     }
 
+    setIsWhiskyLoading(true)
     try {
-      console.log('🔄 Updating whisky:', editingWhisky.id, 'with data:', whiskyForm)
-      
       let imageUrl = whiskyForm.image_url.trim() || null
       
       // Upload new image if a file is selected
       if (whiskyForm.selectedImageFile) {
-        console.log('📸 Uploading new image...')
         setUploadingImage(true)
         try {
           const uploadResult = await uploadWhiskyImage(whiskyForm.selectedImageFile)
           imageUrl = uploadResult.publicUrl
-          console.log('✅ Image uploaded successfully:', imageUrl)
         } catch (uploadError: any) {
-          console.error('❌ Image upload error:', uploadError)
+          console.error('Image upload error:', uploadError)
           toast.error(t('admin.imageUploadError') + ': ' + (uploadError.message || 'Unknown error'))
           setUploadingImage(false)
           return
@@ -793,37 +839,28 @@ export function AdminPage() {
         type: whiskyForm.type.trim(),
         country: whiskyForm.country.trim(),
         region: whiskyForm.region.trim() || null,
-        alcohol_percentage: whiskyForm.alcohol_percentage,
-        rating: whiskyForm.rating,
-        age_years: whiskyForm.age_years,
+        alcohol_percentage: parseNumber(whiskyForm.alcohol_percentage) || 40,
+        rating: parseNumber(whiskyForm.rating),
+        age_years: parsePositiveInteger(whiskyForm.age_years),
         color: whiskyForm.color.trim() || null,
         aroma: whiskyForm.aroma.trim() || null,
         taste: whiskyForm.taste.trim() || null,
         finish: whiskyForm.finish.trim() || null,
         description: whiskyForm.description.trim() || null,
         image_url: imageUrl,
-        // language_code: whiskyForm.language_code, // Temporarily disabled - column may not exist
         updated_at: new Date().toISOString()
       }
 
-      console.log('📝 Updating with data:', updateData)
-
-      console.log('📡 Sending update request to Supabase...')
       const { data, error } = await supabase
         .from('whiskies')
         .update(updateData)
         .eq('id', editingWhisky.id)
         .select()
 
-      console.log('📡 Supabase response received:', { data, error })
-
       if (error) {
-        console.error('❌ Supabase update error:', error)
+        console.error('Supabase update error:', error)
         throw error
       }
-
-      console.log('✅ Update successful:', data)
-      console.log('🚪 About to close modal and reset form...')
 
       setEditingWhisky(null)
       // Reset form
@@ -850,6 +887,8 @@ export function AdminPage() {
     } catch (error: any) {
       console.error('Error updating whisky:', error)
       toast.error(t('admin.whiskyUpdateError') + ': ' + (error.message || 'Unknown error'))
+    } finally {
+      setIsWhiskyLoading(false)
     }
   }
 
@@ -1688,7 +1727,8 @@ export function AdminPage() {
 
         {/* Tabs */}
         <div className="mb-6">
-          <div className="flex space-x-1 bg-white/10 backdrop-blur-sm rounded-lg p-1">
+          {/* Desktop Navigation */}
+          <div className="hidden lg:flex space-x-1 bg-white/10 backdrop-blur-sm rounded-lg p-1">
             <button
               onClick={() => setActiveTab('overview')}
               className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -1745,8 +1785,127 @@ export function AdminPage() {
               {t('admin.eventManagement')}
             </button>
             <button
+              onClick={() => setActiveTab('analytics')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'analytics'
+                  ? 'bg-white/20 text-slate-800 dark:text-white'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
+              }`}
+            >
+              Analytics
+            </button>
+            <button
               onClick={() => setActiveTab('background')}
               className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'background'
+                  ? 'bg-white/20 text-slate-800 dark:text-white'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
+              }`}
+            >
+              <Image className="w-4 h-4" />
+              {t('admin.background')}
+            </button>
+          </div>
+
+          {/* Mobile Navigation - Dropdown */}
+          <div className="lg:hidden mb-4">
+            <div className="relative">
+              <select
+                value={activeTab}
+                onChange={(e) => setActiveTab(e.target.value as any)}
+                className="w-full px-4 py-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent appearance-none"
+              >
+                <option value="overview">{t('admin.overview')}</option>
+                <option value="users">{t('admin.userManagement')}</option>
+                <option value="whiskies">{t('admin.whiskyManagement')}</option>
+                <option value="groups">{t('admin.groupManagement')}</option>
+                <option value="events">{t('admin.eventManagement')}</option>
+                <option value="analytics">Analytics</option>
+                <option value="background">{t('admin.background')}</option>
+              </select>
+              {/* Custom dropdown arrow */}
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                <svg className="w-5 h-5 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          {/* Tablet Navigation - Scrollable */}
+          <div className="hidden md:flex lg:hidden overflow-x-auto bg-white/10 backdrop-blur-sm rounded-lg p-1 space-x-1 scrollbar-none"
+               style={{
+                 scrollbarWidth: 'none', /* Firefox */
+                 msOverflowStyle: 'none' /* IE and Edge */
+               }}>
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+                activeTab === 'overview'
+                  ? 'bg-white/20 text-slate-800 dark:text-white'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
+              }`}
+            >
+              <Settings className="w-4 h-4" />
+              {t('admin.overview')}
+            </button>
+            <button
+              onClick={() => setActiveTab('users')}
+              className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+                activeTab === 'users'
+                  ? 'bg-white/20 text-slate-800 dark:text-white'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
+              }`}
+            >
+              <Users className="w-4 h-4" />
+              {t('admin.userManagement')}
+            </button>
+            <button
+              onClick={() => setActiveTab('whiskies')}
+              className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+                activeTab === 'whiskies'
+                  ? 'bg-white/20 text-slate-800 dark:text-white'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
+              }`}
+            >
+              <Wine className="w-4 h-4" />
+              {t('admin.whiskyManagement')}
+            </button>
+            <button
+              onClick={() => setActiveTab('groups')}
+              className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+                activeTab === 'groups'
+                  ? 'bg-white/20 text-slate-800 dark:text-white'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
+              }`}
+            >
+              <Users2 className="w-4 h-4" />
+              {t('admin.groupManagement')}
+            </button>
+            <button
+              onClick={() => setActiveTab('events')}
+              className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+                activeTab === 'events'
+                  ? 'bg-white/20 text-slate-800 dark:text-white'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
+              }`}
+            >
+              <CalendarDays className="w-4 h-4" />
+              {t('admin.eventManagement')}
+            </button>
+            <button
+              onClick={() => setActiveTab('analytics')}
+              className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+                activeTab === 'analytics'
+                  ? 'bg-white/20 text-slate-800 dark:text-white'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
+              }`}
+            >
+              Analytics
+            </button>
+            <button
+              onClick={() => setActiveTab('background')}
+              className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
                 activeTab === 'background'
                   ? 'bg-white/20 text-slate-800 dark:text-white'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
@@ -1816,6 +1975,22 @@ export function AdminPage() {
                 </div>
               </div>
             </div>
+          </motion.div>
+        )}
+
+        {/* Analytics Tab */}
+        {activeTab === 'analytics' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <div className="mb-6">
+              <h2 className="text-xl font-bold bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+                Analytics Dashboard
+              </h2>
+              <p className="text-slate-600 dark:text-slate-400">Gelişmiş analitik gösterge paneli ve interaktif grafikler</p>
+            </div>
+            <AnalyticsDashboard refreshInterval={300000} />
           </motion.div>
         )}
 
@@ -2968,10 +3143,10 @@ export function AdminPage() {
                   </button>
                   <button
                     onClick={handleCreateWhisky}
-                    disabled={isLoading}
+                    disabled={isWhiskyLoading}
                     className="flex-1 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-lg transition-all duration-200 disabled:opacity-50"
                   >
-                    {isLoading ? 'Ekleniyor...' : 'Viski Ekle'}
+                    {isWhiskyLoading ? 'Ekleniyor...' : 'Viski Ekle'}
                   </button>
                 </div>
               </motion.div>
@@ -3215,7 +3390,7 @@ export function AdminPage() {
                               />
                               <div className="flex-1">
                                 <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                  {t('adminPage.whiskyForm.labels.currentImage')}: {whiskyForm.name}
+                                 {t('adminPage.whiskyForm.labels.currentImage')}: {whiskyForm.name}
                                 </p>
                                 <p className="text-xs text-slate-500 dark:text-slate-400 break-all">
                                   {whiskyForm.image_url.length > 50 ? whiskyForm.image_url.substring(0, 50) + '...' : whiskyForm.image_url}
@@ -3291,10 +3466,10 @@ export function AdminPage() {
                   </button>
                   <button
                     onClick={handleUpdateWhisky}
-                    disabled={isLoading}
+                    disabled={isWhiskyLoading}
                     className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white rounded-lg transition-all duration-200 disabled:opacity-50"
                   >
-                    {isLoading ? t('adminPage.whiskyForm.buttons.updating') : t('adminPage.whiskyForm.buttons.update')}
+                    {isWhiskyLoading ? t('adminPage.whiskyForm.buttons.updating') : t('adminPage.whiskyForm.buttons.update')}
                   </button>
                 </div>
               </motion.div>
@@ -3313,9 +3488,7 @@ export function AdminPage() {
                 className="bg-white/90 dark:bg-slate-800/95 backdrop-blur-md border border-white/20 dark:border-slate-700 rounded-2xl p-6 w-full max-w-4xl shadow-2xl max-h-[90vh] overflow-y-auto"
               >
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-2xl font-bold bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
-                    {t('adminPage.whiskyDetails.title')}
-                  </h3>
+                  <h3 className="text-2xl font-bold text-slate-800 dark:text-white">{t('adminPage.whiskyDetails.title')}</h3>
                   <button
                     onClick={() => setViewingWhisky(null)}
                     className="p-2 text-slate-500 hover:bg-slate-500/10 rounded-lg transition-colors"

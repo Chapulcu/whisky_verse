@@ -776,6 +776,59 @@
       "checkoutUrlError": "Checkout URL alınamadı"
     }
   },
+  "analytics": {
+    "dashboard": {
+      "title": "Analytics Dashboard",
+      "subtitle": "Gelişmiş analitik gösterge paneli ve interaktif grafikler",
+      "lastUpdated": "Son güncelleme",
+      "refresh": "Yenile",
+      "export": "Dışa Aktar",
+      "loading": "Veriler yükleniyor..."
+    },
+    "cards": {
+      "totalCollection": "Toplam Koleksiyon",
+      "activeUsers": "Aktif Kullanıcılar",
+      "averageCollection": "Ortalama Koleksiyon",
+      "notesRatio": "Not Yazma Oranı",
+      "items": "öğe",
+      "collectors": "koleksiyoner",
+      "itemsPerUser": "öğe/kullanıcı",
+      "notes": "not",
+      "vsPreviousPeriod": "vs geçen dönem"
+    },
+    "charts": {
+      "dailyTrend": "Günlük Trend (Son 30 Gün)",
+      "whiskyTypeDistribution": "Whisky Tür Dağılımı",
+      "topWhiskies": "En Popüler Whiskiler",
+      "countryDistribution": "Ülke Dağılımı",
+      "total": "Toplam",
+      "average": "Ortalama",
+      "itemsAdded": "öğe eklendi"
+    },
+    "tooltips": {
+      "clickToView": "Detaylar için tıklayın",
+      "average": "Ortalama",
+      "items": "öğe",
+      "whiskyDetails": "Whisky detayları",
+      "collectionCount": "Koleksiyon sayısı"
+    },
+    "accessibility": {
+      "chartDescription": "Analitik grafikleri",
+      "barChart": "Çubuk grafik",
+      "lineChart": "Çizgi grafik",
+      "donutChart": "Halka grafik",
+      "refreshButton": "Verileri yenile",
+      "exportButton": "Verileri dışa aktar",
+      "chartNavigation": "Grafikte gezinmek için ok tuşlarını kullanın",
+      "dataVisualization": "Veri görselleştirmesi"
+    },
+    "errors": {
+      "loadingFailed": "Veriler yüklenirken hata oluştu",
+      "refreshFailed": "Veriler yenilenirken hata oluştu",
+      "exportFailed": "Veriler dışa aktarılırken hata oluştu",
+      "unauthorized": "Bu verilere erişim yetkiniz yok"
+    }
+  },
   "adminPage": {
     "groupManagement": {
       "title": "Grup Yönetimi",
