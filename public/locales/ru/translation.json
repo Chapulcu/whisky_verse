@@ -1125,5 +1125,6 @@
     }
   },
   "themeVideoBackground": "Видео-фон темы",
-  "usingDefaultBackground": "Используется стандартный фон"
+  "usingDefaultBackground": "Используется стандартный фон",
+  "upgradeToVip": "Обновить до VIP"
 }
