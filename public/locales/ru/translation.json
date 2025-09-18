@@ -964,7 +964,8 @@
         "creating": "Создание...",
         "selectFile": "Выбрать файл",
         "save": "Сохранить",
-        "selectNewFile": "Выбрать новый файл"
+        "selectNewFile": "Выбрать новый файл",
+         "uploading": "Загрузка..."
       },
       "whiskyName": "Название виски",
       "whiskyNamePlaceholder": "Например. Macallan 18",
@@ -1101,7 +1102,8 @@
     "home": {
       "title": "Главная - WhiskyVerse",
       "description": "Добро пожаловать в WhiskyVerse! Создайте свою коллекцию виски и поделитесь ею с нашим сообществом.",
-      "keywords": "главная, сообщество виски, коллекция виски"
+      "keywords": "главная, сообщество виски, коллекция виски",
+      "exploreWhiskies": "Исследуйте виски"
     },
     "whiskies": {
       "title": "Каталог виски - WhiskyVerse",
@@ -1126,5 +1128,7 @@
   },
   "themeVideoBackground": "Видео-фон темы",
   "usingDefaultBackground": "Используется стандартный фон",
-  "upgradeToVip": "Обновить до VIP"
+  "upgradeToVip": "Обновить до VIP",
+  "signUp": "Зарегистрироваться",
+  "whiskies": "Типы виски"
 }

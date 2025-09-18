@@ -354,6 +354,7 @@
     "shortDateFormat": "DD MMM"
   },
   "home": {
+    "exploreWhiskies": "Viskileri Keşfet",
     "comprehensiveCollection": "Kapsamlı Viski Koleksiyonu",
     "comprehensiveCollectionDesc": "Dünyanın en iyi viskilerini keşfedin, tadın ve koleksiyonunuzu oluşturun.",
     "whiskyCommunitiy": "Viski Topluluğu",
@@ -370,7 +371,6 @@
     "collectionsCount": "Koleksiyon",
     "heroTitle": "WhiskyVerse",
     "heroDescription": "Viski tutkunları için en kapsamlı platform. Dünyanın en kaliteli ruhlarını keşfedin, tadın ve bağlantı kurun.",
-    "exploreWhiskies": "Viskileri Keşfet",
     "joinWhiskyVerse": "WhiskyVerse'e Katıl",
     "features": {
       "title": "Özellikleri Keşfedin",
@@ -1018,7 +1018,8 @@
         "creating": "Oluşturuluyor...",
         "selectFile": "Dosya Seç",
         "save": "Kaydet",
-        "selectNewFile": "Yeni Dosya Seç"
+        "selectNewFile": "Yeni Dosya Seç",
+        "uploading": "Yükleniyor..."
       },
       "whiskyName": "Viski Adı",
       "whiskyNamePlaceholder": "Örn. Macallan 18",
@@ -1183,6 +1184,9 @@
   },
   "themeVideoBackground":"Tema Video Arka Planı",
   "usingDefaultBackground":"Varsayılan Arka Plan Kullanılıyor",
-  "upgradeToVip":"VIP Üyeliğe Yükselt"
+  "upgradeToVip":"VIP Üyeliğe Yükselt",
+  "downgradeToStandard":"Standart Üyeliğe Düşür",
+  "signUp": "Üye Ol",
+  "whiskies": "Viskiler"
 
 }

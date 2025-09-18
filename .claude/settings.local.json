@@ -55,7 +55,9 @@
       "Read(//var/folders/xp/g7ybln5j49v5254kxypbsm3h0000gn/T/TemporaryItems/NSIRD_screencaptureui_1nkFZH/**)",
       "Bash(git reset:*)",
       "Bash(mkdir:*)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Read(//var/folders/xp/g7ybln5j49v5254kxypbsm3h0000gn/T/TemporaryItems/NSIRD_screencaptureui_kXivyw/**)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []

@@ -1017,7 +1017,8 @@
         "creating": "Creating...",
         "selectFile": "Select File",
         "save": "Save",
-        "selectNewFile": "Select New File"
+        "selectNewFile": "Select New File",
+         "uploading": "Uploading..."
       },
       "whiskyName": "Whisky Name",
       "whiskyNamePlaceholder": "e.g. Macallan 18",
@@ -1182,5 +1183,7 @@
   },
   "themeVideoBackground": "Theme Video Background",
   "usingDefaultBackground": "Using Default Background",
-  "upgradeToVip": "Upgrade to VIP"
+  "upgradeToVip": "Upgrade to VIP",
+  "signUp": "Sign Up",
+  "whiskies": "Whiskies"
 }
