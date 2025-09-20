@@ -60,6 +60,7 @@ export function CollectionPage() {
   const [selectedCountries, setSelectedCountries] = useState<string[]>([])
   const [selectedTypes, setSelectedTypes] = useState<string[]>([])
   const [ratingFilter, setRatingFilter] = useState<number>(0)
+  const [selectedLetter, setSelectedLetter] = useState('')
   const [isFiltersOpen, setIsFiltersOpen] = useState(false)
   const [isAdvancedFiltersOpen, setIsAdvancedFiltersOpen] = useState(false)
 
@@ -76,8 +77,9 @@ export function CollectionPage() {
       const matchesCountry = selectedCountries.length === 0 || selectedCountries.includes(item.whisky.country)
       const matchesType = selectedTypes.length === 0 || selectedTypes.includes(item.whisky.type)
       const matchesRating = ratingFilter === 0 || (item.rating || 0) >= ratingFilter
+      const matchesLetter = !selectedLetter || item.whisky.name.toLowerCase().startsWith(selectedLetter.toLowerCase())
 
-      return matchesSearch && matchesFilter && matchesCountry && matchesType && matchesRating
+      return matchesSearch && matchesFilter && matchesCountry && matchesType && matchesRating && matchesLetter
     })
 
     // Sort the filtered results
@@ -117,7 +119,7 @@ export function CollectionPage() {
     })
 
     return filtered
-  }, [collection, searchTerm, filterType, selectedCountries, selectedTypes, ratingFilter, sortBy, sortOrder])
+  }, [collection, searchTerm, filterType, selectedCountries, selectedTypes, ratingFilter, selectedLetter, sortBy, sortOrder])
 
   // Pagination
   const totalPages = Math.ceil(filteredAndSortedCollection.length / itemsPerPage)
@@ -373,6 +375,7 @@ export function CollectionPage() {
                     setSelectedCountries([])
                     setSelectedTypes([])
                     setRatingFilter(0)
+                    setSelectedLetter('')
                     setSortBy('added_date')
                     setSortOrder('desc')
                     setCurrentPage(1)
@@ -500,6 +503,59 @@ export function CollectionPage() {
                         )}
                       </button>
                     ))}
+                  </div>
+                </div>
+
+                {/* Alphabetical Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+                    <Filter className="w-4 h-4" />
+                    {t('adminPage.whiskyManagement.filters.alphabetical')}
+                  </label>
+                  <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-4 shadow-xl">
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={() => {
+                          setSelectedLetter('')
+                          setCurrentPage(1)
+                        }}
+                        className={`px-3 py-1.5 text-sm rounded-lg transition-all duration-200 ${
+                          selectedLetter === ''
+                            ? 'bg-amber-500 text-white shadow-lg'
+                            : 'bg-white/10 hover:bg-white/20 text-slate-600 dark:text-slate-400'
+                        }`}
+                      >
+                        {t('adminPage.whiskyManagement.filters.all')}
+                      </button>
+                      {'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(letter => {
+                        const count = collection.filter(item => item.whisky.name.toLowerCase().startsWith(letter.toLowerCase())).length
+                        return (
+                          <button
+                            key={letter}
+                            onClick={() => {
+                              setSelectedLetter(letter)
+                              setCurrentPage(1)
+                            }}
+                            disabled={count === 0}
+                            className={`px-3 py-1.5 text-sm rounded-lg transition-all duration-200 relative ${
+                              selectedLetter === letter
+                                ? 'bg-amber-500 text-white shadow-lg'
+                                : count > 0
+                                ? 'bg-white/10 hover:bg-white/20 text-slate-600 dark:text-slate-400'
+                                : 'bg-slate-300/20 text-slate-400 cursor-not-allowed'
+                            }`}
+                            title={`${count} viski`}
+                          >
+                            {letter}
+                            {count > 0 && (
+                              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                {count > 99 ? '99+' : count}
+                              </span>
+                            )}
+                          </button>
+                        )
+                      })}
+                    </div>
                   </div>
                 </div>
               </div>
