@@ -87,7 +87,7 @@ export function LineChart({ data, showAverage = true, gradient = true }: LineCha
               strokeOpacity={0.7}
               label={{
                 value: `Ortalama: ${average.toFixed(1)}`,
-                position: 'topRight',
+                position: 'top' as const,
                 style: {
                   fontSize: '12px',
                   fill: '#f59e0b',

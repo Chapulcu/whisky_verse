@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAdminOperations } from '@/hooks/useAdminOperations'
-import { useWhiskyUpload } from '@/hooks/useWhiskyUpload'
+import { useDirectWhiskyUpload } from '@/hooks/useDirectWhiskyUpload'
 import { supabase } from '@/lib/supabase'
 import { 
   Users, 
@@ -150,7 +150,8 @@ export function AdminPage() {
   // const [isBulkUpdating, setIsBulkUpdating] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const imageInputRef = useRef<HTMLInputElement>(null)
-  const { uploadWhiskyImage, isUploading } = useWhiskyUpload()
+  // Switch to API-based operations (no more Supabase timeout issues)
+  const { createWhiskyWithImage, updateWhisky, deleteWhisky, uploadImageDirect, isUploading } = useDirectWhiskyUpload()
   const [adminForm, setAdminForm] = useState({
     email: '',
     password: '',
@@ -712,81 +713,36 @@ export function AdminPage() {
 
     console.log('✅ Validation passed, starting creation...')
     setIsWhiskyLoading(true)
+
     try {
-      let imageUrl = whiskyForm.image_url.trim() || null
-      console.log('🖼️ Image URL from form:', imageUrl)
-
-      // Upload image if a file is selected
-      if (whiskyForm.selectedImageFile) {
-        console.log('📁 File selected for upload:', whiskyForm.selectedImageFile.name)
-        console.log('⚠️ GEÇICI: Image upload Edge Function çalışmıyor, atlıyoruz...')
-        // TODO: Fix Edge Function upload işlemi
-        imageUrl = null // Geçici olarak null
-      } else {
-        console.log('🚫 No file selected, using URL or null')
-      }
-
-      console.log('📊 Inserting whisky data...')
-      const insertData = {
+      // Prepare whisky data
+      const whiskyData = {
         name: whiskyForm.name.trim(),
         type: whiskyForm.type.trim(),
         country: whiskyForm.country.trim(),
-        region: whiskyForm.region.trim() || null,
+        region: whiskyForm.region.trim() || undefined,
         alcohol_percentage: parseNumber(whiskyForm.alcohol_percentage) || 40,
-        rating: parseNumber(whiskyForm.rating),
-        age_years: parsePositiveInteger(whiskyForm.age_years),
-        color: whiskyForm.color.trim() || null,
-        aroma: whiskyForm.aroma.trim() || null,
-        taste: whiskyForm.taste.trim() || null,
-        finish: whiskyForm.finish.trim() || null,
-        description: whiskyForm.description.trim() || null,
-        image_url: imageUrl,
-        created_by: user?.id
-      }
-      console.log('📝 Insert data:', insertData)
-      console.log('👤 Current user:', user?.id)
-
-      // Test database connection first
-      console.log('🔌 Testing database connection...')
-      try {
-        const connectionTest = await supabase.from('whiskies').select('count').limit(1)
-        console.log('✅ Database connection OK:', connectionTest)
-      } catch (connError) {
-        console.error('❌ Database connection failed:', connError)
-        throw new Error('Database connection failed')
+        rating: whiskyForm.rating ? parseInt(whiskyForm.rating.toString()) : undefined,
+        age_years: parsePositiveInteger(whiskyForm.age_years) || undefined,
+        color: whiskyForm.color.trim() || undefined,
+        aroma: whiskyForm.aroma.trim() || undefined,
+        taste: whiskyForm.taste.trim() || undefined,
+        finish: whiskyForm.finish.trim() || undefined,
+        description: whiskyForm.description.trim() || undefined
       }
 
-      console.log('🔄 Calling supabase.from(whiskies).insert()...')
+      console.log('📊 Creating whisky with data:', whiskyData)
+      console.log('📁 Image file:', whiskyForm.selectedImageFile?.name || 'none')
 
-      // Add timeout to detect hanging requests
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Database request timeout (10s)')), 10000)
-      })
+      // Use the new hook to create whisky with image
+      const result = await createWhiskyWithImage(
+        whiskyData,
+        whiskyForm.selectedImageFile || undefined
+      )
 
-      const insertPromise = supabase
-        .from('whiskies')
-        .insert(insertData)
-        .select()
-        .single()
+      console.log('✅ Whisky created successfully:', result)
 
-      const response = await Promise.race([insertPromise, timeoutPromise]) as any
-
-      console.log('📡 Supabase response:', response)
-      const { data, error } = response
-
-      if (error) {
-        console.error('💥 Supabase error:', error)
-        console.error('💥 Error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        })
-        throw error
-      }
-
-      console.log('✅ Whisky created successfully:', data)
-      setIsCreatingWhisky(false)
+      // Reset form (modal will close in finally block)
       setWhiskyForm({
         name: '',
         type: '',
@@ -803,13 +759,16 @@ export function AdminPage() {
         image_url: '',
         selectedImageFile: null
       })
+
+      // Reload whiskies list
       await loadWhiskies()
-      toast.success(t('admin.whiskyAddedSuccess'))
+
     } catch (error: any) {
-      console.error('Error creating whisky:', error)
-      toast.error(t('admin.whiskyAddError') + ': ' + (error.message || 'Unknown error'))
+      console.error('❌ Error creating whisky:', error)
+      toast.error('Viski oluşturma hatası: ' + (error.message || 'Bilinmeyen hata'))
     } finally {
       setIsWhiskyLoading(false)
+      setIsCreatingWhisky(false)
     }
   }
 
@@ -839,7 +798,7 @@ export function AdminPage() {
 
   const handleUpdateWhisky = async () => {
     if (!editingWhisky) {
-      toast.error(t('adminPage.toasts.whiskyNotFound'))
+      toast.error('Düzenlenecek viski bulunamadı')
       return
     }
 
@@ -850,45 +809,38 @@ export function AdminPage() {
     }
 
     setIsWhiskyLoading(true)
-    try {
-      let imageUrl = whiskyForm.image_url.trim() || null
-      
-      // GEÇICI: Image upload Edge Function çalışmıyor
-      if (whiskyForm.selectedImageFile) {
-        console.warn('⚠️ Image upload geçici olarak devre dışı - Edge Function problemi')
-        imageUrl = null
-      }
 
-      const updateData = {
+    try {
+      // Prepare update data
+      const whiskyData = {
         name: whiskyForm.name.trim(),
         type: whiskyForm.type.trim(),
         country: whiskyForm.country.trim(),
-        region: whiskyForm.region.trim() || null,
+        region: whiskyForm.region.trim() || undefined,
         alcohol_percentage: parseNumber(whiskyForm.alcohol_percentage) || 40,
-        rating: parseNumber(whiskyForm.rating),
-        age_years: parsePositiveInteger(whiskyForm.age_years),
-        color: whiskyForm.color.trim() || null,
-        aroma: whiskyForm.aroma.trim() || null,
-        taste: whiskyForm.taste.trim() || null,
-        finish: whiskyForm.finish.trim() || null,
-        description: whiskyForm.description.trim() || null,
-        image_url: imageUrl,
-        updated_at: new Date().toISOString()
+        rating: whiskyForm.rating ? parseInt(whiskyForm.rating.toString()) : undefined,
+        age_years: parsePositiveInteger(whiskyForm.age_years) || undefined,
+        color: whiskyForm.color.trim() || undefined,
+        aroma: whiskyForm.aroma.trim() || undefined,
+        taste: whiskyForm.taste.trim() || undefined,
+        finish: whiskyForm.finish.trim() || undefined,
+        description: whiskyForm.description.trim() || undefined
       }
 
-      const { data, error } = await supabase
-        .from('whiskies')
-        .update(updateData)
-        .eq('id', editingWhisky.id)
-        .select()
+      console.log('🔄 Updating whisky:', editingWhisky.id, whiskyData)
+      console.log('📁 New image file:', whiskyForm.selectedImageFile?.name || 'none')
 
-      if (error) {
-        console.error('Supabase update error:', error)
-        throw error
-      }
+      // Use API-based update (no more timeout issues!)
+      const result = await updateWhisky(
+        editingWhisky.id,
+        whiskyData,
+        whiskyForm.selectedImageFile || undefined
+      )
 
+      console.log('✅ Whisky updated successfully:', result)
+
+      // Reset editing state and form
       setEditingWhisky(null)
-      // Reset form
       setWhiskyForm({
         name: '',
         type: '',
@@ -905,60 +857,56 @@ export function AdminPage() {
         image_url: '',
         selectedImageFile: null
       })
-      
+
+      // Reload whiskies list
       await loadWhiskies()
-      toast.success(t('admin.whiskyUpdatedSuccess'))
+
     } catch (error: any) {
-      console.error('Error updating whisky:', error)
-      toast.error(t('admin.whiskyUpdateError') + ': ' + (error.message || 'Unknown error'))
+      console.error('❌ Error updating whisky:', error)
+      toast.error('Viski güncelleme hatası: ' + (error.message || 'Bilinmeyen hata'))
+
+      // Ensure modal closes even on error
+      setEditingWhisky(null)
+      setWhiskyForm({
+        name: '',
+        type: '',
+        country: '',
+        region: '',
+        alcohol_percentage: 40,
+        rating: null,
+        age_years: null,
+        color: '',
+        aroma: '',
+        taste: '',
+        finish: '',
+        description: '',
+        image_url: '',
+        selectedImageFile: null
+      })
     } finally {
       setIsWhiskyLoading(false)
     }
   }
 
   const handleDeleteWhisky = async (whiskyId: number, whiskyName: string) => {
-    if (!confirm(`"${whiskyName}" ${t('adminPage.toasts.deleteConfirm')}`)) {
+    if (!confirm(`"${whiskyName}" viskisini silmek istediğinizden emin misiniz?`)) {
       return
     }
 
     try {
-      // First check if whisky is in any user collections
-      const { data: userWhiskies, error: checkError } = await supabase
-        .from('user_whiskies')
-        .select('id')
-        .eq('whisky_id', whiskyId)
-        .limit(1)
+      console.log('🗑️ Deleting whisky:', whiskyId, whiskyName)
 
-      if (checkError) throw checkError
+      // Use the new hook to delete whisky (it handles user collections automatically)
+      await deleteWhisky(whiskyId)
 
-      if (userWhiskies && userWhiskies.length > 0) {
-        const shouldProceed = confirm(
-          t('adminPage.toasts.whiskyInCollections')
-        )
-        if (!shouldProceed) return
+      console.log('✅ Whisky deleted successfully')
 
-        // Delete from user collections first
-        const { error: deleteUserWhiskiesError } = await supabase
-          .from('user_whiskies')
-          .delete()
-          .eq('whisky_id', whiskyId)
-
-        if (deleteUserWhiskiesError) throw deleteUserWhiskiesError
-      }
-
-      // Delete the whisky
-      const { error } = await supabase
-        .from('whiskies')
-        .delete()
-        .eq('id', whiskyId)
-
-      if (error) throw error
-
+      // Reload whiskies list
       await loadWhiskies()
-      toast.success(t('admin.whiskyDeletedSuccess'))
+
     } catch (error: any) {
-      console.error('Error deleting whisky:', error)
-      toast.error(t('admin.whiskyDeleteError') + ': ' + (error.message || 'Unknown error'))
+      console.error('❌ Error deleting whisky:', error)
+      // Error is already shown by the hook via toast
     }
   }
 

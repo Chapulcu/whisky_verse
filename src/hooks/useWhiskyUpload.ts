@@ -44,9 +44,9 @@ export function useWhiskyUpload() {
         reader.readAsDataURL(file)
       })
 
-      // Generate unique filename
-      const timestamp = Date.now()
-      const uniqueFileName = `whisky_${timestamp}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`
+      // Generate user-scoped path: userId/filename (RLS owner check)
+      const userId = user.id
+      const uniqueFileName = `${userId}/${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`
 
       // Use Edge Function to upload image
       const { data, error } = await supabase.functions.invoke('upload-file', {
