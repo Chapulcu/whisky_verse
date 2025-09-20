@@ -1062,7 +1062,10 @@
         "createdDate": "Creation Date",
         "lastUpdated": "Last Update",
         "close": "Close",
-        "metadata": "Metadata"
+        "metadata": "Metadata",
+        "country": "Country",
+        "region": "Region",
+        "age": "Age"
       },
       "buttons": {
         "edit": "Edit",
@@ -1118,6 +1121,13 @@
         "creation":"Creation Date",
         "lastUpdated":"Last Update"
       },
+      "emptyStates": {
+        "noMatchingWhiskies": "No whiskies found matching your search criteria",
+        "noWhiskiesYet": "No whiskies yet",
+        "noWhiskiesOnPage": "No whiskies on this page"
+      },
+      "viewDetails": "View Details",
+      "previousPage": "Previous page",
      "importSection": {
       "requiredColumns": "Required Columns: name, type, country, alcohol_percentage",
       "optionalColumns": "Optional Columns: imageUrl",

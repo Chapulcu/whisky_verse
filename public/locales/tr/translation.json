@@ -1063,7 +1063,9 @@
         "createdDate":"Oluşturma Tarihi",
         "lastUpdated":"Son Güncelleme",
         "close":"Kapat",
-        "metadata": "Meta Veriler"
+        "metadata": "Meta Veriler",
+        "country": "Ülke",
+        "region": "Bölge"
       }, 
       "buttons":{
           "edit":"Düzenle",
@@ -1119,6 +1121,13 @@
         "creation":"Oluşturma Tarihi",
         "lastUpdated":"Son Güncelleme"
       },
+      "emptyStates": {
+        "noMatchingWhiskies": "Arama kriterlerinize uygun viski bulunamadı",
+        "noWhiskiesYet": "Henüz viski yok",
+        "noWhiskiesOnPage": "Bu sayfada viski yok"
+      },
+      "viewDetails": "Detayları Görüntüle",
+      "previousPage": "Önceki sayfa",
      "importSection": {
       "requiredColumns": "Gerekli Sütunlar: name, type, country, alcohol_percentage",
       "optionalColumns": "Opsiyonel Sütunlar: imageUrl",
