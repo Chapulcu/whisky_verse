@@ -28,25 +28,29 @@ export function HomePage() {
       icon: Wine,
       titleKey: 'home.features.collection.title',
       descriptionKey: 'home.features.collection.description',
-      color: 'from-amber-500 to-orange-500'
+      color: 'from-amber-500 to-orange-500',
+      link: '/whiskies'
     },
     {
       icon: Users,
       titleKey: 'home.features.community.title',
       descriptionKey: 'home.features.community.description',
-      color: 'from-blue-500 to-purple-500'
+      color: 'from-blue-500 to-purple-500',
+      link: '/groups'
     },
     {
       icon: Calendar,
       titleKey: 'home.features.events.title',
       descriptionKey: 'home.features.events.description',
-      color: 'from-purple-500 to-pink-500'
+      color: 'from-purple-500 to-pink-500',
+      link: '/events'
     },
     {
       icon: Award,
       titleKey: 'home.features.reviews.title',
       descriptionKey: 'home.features.reviews.description',
-      color: 'from-green-500 to-teal-500'
+      color: 'from-green-500 to-teal-500',
+      link: '/whiskies'
     }
   ], [])
 
@@ -198,21 +202,28 @@ export function HomePage() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.6 + index * 0.1 }}
-                className="card group hover:scale-105"
               >
-                <div className="flex items-start gap-4">
-                  <div className={`w-12 h-12 bg-gradient-to-br ${feature.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                    <Icon className="w-6 h-6 text-white" />
+                <Link
+                  to={feature.link}
+                  className="card group hover:scale-105 block transition-transform duration-300"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className={`w-12 h-12 bg-gradient-to-br ${feature.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                      <Icon className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2 group-hover:text-primary-600 transition-colors">
+                        {t(feature.titleKey)}
+                      </h3>
+                      <p className="text-slate-600 dark:text-slate-300 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-colors">
+                        {t(feature.descriptionKey)}
+                      </p>
+                    </div>
+                    <div className="ml-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <ArrowRight className="w-5 h-5 text-primary-500" />
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-2">
-                      {t(feature.titleKey)}
-                    </h3>
-                    <p className="text-slate-600 dark:text-slate-300">
-                      {t(feature.descriptionKey)}
-                    </p>
-                  </div>
-                </div>
+                </Link>
               </motion.div>
             )
           })}
