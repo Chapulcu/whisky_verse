@@ -65,6 +65,7 @@ function WhiskiesPageContent() {
   // Removed old searchTerm state - now using localSearchTerm and debouncedSearchTerm
   const [selectedCountry, setSelectedCountry] = useState('')
   const [selectedType, setSelectedType] = useState('')
+  const [selectedLetter, setSelectedLetter] = useState('')
   const [showFilters, setShowFilters] = useState(false)
 
   // Cleanup refs for memory management
@@ -289,8 +290,14 @@ function WhiskiesPageContent() {
     setShowImageViewer(true)
   }
 
-  // Server already applied filters and pagination; use returned rows as-is
-  const filteredWhiskies = whiskies
+  // Apply client-side letter filtering on top of server-side filtering
+  const filteredWhiskies = useMemo(() => {
+    if (!selectedLetter) return whiskies
+
+    return whiskies.filter(whisky =>
+      whisky.name.toLowerCase().startsWith(selectedLetter.toLowerCase())
+    )
+  }, [whiskies, selectedLetter])
 
   // Get unique countries and types for filters
   const countries = [...new Set(whiskies.map(w => w.country))].sort()
@@ -385,7 +392,7 @@ function WhiskiesPageContent() {
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1)
-  }, [localSearchTerm, selectedCountry, selectedType])
+  }, [localSearchTerm, selectedCountry, selectedType, selectedLetter])
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -592,13 +599,14 @@ function WhiskiesPageContent() {
             </button>
             
             {/* Quick Clear Button - Always Visible */}
-            {(localSearchTerm || selectedCountry || selectedType) && (
+            {(localSearchTerm || selectedCountry || selectedType || selectedLetter) && (
               <button
                 onClick={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
                   setSelectedCountry('')
                   setSelectedType('')
+                  setSelectedLetter('')
                   setLocalSearchTerm('')
                   setDebouncedSearchTerm('')
                   setCurrentPage(1)
@@ -618,7 +626,7 @@ function WhiskiesPageContent() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="grid md:grid-cols-3 gap-4 pt-4 border-t border-white/10 dark:border-white/5"
+            className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-white/10 dark:border-white/5"
           >
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
@@ -655,8 +663,55 @@ function WhiskiesPageContent() {
                 ))}
               </select>
             </div>
-            
-            <div className="flex items-end">
+
+            {/* Alphabetical Filter */}
+            <div className="col-span-full">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+                <Filter className="w-4 h-4" />
+                {t('adminPage.whiskyManagement.filters.alphabetical')}
+              </label>
+              <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-4 shadow-xl">
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setSelectedLetter('')}
+                    className={`px-3 py-1.5 text-sm rounded-lg transition-all duration-200 ${
+                      selectedLetter === ''
+                        ? 'bg-amber-500 text-white shadow-lg'
+                        : 'bg-white/10 hover:bg-white/20 text-slate-600 dark:text-slate-400'
+                    }`}
+                  >
+                    {t('adminPage.whiskyManagement.filters.all')}
+                  </button>
+                  {'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(letter => {
+                    const count = whiskies.filter(w => w.name.toLowerCase().startsWith(letter.toLowerCase())).length
+                    return (
+                      <button
+                        key={letter}
+                        onClick={() => setSelectedLetter(letter)}
+                        disabled={count === 0}
+                        className={`px-3 py-1.5 text-sm rounded-lg transition-all duration-200 relative ${
+                          selectedLetter === letter
+                            ? 'bg-amber-500 text-white shadow-lg'
+                            : count > 0
+                            ? 'bg-white/10 hover:bg-white/20 text-slate-600 dark:text-slate-400'
+                            : 'bg-slate-300/20 text-slate-400 cursor-not-allowed'
+                        }`}
+                        title={`${count} viski`}
+                      >
+                        {letter}
+                        {count > 0 && (
+                          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                            {count > 99 ? '99+' : count}
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-end col-span-full">
               <button
                 onClick={(e) => {
                   e.preventDefault()
@@ -664,6 +719,7 @@ function WhiskiesPageContent() {
                   console.log('Clear filters clicked') // Debug log
                   setSelectedCountry('')
                   setSelectedType('')
+                  setSelectedLetter('')
                   setLocalSearchTerm('')
                   setDebouncedSearchTerm('')
                   setCurrentPage(1) // Reset page to 1
@@ -1567,10 +1623,6 @@ function WhiskiesPageContent() {
               />
             </div>
 
-            {/* Image Info */}
-            <div className="mt-4 text-center text-white/80 text-sm">
-              {t('whiskiesPage.clickToEnlarge')}
-            </div>
           </motion.div>
 
           {/* Background Click to Close */}
