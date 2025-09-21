@@ -76,7 +76,7 @@ export function Navigation() {
   return (
     <ErrorBoundary>
       {/* Desktop Navigation */}
-      <nav className="hidden lg:flex glass-strong fixed top-4 left-1/2 transform -translate-x-1/2 z-50 rounded-2xl px-3 xl:px-4 py-3 max-w-[98vw] overflow-hidden">
+      <nav className="hidden lg:flex glass-nav fixed top-4 left-1/2 transform -translate-x-1/2 z-50 rounded-2xl px-3 xl:px-4 py-3 max-w-[98vw] overflow-hidden">
         <div className="flex items-center gap-2 xl:gap-4 w-full min-w-0">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-1 xl:gap-2 flex-shrink-0">
@@ -129,7 +129,7 @@ export function Navigation() {
       </nav>
 
       {/* Tablet Navigation (768px - 1024px) */}
-      <nav className="hidden md:flex lg:hidden glass-strong fixed top-4 left-1/2 transform -translate-x-1/2 z-50 rounded-2xl px-3 py-3 max-w-[98vw] overflow-hidden">
+      <nav className="hidden md:flex lg:hidden glass-nav fixed top-4 left-1/2 transform -translate-x-1/2 z-50 rounded-2xl px-3 py-3 max-w-[98vw] overflow-hidden">
         <div className="flex items-center gap-2 w-full min-w-0">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 flex-shrink-0">
@@ -181,7 +181,7 @@ export function Navigation() {
       {/* Mobile Navigation */}
       <nav className="md:hidden">
         {/* Mobile Header - Optimized for landscape */}
-        <div className="glass-strong fixed top-0 left-0 right-0 z-50 px-3 py-2 landscape:py-1">
+        <div className="glass-nav fixed top-0 left-0 right-0 z-50 px-3 py-2 landscape:py-1">
           <div className="flex items-center justify-between h-12 landscape:h-10">
             <Link to="/" className="flex items-center gap-2 flex-shrink-0" onClick={closeMobileMenu}>
               <div className="w-7 h-7 landscape:w-6 landscape:h-6 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-lg flex items-center justify-center">
@@ -225,7 +225,7 @@ export function Navigation() {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="fixed top-14 landscape:top-12 left-0 right-0 z-40 glass-strong mx-3 landscape:mx-2 rounded-xl p-4 landscape:p-3 max-h-[calc(100vh-4rem)] landscape:max-h-[calc(100vh-3rem)] overflow-y-auto"
+              className="fixed top-14 landscape:top-12 left-0 right-0 z-40 glass-panel mx-3 landscape:mx-2 p-4 landscape:p-3 max-h-[calc(100vh-4rem)] landscape:max-h-[calc(100vh-3rem)] overflow-y-auto"
             >
               {/* Landscape: Horizontal layout for navigation items */}
               <div className="landscape:hidden space-y-2">

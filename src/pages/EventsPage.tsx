@@ -380,7 +380,7 @@ export function EventsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="card">
+      <div className="glass-panel p-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
             <button
@@ -433,7 +433,7 @@ export function EventsPage() {
 
       {/* No Groups Warning */}
       {myGroups.length === 0 && (
-        <div className="card bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
+        <div className="glass-cardbg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
           <div className="flex items-center gap-3 text-yellow-800 dark:text-yellow-200">
             <Crown className="w-5 h-5" />
             <div>

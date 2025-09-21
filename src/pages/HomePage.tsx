@@ -97,7 +97,7 @@ export function HomePage() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="relative card-strong text-center mobile-card-spacing py-12 sm:py-16"
+          className="relative glass-card text-center mobile-card-spacing py-12 sm:py-16"
         >
           <div className="flex justify-center mb-8">
             <div className="relative">
@@ -159,7 +159,7 @@ export function HomePage() {
           {statsDisplay.map((stat, index) => {
             const Icon = stat.icon
             return (
-              <div key={index} className="card text-center group hover:scale-105 transition-transform">
+              <div key={index} className="glass-card text-center group hover:scale-105 transition-transform">
                 <div className="flex justify-center mb-3">
                   <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
                     <Icon className="w-6 h-6 text-white" />
@@ -205,7 +205,7 @@ export function HomePage() {
               >
                 <Link
                   to={feature.link}
-                  className="card group hover:scale-105 block transition-transform duration-300"
+                  className="glass-card group hover:scale-105 block transition-transform duration-300"
                 >
                   <div className="flex items-start gap-4">
                     <div className={`w-12 h-12 bg-gradient-to-br ${feature.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
@@ -237,7 +237,7 @@ export function HomePage() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.8 }}
-            className="card-strong text-center py-12"
+            className="glass-card text-center py-12"
           >
             <TrendingUp className="w-16 h-16 text-primary-500 mx-auto mb-6" />
             <h3 className="text-2xl md:text-3xl font-cyber font-bold text-gradient mb-4">

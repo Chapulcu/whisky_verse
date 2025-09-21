@@ -295,7 +295,7 @@ export function GroupsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="card">
+      <div className="glass-panel p-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
             <button
@@ -352,7 +352,7 @@ export function GroupsPage() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: index * 0.1 }}
-            className="card group hover:scale-105"
+            className="glass-cardgroup hover:scale-105"
           >
             {/* Header */}
             <div className="flex items-start justify-between mb-4">

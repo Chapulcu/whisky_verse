@@ -282,19 +282,19 @@ export function CollectionPage() {
           transition={{ delay: 0.1 }}
           className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
         >
-          <div className="glass rounded-xl p-4 text-center">
+          <div className="glass-card p-4 text-center">
             <div className="text-2xl font-bold text-amber-600">{stats.total}</div>
             <div className="text-sm text-slate-600 dark:text-slate-400">{t('collectionPage.stats.totalWhisky')}</div>
           </div>
-          <div className="glass rounded-xl p-4 text-center">
+          <div className="glass-card p-4 text-center">
             <div className="text-2xl font-bold text-green-600">{stats.tasted}</div>
             <div className="text-sm text-slate-600 dark:text-slate-400">{t('collectionPage.stats.tasted')}</div>
           </div>
-          <div className="glass rounded-xl p-4 text-center">
+          <div className="glass-card p-4 text-center">
             <div className="text-2xl font-bold text-blue-600">{stats.untasted}</div>
             <div className="text-sm text-slate-600 dark:text-slate-400">{t('collectionPage.stats.untasted')}</div>
           </div>
-          <div className="glass rounded-xl p-4 text-center">
+          <div className="glass-card p-4 text-center">
             <div className="text-2xl font-bold text-purple-600">
               {stats.avgRating > 0 ? stats.avgRating.toFixed(1) : '—'}
             </div>
@@ -307,7 +307,7 @@ export function CollectionPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="glass rounded-xl p-4 mb-6"
+          className="glass-card p-4 mb-6"
         >
           <div className="flex flex-col gap-4">
             {/* Search Bar */}
@@ -363,7 +363,7 @@ export function CollectionPage() {
               animate={{ opacity: 1, height: 'auto', y: 0 }}
               exit={{ opacity: 0, height: 0, y: -20 }}
               transition={{ duration: 0.3, ease: 'easeInOut' }}
-              className="glass rounded-xl p-4 mb-6 space-y-4 overflow-hidden"
+              className="glass-card p-4 mb-6 space-y-4 overflow-hidden"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -633,7 +633,7 @@ export function CollectionPage() {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: index * 0.05 }}
-                className="glass rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 group"
+                className="glass-card overflow-hidden hover:shadow-xl transition-all duration-300 group"
               >
                 {/* Image Section */}
                 <div className="relative aspect-[4/5] bg-gradient-to-br from-amber-100 to-orange-100 dark:from-slate-700 dark:to-slate-800">
@@ -893,7 +893,7 @@ export function CollectionPage() {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                className="glass rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+                className="glass-card max-w-2xl w-full max-h-[90vh] overflow-y-auto"
               >
                 <div className="flex justify-between items-start mb-4">
                   <h2 className="text-2xl font-bold text-slate-800 dark:text-white">

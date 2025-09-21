@@ -544,7 +544,7 @@ function WhiskiesPageContent() {
       </div>
 
       {/* Search and Filters */}
-      <div className="card space-y-4">
+      <div className="glass-panel space-y-4 p-6">
         {/* Search Bar */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -553,7 +553,7 @@ function WhiskiesPageContent() {
             placeholder={t('whiskiesPage.searchPlaceholder')}
             value={localSearchTerm}
             onChange={(e) => setLocalSearchTerm(e.target.value)}
-            className="input-glass pl-10 pr-32"
+            className="glass-input pl-10 pr-32 w-full"
             autoComplete="off"
           />
           {localSearchTerm.length > 0 && localSearchTerm.length < 3 && (
@@ -636,7 +636,7 @@ function WhiskiesPageContent() {
                 id="countrySelect"
                 value={selectedCountry}
                 onChange={(e) => setSelectedCountry(e.target.value)}
-                className="input-glass"
+                className="glass-input w-full"
                 aria-label={t('country')}
               >
                 <option value="">{t('whiskiesPage.allCountries')}</option>
@@ -654,7 +654,7 @@ function WhiskiesPageContent() {
                 id="typeSelect"
                 value={selectedType}
                 onChange={(e) => setSelectedType(e.target.value)}
-                className="input-glass"
+                className="glass-input w-full"
                 aria-label={t('whiskyType')}
               >
                 <option value="">{t('whiskiesPage.allTypes')}</option>
@@ -750,7 +750,7 @@ function WhiskiesPageContent() {
                 id="gridColumnsSelect"
                 value={gridColumns}
                 onChange={(e) => setGridColumns(Number(e.target.value) as 2 | 3 | 4 | 5 | 6)}
-                className="input-glass text-sm px-3 py-1"
+                className="glass-input text-sm px-3 py-1 w-full"
                 aria-label={t('whiskiesPage.column')}
               >
                 <option value={2}>2</option>
@@ -770,7 +770,7 @@ function WhiskiesPageContent() {
                   setItemsPerPage(Number(e.target.value))
                   setCurrentPage(1)
                 }}
-                className="input-glass text-sm px-3 py-1"
+                className="glass-input text-sm px-3 py-1 w-full"
                 aria-label={t('whiskiesPage.perPage')}
               >
                 <option value={6}>6</option>
@@ -792,7 +792,7 @@ function WhiskiesPageContent() {
                 setItemsPerPage(Number(e.target.value))
                 setCurrentPage(1)
               }}
-              className="input-glass text-sm px-3 py-1"
+              className="glass-input text-sm px-3 py-1 w-full"
               aria-label={t('whiskiesPage.perPage')}
             >
               <option value={5}>5</option>
