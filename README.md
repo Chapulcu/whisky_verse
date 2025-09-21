@@ -208,8 +208,8 @@ Bu proje özel lisans altında dağıtılmaktadır. Detaylar için [LICENSE](LIC
 
 **Talip Akhan**
 - 📧 Email: akhantalip@gmail.com
-- 💼 LinkedIn: [linkedin.com/in/talipakhan](https://linkedin.com/in/talipakhan)
-- 🐙 GitHub: [@talipakhan](https://github.com/talipakhan)
+- 💼 LinkedIn: [https://www.linkedin.com/in/talip-akhan-48491515/](https://www.linkedin.com/in/talip-akhan-48491515/)
+- 🐙 GitHub: [@talipakhan](https://github.com/Chapulcu)
 
 ---
 

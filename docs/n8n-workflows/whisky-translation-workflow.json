@@ -1,0 +1,323 @@
+{
+  "name": "WhiskyVerse AI Translation Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "value": "0 2 * * *"
+            }
+          ]
+        }
+      },
+      "name": "Daily Translation Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300],
+      "id": "schedule-trigger"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "executeQuery",
+        "query": "SELECT id, name, description, aroma, taste, finish, color, region, type FROM whiskies WHERE id NOT IN (SELECT DISTINCT whisky_id FROM whisky_translations WHERE language_code IN ('en', 'ru')) ORDER BY id LIMIT 50"
+      },
+      "name": "Get Untranslated Whiskies",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [460, 300],
+      "id": "supabase-query",
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-whiskyverse",
+          "name": "Supabase WhiskyVerse"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "name": "Split Whiskies",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [680, 300],
+      "id": "split-whiskies"
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "options": {
+          "temperature": 0.1,
+          "maxTokens": 2000
+        },
+        "prompt": "Sen uzman bir viski çevirmensin. Aşağıdaki viski bilgilerini profesyonel şekilde İngilizce ve Rusça'ya çevir. Viski terminolojisini koru ve tutarlı ol.\n\nViski Bilgileri:\n- İsim: {{$json.name}}\n- Açıklama: {{$json.description}}\n- Aroma: {{$json.aroma}}\n- Tat: {{$json.taste}}\n- Final: {{$json.finish}}\n- Renk: {{$json.color}}\n- Bölge: {{$json.region}}\n- Tip: {{$json.type}}\n\nSadece aşağıdaki JSON formatında cevap ver:\n{\n  \"en\": {\n    \"name\": \"...\",\n    \"description\": \"...\",\n    \"aroma\": \"...\",\n    \"taste\": \"...\",\n    \"finish\": \"...\",\n    \"color\": \"...\",\n    \"region\": \"...\",\n    \"type\": \"...\"\n  },\n  \"ru\": {\n    \"name\": \"...\",\n    \"description\": \"...\",\n    \"aroma\": \"...\",\n    \"taste\": \"...\",\n    \"finish\": \"...\",\n    \"color\": \"...\",\n    \"region\": \"...\",\n    \"type\": \"...\"\n  }\n}"
+      },
+      "name": "AI Translator",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1.3,
+      "position": [900, 300],
+      "id": "ai-translator",
+      "credentials": {
+        "openAiApi": {
+          "id": "openai-translator",
+          "name": "OpenAI Translator"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const aiResponse = items[0].json.message.content;\nconst whiskyId = items[0].json.id;\n\ntry {\n  const translations = JSON.parse(aiResponse);\n  \n  const results = [];\n  \n  // English translation\n  if (translations.en) {\n    results.push({\n      whisky_id: whiskyId,\n      language_code: 'en',\n      source_language_code: 'tr',\n      name: translations.en.name || '',\n      description: translations.en.description || null,\n      aroma: translations.en.aroma || null,\n      taste: translations.en.taste || null,\n      finish: translations.en.finish || null,\n      color: translations.en.color || null,\n      region: translations.en.region || null,\n      type: translations.en.type || null,\n      translation_status: 'machine',\n      quality_score: 0.8\n    });\n  }\n  \n  // Russian translation\n  if (translations.ru) {\n    results.push({\n      whisky_id: whiskyId,\n      language_code: 'ru',\n      source_language_code: 'tr',\n      name: translations.ru.name || '',\n      description: translations.ru.description || null,\n      aroma: translations.ru.aroma || null,\n      taste: translations.ru.taste || null,\n      finish: translations.ru.finish || null,\n      color: translations.ru.color || null,\n      region: translations.ru.region || null,\n      type: translations.ru.type || null,\n      translation_status: 'machine',\n      quality_score: 0.8\n    });\n  }\n  \n  return results;\n} catch (error) {\n  console.error('JSON Parse Error:', error);\n  return [{\n    error: true,\n    whisky_id: whiskyId,\n    message: 'AI response could not be parsed',\n    raw_response: aiResponse\n  }];\n}"
+      },
+      "name": "Parse AI Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 300],
+      "id": "parse-response"
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "name": "Split Languages",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [1340, 300],
+      "id": "split-languages"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.error}}",
+              "operation": "notEqual",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "name": "Check No Error",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1560, 300],
+      "id": "check-error"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "insert",
+        "table": "whisky_translations",
+        "records": {
+          "values": {
+            "whisky_id": "={{$json.whisky_id}}",
+            "language_code": "={{$json.language_code}}",
+            "source_language_code": "={{$json.source_language_code}}",
+            "name": "={{$json.name}}",
+            "description": "={{$json.description}}",
+            "aroma": "={{$json.aroma}}",
+            "taste": "={{$json.taste}}",
+            "finish": "={{$json.finish}}",
+            "color": "={{$json.color}}",
+            "region": "={{$json.region}}",
+            "type": "={{$json.type}}",
+            "translation_status": "={{$json.translation_status}}",
+            "quality_score": "={{$json.quality_score}}"
+          }
+        }
+      },
+      "name": "Insert Translation",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [1780, 220],
+      "id": "insert-translation",
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-whiskyverse",
+          "name": "Supabase WhiskyVerse"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://your-logging-webhook.com/log",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"timestamp\": \"{{new Date().toISOString()}}\",\n  \"workflow\": \"whisky_translation\",\n  \"whisky_id\": {{$json.whisky_id}},\n  \"status\": \"error\",\n  \"error_message\": \"{{$json.message}}\",\n  \"raw_response\": \"{{$json.raw_response}}\"\n}",
+        "options": {}
+      },
+      "name": "Log Error",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1780, 380],
+      "id": "log-error"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://your-logging-webhook.com/log",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"timestamp\": \"{{new Date().toISOString()}}\",\n  \"workflow\": \"whisky_translation\",\n  \"whisky_id\": {{$json.whisky_id}},\n  \"language\": \"{{$json.language_code}}\",\n  \"status\": \"success\",\n  \"processing_time\": \"{{$workflow.timestamp}}\"\n}",
+        "options": {}
+      },
+      "name": "Log Success",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [2000, 220],
+      "id": "log-success"
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "seconds"
+      },
+      "name": "Rate Limit Delay",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [800, 300],
+      "id": "rate-limit-delay"
+    }
+  ],
+  "connections": {
+    "Daily Translation Schedule": {
+      "main": [
+        [
+          {
+            "node": "Get Untranslated Whiskies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Untranslated Whiskies": {
+      "main": [
+        [
+          {
+            "node": "Split Whiskies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Whiskies": {
+      "main": [
+        [
+          {
+            "node": "Rate Limit Delay",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rate Limit Delay": {
+      "main": [
+        [
+          {
+            "node": "AI Translator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Translator": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI Response": {
+      "main": [
+        [
+          {
+            "node": "Split Languages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Languages": {
+      "main": [
+        [
+          {
+            "node": "Check No Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check No Error": {
+      "main": [
+        [
+          {
+            "node": "Insert Translation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Translation": {
+      "main": [
+        [
+          {
+            "node": "Log Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2024-01-20T10:00:00.000Z",
+      "updatedAt": "2024-01-20T10:00:00.000Z",
+      "id": "translation",
+      "name": "Translation"
+    },
+    {
+      "createdAt": "2024-01-20T10:00:00.000Z",
+      "updatedAt": "2024-01-20T10:00:00.000Z",
+      "id": "whisky",
+      "name": "Whisky"
+    },
+    {
+      "createdAt": "2024-01-20T10:00:00.000Z",
+      "updatedAt": "2024-01-20T10:00:00.000Z",
+      "id": "ai",
+      "name": "AI"
+    }
+  ],
+  "triggerCount": 0,
+  "updatedAt": "2024-01-20T10:00:00.000Z",
+  "versionId": "1"
+}
