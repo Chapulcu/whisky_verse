@@ -727,6 +727,10 @@
     "toasts": {
       "eventsLoadError": "Could not load events",
       "eventCreateError": "An error occurred while creating event",
+      "eventCreatedSuccess": "Event created successfully",
+      "registrationSuccess": "You have successfully registered for the event",
+      "registrationCancelled": "Your event registration has been cancelled",
+      "eventDeletedSuccess": "Event deleted successfully",
       "alreadyRegistered": "You are already registered for this event",
       "registrationError": "An error occurred while registering",
       "cancelRegistrationError": "An error occurred while cancelling registration",

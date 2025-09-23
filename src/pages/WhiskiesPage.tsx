@@ -20,15 +20,13 @@ import {
   Grid3X3,
   List,
   ChevronLeft,
-  ChevronRight,
-  Globe
+  ChevronRight
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuth } from '@/contexts/AuthContext'
 import { useWhiskyUpload } from '@/hooks/useWhiskyUpload'
 import { useWhiskiesMultilingual, MultilingualWhisky } from '@/hooks/useWhiskiesMultilingual'
 import { useUserCollection } from '@/hooks/useUserCollection'
-import { TranslationManager } from '@/components/TranslationManager'
 import { WhiskyErrorBoundary } from '@/components/WhiskyErrorBoundary'
 import { WhiskySkeleton, WhiskySkeletonMini } from '@/components/WhiskySkeleton'
 
@@ -77,8 +75,6 @@ function WhiskiesPageContent() {
   const [gridColumns, setGridColumns] = useState<2 | 3 | 4 | 5 | 6>(3)
   const [showAddModal, setShowAddModal] = useState(false)
   const [viewingWhisky, setViewingWhisky] = useState<MultilingualWhisky | null>(null)
-  const [showTranslationManager, setShowTranslationManager] = useState(false)
-  const [translatingWhisky, setTranslatingWhisky] = useState<MultilingualWhisky | null>(null)
   const [showImageViewer, setShowImageViewer] = useState(false)
   const [viewingImage, setViewingImage] = useState<{ url: string; name: string } | null>(null)
   const [addForm, setAddForm] = useState({
@@ -98,11 +94,6 @@ function WhiskiesPageContent() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string>('')
 
-  // Translation management handlers
-  const handleManageTranslations = (whisky: MultilingualWhisky) => {
-    setTranslatingWhisky(whisky)
-    setShowTranslationManager(true)
-  }
 
   // loadUserCollection is now handled by useUserCollection hook
 
@@ -133,19 +124,147 @@ function WhiskiesPageContent() {
   // Handle URL query parameter for whisky ID
   useEffect(() => {
     const whiskyId = searchParams.get('id')
-    if (whiskyId && whiskies.length > 0) {
-      const targetWhisky = whiskies.find(w => w.id === parseInt(whiskyId))
-      if (targetWhisky) {
-        setViewingWhisky(targetWhisky)
-        // Clear the URL parameter after opening the modal
-        setSearchParams(prev => {
-          const newParams = new URLSearchParams(prev)
-          newParams.delete('id')
-          return newParams
-        })
+    if (whiskyId) {
+      const whiskyIdNum = parseInt(whiskyId)
+      console.log('🔗 URL parameter detected - Whisky ID:', whiskyIdNum)
+
+      // First try to find in loaded whiskies
+      if (whiskies.length > 0) {
+        console.log('📚 Searching in loaded whiskies:', whiskies.length, 'items')
+        const targetWhisky = whiskies.find(w => w.id === whiskyIdNum)
+        if (targetWhisky) {
+          console.log('✅ Found whisky in loaded list:', targetWhisky.name)
+          setViewingWhisky(targetWhisky)
+          // Clear the URL parameter after a short delay to ensure modal opens
+          setTimeout(() => {
+            setSearchParams(prev => {
+              const newParams = new URLSearchParams(prev)
+              newParams.delete('id')
+              return newParams
+            })
+          }, 100)
+          return
+        } else {
+          console.log('❌ Whisky not found in loaded list, will fetch from database')
+        }
+      } else {
+        console.log('📭 No whiskies loaded yet, will fetch from database')
       }
+
+      // If not found in loaded whiskies, fetch directly from database
+      const fetchWhiskyById = async () => {
+        try {
+          console.log('🔄 Fetching whisky from database with ID:', whiskyIdNum)
+          console.log('🌍 Current language:', i18n.language)
+
+          // Use the same query structure as useWhiskiesMultilingual hook
+          const { data: whiskyData, error: whiskyError } = await supabase
+            .from('whiskies')
+            .select(`
+              id,
+              name,
+              image_url,
+              alcohol_percentage,
+              rating,
+              age_years,
+              country,
+              region,
+              type,
+              description,
+              aroma,
+              taste,
+              finish,
+              color,
+              created_at,
+              whisky_translations:whisky_translations (
+                language_code,
+                name,
+                description,
+                aroma,
+                taste,
+                finish,
+                color,
+                region,
+                type,
+                country,
+                translation_status
+              )
+            `)
+            .eq('id', whiskyIdNum)
+            .single()
+
+          if (whiskyError || !whiskyData) {
+            console.error('❌ Error fetching whisky by ID:', whiskyError)
+            return
+          }
+
+          console.log('✅ Whisky fetched from database:', whiskyData.name)
+          console.log('📝 Available translations:', whiskyData.whisky_translations?.map(t => t.language_code) || [])
+
+          // Apply same translation logic as useWhiskiesMultilingual
+          const currentLang = i18n.language as 'tr' | 'en' | 'ru'
+          let bestTranslation = null
+
+          // For Turkish, prefer original data
+          if (currentLang !== 'tr' && whiskyData.whisky_translations) {
+            // Try to find translation for current language first
+            const pref = [currentLang, 'tr', 'en'] as ('tr' | 'en' | 'ru')[]
+            for (const code of pref) {
+              const t = whiskyData.whisky_translations.find(x => x.language_code === code)
+              if (t) {
+                bestTranslation = t
+                console.log(`🎯 Using ${code} translation for ${currentLang}`)
+                break
+              }
+            }
+          }
+
+          // Build MultilingualWhisky object with proper localization
+          const whisky: MultilingualWhisky = {
+            id: whiskyData.id,
+            image_url: whiskyData.image_url,
+            alcohol_percentage: whiskyData.alcohol_percentage,
+            rating: whiskyData.rating,
+            age_years: whiskyData.age_years,
+            country: bestTranslation?.country || whiskyData.country,
+            name: bestTranslation?.name || whiskyData.name,
+            description: bestTranslation?.description || whiskyData.description,
+            aroma: bestTranslation?.aroma || whiskyData.aroma,
+            taste: bestTranslation?.taste || whiskyData.taste,
+            finish: bestTranslation?.finish || whiskyData.finish,
+            color: bestTranslation?.color || whiskyData.color,
+            region: bestTranslation?.region || whiskyData.region,
+            type: bestTranslation?.type || whiskyData.type,
+            language_code: bestTranslation ? bestTranslation.language_code : currentLang,
+            translation_status: bestTranslation?.translation_status || (currentLang === 'tr' ? 'human' : undefined)
+          }
+
+          console.log('🎯 Final localized whisky data:', {
+            name: whisky.name,
+            language_code: whisky.language_code,
+            hasDescription: !!whisky.description,
+            hasAroma: !!whisky.aroma,
+            hasTaste: !!whisky.taste,
+            hasFinish: !!whisky.finish
+          })
+
+          setViewingWhisky(whisky)
+          // Clear the URL parameter after a short delay to ensure modal opens
+          setTimeout(() => {
+            setSearchParams(prev => {
+              const newParams = new URLSearchParams(prev)
+              newParams.delete('id')
+              return newParams
+            })
+          }, 100)
+        } catch (error) {
+          console.error('💥 Error fetching whisky:', error)
+        }
+      }
+
+      fetchWhiskyById()
     }
-  }, [searchParams, whiskies, setSearchParams])
+  }, [searchParams, whiskies, setSearchParams, i18n.language])
 
   // Cleanup on unmount
   useEffect(() => {
@@ -290,18 +409,6 @@ function WhiskiesPageContent() {
     setViewingWhisky(whisky)
   }
 
-  const handleTranslateWhisky = (whisky: MultilingualWhisky) => {
-    setTranslatingWhisky(whisky)
-    setShowTranslationManager(true)
-  }
-
-  const handleTranslationSave = () => {
-    // Reload whiskies to get updated data
-    const offset = (currentPage - 1) * itemsPerPage
-    loadWhiskies(i18n.language as any, itemsPerPage, offset, debouncedSearchTerm, selectedCountry, selectedType)
-    setShowTranslationManager(false)
-    setTranslatingWhisky(null)
-  }
 
   const handleImageClick = (imageUrl: string, whiskyName: string) => {
     setViewingImage({ url: imageUrl, name: whiskyName })
@@ -883,16 +990,6 @@ function WhiskiesPageContent() {
                       <Eye className="w-4 h-4" />
                     </button>
                     
-                    {/* Translation Management Button - for admin users only */}
-                    {user && profile && profile.role === 'admin' && (
-                      <button
-                        onClick={() => handleTranslateWhisky(whisky)}
-                        className="p-2 rounded-full bg-blue-600/20 hover:bg-blue-500/30 text-blue-100 hover:text-white backdrop-blur-md border border-blue-400/20 hover:border-blue-300/30 transition-all duration-300 shadow-lg hover:shadow-blue-500/25"
-                        title={t('whiskiesPage.manageTranslations')}
-                      >
-                        <Globe className="w-4 h-4" />
-                      </button>
-                    )}
                     
                     {user && (
                       <>
@@ -1040,16 +1137,6 @@ function WhiskiesPageContent() {
                     <Eye className="w-4 h-4" />
                   </button>
                   
-                  {/* Translation Management Button - for admin users only */}
-                  {user && profile && profile.role === 'admin' && (
-                    <button
-                      onClick={() => handleTranslateWhisky(whisky)}
-                      className="p-2 rounded-lg bg-blue-600/20 hover:bg-blue-500/30 text-blue-100 hover:text-white backdrop-blur-md border border-blue-400/20 hover:border-blue-300/30 transition-all duration-300 shadow-lg hover:shadow-blue-500/25 min-w-[44px] min-h-[44px] flex items-center justify-center"
-                      title="Çevirileri Yönet"
-                    >
-                      <Globe className="w-4 h-4" />
-                    </button>
-                  )}
                   
                   {user && (
                     <>
@@ -1379,7 +1466,10 @@ function WhiskiesPageContent() {
       )}
 
       {/* Whisky Detail Modal */}
-      {viewingWhisky && (
+      {viewingWhisky && (() => {
+        console.log('🎭 Rendering modal for whisky:', viewingWhisky.name)
+        return true
+      })() && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -1654,14 +1744,6 @@ function WhiskiesPageContent() {
         </div>
       )}
 
-      {/* Translation Manager */}
-      {showTranslationManager && translatingWhisky && (
-        <TranslationManager
-          whiskyId={translatingWhisky.id}
-          onClose={() => setShowTranslationManager(false)}
-          onSave={handleTranslationSave}
-        />
-      )}
     </div>
   )
 }

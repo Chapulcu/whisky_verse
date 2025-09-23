@@ -90,7 +90,6 @@ export function FeaturedWhiskies({ whiskies, loading }: FeaturedWhiskiesProps) {
       {/* Featured Whiskies Scroll Container */}
       <div className="relative">
         <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 snap-x snap-mandatory">
-          {/* Show more whiskies to enable scrolling */}
           {whiskies.slice(0, 6).map((whisky, index) => (
             <motion.div
               key={whisky.id}
@@ -103,56 +102,54 @@ export function FeaturedWhiskies({ whiskies, loading }: FeaturedWhiskiesProps) {
                 to={`/whiskies?id=${whisky.id}`}
                 className="glass-panel block overflow-hidden hover:scale-[1.01] hover:shadow-lg transition-all duration-300 hover:shadow-amber-500/20 hover:border-amber-300/30 p-3 h-full"
               >
-              {/* Whisky Image */}
-              <div className="relative aspect-[3/4] mb-3 rounded-lg overflow-hidden bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/20 dark:to-orange-900/20 shadow-lg ring-1 ring-amber-200/30 dark:ring-amber-500/20">
-                {whisky.image_url ? (
-                  <img
-                    src={whisky.image_url}
-                    alt={whisky.name}
-                    className="w-full h-full object-cover transition-all duration-300 group-hover:scale-105"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-                    <Wine className="w-12 h-12 text-amber-400" />
-                  </div>
-                )}
-
-                {/* Featured Badge */}
-                <div className="absolute top-2 left-2">
-                  <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-md">
-                    <div className="flex items-center gap-1">
-                      <Star className="w-2.5 h-2.5 fill-current" />
-                      <span className="text-xs">{t('home.featured.badge')}</span>
+                {/* Whisky Image */}
+                <div className="relative aspect-[3/4] mb-3 rounded-lg overflow-hidden bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/20 dark:to-orange-900/20 shadow-lg ring-1 ring-amber-200/30 dark:ring-amber-500/20">
+                  {whisky.image_url ? (
+                    <img
+                      src={whisky.image_url}
+                      alt={whisky.name}
+                      className="w-full h-full object-cover transition-all duration-300 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+                      <Wine className="w-12 h-12 text-amber-400" />
                     </div>
-                  </div>
-                </div>
+                  )}
 
-                {/* Rating Badge */}
-                {whisky.rating && (
-                  <div className="absolute top-2 right-2">
-                    <div className="bg-black/40 backdrop-blur-sm rounded px-2 py-0.5">
-                      <div className="flex items-center gap-1 text-white font-medium text-xs">
-                        <Star className="w-2.5 h-2.5 fill-current text-yellow-400" />
-                        {whisky.rating}
+                  {/* Featured Badge */}
+                  <div className="absolute top-2 left-2">
+                    <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-md">
+                      <div className="flex items-center gap-1">
+                        <Star className="w-2.5 h-2.5 fill-current" />
+                        <span className="text-xs">{t('home.featured.badge')}</span>
                       </div>
                     </div>
                   </div>
-                )}
-              </div>
 
-              {/* Whisky Info */}
-              <div className="space-y-2">
-                {/* Name and Type */}
-                <div>
-                  <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-1 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors line-clamp-2 leading-tight">
-                    {whisky.name}
-                  </h3>
-                  <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">
-                    {whisky.country}
-                  </p>
+                  {/* Rating Badge */}
+                  {whisky.rating && (
+                    <div className="absolute top-2 right-2">
+                      <div className="bg-black/40 backdrop-blur-sm rounded px-2 py-0.5">
+                        <div className="flex items-center gap-1 text-white font-medium text-xs">
+                          <Star className="w-2.5 h-2.5 fill-current text-yellow-400" />
+                          {whisky.rating}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-              </div>
+                {/* Whisky Info */}
+                <div className="space-y-2">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-1 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors line-clamp-2 leading-tight">
+                      {whisky.name}
+                    </h3>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">
+                      {whisky.country}
+                    </p>
+                  </div>
+                </div>
               </Link>
             </motion.div>
           ))}

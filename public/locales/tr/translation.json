@@ -727,6 +727,10 @@
     "toasts": {
       "eventsLoadError": "Etkinlikler yüklenemedi",
       "eventCreateError": "Etkinlik oluşturulurken hata oluştu",
+      "eventCreatedSuccess": "Etkinlik başarıyla oluşturuldu",
+      "registrationSuccess": "Etkinliğe başarıyla kayıt oldunuz",
+      "registrationCancelled": "Etkinlik kaydınız iptal edildi",
+      "eventDeletedSuccess": "Etkinlik başarıyla silindi",
       "alreadyRegistered": "Zaten bu etkinliğe kayıtlısınız",
       "registrationError": "Kayıt olurken hata oluştu",
       "cancelRegistrationError": "Kayıt iptal edilirken hata oluştu",
