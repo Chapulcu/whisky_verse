@@ -403,7 +403,8 @@
       "subtitle": "Most loved and highest rated whiskies from our collection",
       "badge": "Featured",
       "viewDetails": "View Details",
-      "viewAll": "View All Whiskies"
+      "viewAll": "View All Whiskies",
+      "swipeToView": "Swipe to view more"
     },
     "events": {
       "title": "Upcoming Tasting Events",

@@ -31,7 +31,7 @@ export function useFeaturedWhiskies() {
         .not('image_url', 'is', null) // Only whiskies with images
         .order('rating', { ascending: false, nullsLast: true })
         .order('created_at', { ascending: false })
-        .limit(6)
+        .limit(8)
 
       if (fetchError) {
         throw fetchError

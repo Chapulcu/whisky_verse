@@ -40,9 +40,9 @@ export function FeaturedWhiskies({ whiskies, loading }: FeaturedWhiskiesProps) {
           <div className="h-6 bg-slate-300 dark:bg-slate-700 rounded-md mx-auto max-w-md animate-pulse"></div>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <div key={index} className="glass-panel p-3 animate-pulse">
+        <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div key={index} className="glass-panel p-3 animate-pulse flex-shrink-0 w-44 sm:w-48">
               <div className="aspect-[3/4] bg-slate-300 dark:bg-slate-700 rounded-lg mb-3"></div>
               <div className="space-y-2">
                 <div className="h-4 bg-slate-300 dark:bg-slate-700 rounded w-3/4"></div>
@@ -87,20 +87,22 @@ export function FeaturedWhiskies({ whiskies, loading }: FeaturedWhiskiesProps) {
         </p>
       </motion.div>
 
-      {/* Featured Whiskies Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        {whiskies.slice(0, 3).map((whisky, index) => (
-          <motion.div
-            key={whisky.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 + index * 0.1 }}
-            className="group"
-          >
-            <Link
-              to={`/whiskies`}
-              className="glass-panel block overflow-hidden hover:scale-[1.01] hover:shadow-lg transition-all duration-300 hover:shadow-amber-500/20 hover:border-amber-300/30 p-3"
+      {/* Featured Whiskies Scroll Container */}
+      <div className="relative">
+        <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 snap-x snap-mandatory">
+          {/* Show more whiskies to enable scrolling */}
+          {whiskies.slice(0, 6).map((whisky, index) => (
+            <motion.div
+              key={whisky.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 + index * 0.1 }}
+              className="group flex-shrink-0 w-44 sm:w-48 snap-start"
             >
+              <Link
+                to={`/whiskies`}
+                className="glass-panel block overflow-hidden hover:scale-[1.01] hover:shadow-lg transition-all duration-300 hover:shadow-amber-500/20 hover:border-amber-300/30 p-3 h-full"
+              >
               {/* Whisky Image */}
               <div className="relative aspect-[3/4] mb-3 rounded-lg overflow-hidden bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/20 dark:to-orange-900/20 shadow-lg ring-1 ring-amber-200/30 dark:ring-amber-500/20">
                 {whisky.image_url ? (
@@ -151,9 +153,24 @@ export function FeaturedWhiskies({ whiskies, loading }: FeaturedWhiskiesProps) {
                 </div>
 
               </div>
-            </Link>
-          </motion.div>
-        ))}
+              </Link>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Scroll Indicator */}
+        {whiskies && whiskies.length > 2 && (
+          <div className="flex justify-center mt-4">
+            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+              <div className="flex gap-1">
+                <div className="w-1 h-1 rounded-full bg-amber-400"></div>
+                <div className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600"></div>
+                <div className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600"></div>
+              </div>
+              <span className="ml-2">{t('home.featured.swipeToView')}</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* View All Link */}

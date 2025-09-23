@@ -403,7 +403,8 @@
       "subtitle": "Koleksiyonumuzdan en beğenilen ve yüksek puanlı viskiler",
       "badge": "Öne Çıkan",
       "viewDetails": "Detayları Gör",
-      "viewAll": "Tüm Viskileri Gör"
+      "viewAll": "Tüm Viskileri Gör",
+      "swipeToView": "Daha fazlası için kaydırın"
     },
     "events": {
       "title": "Yaklaşan Tadım Etkinlikleri",
