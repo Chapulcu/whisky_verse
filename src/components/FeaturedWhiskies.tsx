@@ -21,10 +21,6 @@ export interface FeaturedWhisky {
   alcohol_percentage: number
   rating?: number | null
   image_url?: string | null
-  description?: string | null
-  aroma?: string | null
-  taste?: string | null
-  finish?: string | null
   is_featured?: boolean
 }
 
@@ -178,38 +174,6 @@ export function FeaturedWhiskies({ whiskies, loading }: FeaturedWhiskiesProps) {
                   </div>
                 </div>
 
-                {/* Description Preview */}
-                {whisky.description && (
-                  <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-3 leading-relaxed">
-                    {whisky.description}
-                  </p>
-                )}
-
-                {/* Tasting Notes Preview */}
-                {(whisky.aroma || whisky.taste) && (
-                  <div className="space-y-2">
-                    {whisky.aroma && (
-                      <div className="text-sm">
-                        <span className="font-medium text-green-600 dark:text-green-400">
-                          {t('whisky.aroma')}:
-                        </span>
-                        <span className="text-slate-600 dark:text-slate-400 ml-2 line-clamp-1">
-                          {whisky.aroma}
-                        </span>
-                      </div>
-                    )}
-                    {whisky.taste && (
-                      <div className="text-sm">
-                        <span className="font-medium text-amber-600 dark:text-amber-400">
-                          {t('whisky.taste')}:
-                        </span>
-                        <span className="text-slate-600 dark:text-slate-400 ml-2 line-clamp-1">
-                          {whisky.taste}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
             </Link>
           </motion.div>

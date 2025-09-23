@@ -26,14 +26,9 @@ export function useFeaturedWhiskies() {
           alcohol_percentage,
           rating,
           image_url,
-          description,
-          aroma,
-          taste,
-          finish,
           created_at
         `)
         .not('image_url', 'is', null) // Only whiskies with images
-        .not('description', 'is', null) // Only whiskies with descriptions
         .order('rating', { ascending: false, nullsLast: true })
         .order('created_at', { ascending: false })
         .limit(6)
