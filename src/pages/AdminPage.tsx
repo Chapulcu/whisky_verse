@@ -4,12 +4,12 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useAdminOperations } from '@/hooks/useAdminOperations'
 import { useDirectWhiskyUpload } from '@/hooks/useDirectWhiskyUpload'
 import { supabase } from '@/lib/supabase'
-import { 
-  Users, 
-  Settings, 
-  Shield, 
-  Edit2, 
-  Trash2, 
+import {
+  Users,
+  Settings,
+  Shield,
+  Edit2,
+  Trash2,
   UserPlus,
   Crown,
   Mail,
@@ -33,13 +33,15 @@ import {
   Clock,
   MapPin as LocationIcon,
   Globe,
-  Lock
+  Lock,
+  Languages
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
 import { TranslationManager } from '@/components/TranslationManager'
 import { BackgroundManager } from '@/components/admin/BackgroundManager'
 import { AnalyticsDashboard } from '@/components/analytics/AnalyticsDashboard'
+import { TranslationManagement } from '@/components/admin/TranslationManagement'
 
 interface User {
   id: string
@@ -120,7 +122,7 @@ export function AdminPage() {
   const [whiskies, setWhiskies] = useState<Whisky[]>([])
   const [groups, setGroups] = useState<Group[]>([])
   const [events, setEvents] = useState<Event[]>([])
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'whiskies' | 'groups' | 'events' | 'analytics' | 'background'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'whiskies' | 'groups' | 'events' | 'analytics' | 'background' | 'translations'>('overview')
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCountry, setSelectedCountry] = useState('')
   const [selectedType, setSelectedType] = useState('')
@@ -1777,6 +1779,17 @@ export function AdminPage() {
               <Image className="w-4 h-4" />
               {t('admin.background')}
             </button>
+            <button
+              onClick={() => setActiveTab('translations')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'translations'
+                  ? 'bg-white/20 text-slate-800 dark:text-white'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
+              }`}
+            >
+              <Languages className="w-4 h-4" />
+              Çeviriler
+            </button>
           </div>
 
           {/* Mobile Navigation - Dropdown */}
@@ -1794,6 +1807,7 @@ export function AdminPage() {
                 <option value="events">{t('admin.eventManagement')}</option>
                 <option value="analytics">Analytics</option>
                 <option value="background">{t('admin.background')}</option>
+                <option value="translations">Çeviriler</option>
               </select>
               {/* Custom dropdown arrow */}
               <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
@@ -1885,6 +1899,17 @@ export function AdminPage() {
             >
               <Image className="w-4 h-4" />
               {t('admin.background')}
+            </button>
+            <button
+              onClick={() => setActiveTab('translations')}
+              className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+                activeTab === 'translations'
+                  ? 'bg-white/20 text-slate-800 dark:text-white'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
+              }`}
+            >
+              <Languages className="w-4 h-4" />
+              Çeviriler
             </button>
           </div>
         </div>
@@ -4430,6 +4455,17 @@ export function AdminPage() {
             className="space-y-6"
           >
             <BackgroundManager />
+          </motion.div>
+        )}
+
+        {/* Translations Management Tab */}
+        {activeTab === 'translations' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            <TranslationManagement />
           </motion.div>
         )}
 
