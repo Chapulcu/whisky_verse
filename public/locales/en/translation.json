@@ -405,6 +405,15 @@
       "viewDetails": "View Details",
       "viewAll": "View All Whiskies"
     },
+    "events": {
+      "title": "Upcoming Tasting Events",
+      "subtitle": "Special tasting events organized for whisky enthusiasts",
+      "participants": "participants",
+      "noEvents": "No Upcoming Events",
+      "noEventsDescription": "There are no upcoming events at the moment. Stay tuned for new events!",
+      "createEvent": "Create Event",
+      "viewAll": "View All Events"
+    },
     "cta": {
       "title": "Ready to Start Your Journey?",
       "description": "Join thousands of whisky enthusiasts and start building your perfect collection today."

@@ -405,6 +405,15 @@
       "viewDetails": "Detayları Gör",
       "viewAll": "Tüm Viskileri Gör"
     },
+    "events": {
+      "title": "Yaklaşan Tadım Etkinlikleri",
+      "subtitle": "Viski tutkunları için düzenlenen özel tadım etkinlikleri",
+      "participants": "katılımcı",
+      "noEvents": "Henüz Etkinlik Yok",
+      "noEventsDescription": "Şu anda yaklaşan etkinlik bulunmuyor. Yeni etkinlikler için takipte kalın!",
+      "createEvent": "Etkinlik Oluştur",
+      "viewAll": "Tüm Etkinlikleri Gör"
+    },
     "cta": {
       "title": "Yolculuğunuzu Başlatmaya Hazır mısınız?",
       "description": "Binlerce viski tutkununa katılın ve bugün mükemmel koleksiyonunuzu oluşturmaya başlayın."

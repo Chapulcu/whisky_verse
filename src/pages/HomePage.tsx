@@ -4,7 +4,9 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useHomeStats } from '@/hooks/useHomeStats'
 import { useFeaturedWhiskies } from '@/hooks/useFeaturedWhiskies'
+import { useUpcomingEvents } from '@/hooks/useUpcomingEvents'
 import { FeaturedWhiskies } from '@/components/FeaturedWhiskies'
+import { UpcomingEvents } from '@/components/UpcomingEvents'
 import { motion } from 'framer-motion'
 import { 
   Wine, 
@@ -23,6 +25,7 @@ export function HomePage() {
   const { user, profile } = useAuth()
   const { stats, loading: statsLoading } = useHomeStats()
   const { whiskies: featuredWhiskies, loading: featuredLoading } = useFeaturedWhiskies()
+  const { events: upcomingEvents, loading: eventsLoading } = useUpcomingEvents()
 
 
   // CRITICAL FIX: Memoized features to prevent re-creation
@@ -182,6 +185,9 @@ export function HomePage() {
 
       {/* Featured Whiskies Section */}
       <FeaturedWhiskies whiskies={featuredWhiskies} loading={featuredLoading} />
+
+      {/* Upcoming Events Section */}
+      <UpcomingEvents events={upcomingEvents} loading={eventsLoading} />
 
       {/* Features Section */}
       <section>
