@@ -48,7 +48,13 @@ export interface MultilingualWhisky {
 }
 
 function pickBestTranslation(row: MultilingualWhiskyRow, lang: AppLanguage): { t: any; langUsed: AppLanguage } | null {
-  const pref = [lang, 'en', 'tr'] as AppLanguage[]
+  // For Turkish, always prefer original whiskies table data (base Turkish data)
+  if (lang === 'tr') {
+    return null // Force fallback to original Turkish data from whiskies table
+  }
+
+  // For other languages, prioritize: requested language, then fallback order
+  const pref = [lang, 'tr', 'en'] as AppLanguage[]
   const translations = row.whisky_translations || []
   for (const code of pref) {
     const t = translations.find(x => x.language_code === code)
@@ -245,7 +251,7 @@ export function useWhiskiesMultilingual() {
           region: t?.region || (row as any).region || null,
           type: t?.type || row.type,
           language_code: picked?.langUsed || lang,
-          translation_status: (t as any)?.translation_status,
+          translation_status: picked ? (t as any)?.translation_status : (lang === 'tr' ? 'human' : undefined),
         }
       })
 
