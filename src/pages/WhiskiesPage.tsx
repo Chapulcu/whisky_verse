@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { motion } from 'framer-motion'
 import { 
@@ -43,6 +43,7 @@ interface UserWhisky {
 function WhiskiesPageContent() {
   const { t, i18n } = useTranslation()
   const { user, profile } = useAuth()
+  const [searchParams, setSearchParams] = useSearchParams()
   
   const { uploadWhiskyImage, isUploading } = useWhiskyUpload()
   const { whiskies, totalCount, loading: whiskyLoading, isRefetching: whiskyRefetching, loadWhiskies } = useWhiskiesMultilingual()
@@ -128,6 +129,23 @@ function WhiskiesPageContent() {
       }
     }
   }, [localSearchTerm])
+
+  // Handle URL query parameter for whisky ID
+  useEffect(() => {
+    const whiskyId = searchParams.get('id')
+    if (whiskyId && whiskies.length > 0) {
+      const targetWhisky = whiskies.find(w => w.id === parseInt(whiskyId))
+      if (targetWhisky) {
+        setViewingWhisky(targetWhisky)
+        // Clear the URL parameter after opening the modal
+        setSearchParams(prev => {
+          const newParams = new URLSearchParams(prev)
+          newParams.delete('id')
+          return newParams
+        })
+      }
+    }
+  }, [searchParams, whiskies, setSearchParams])
 
   // Cleanup on unmount
   useEffect(() => {

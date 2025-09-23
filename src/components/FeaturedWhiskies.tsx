@@ -100,7 +100,7 @@ export function FeaturedWhiskies({ whiskies, loading }: FeaturedWhiskiesProps) {
               className="group flex-shrink-0 w-44 sm:w-48 snap-start"
             >
               <Link
-                to={`/whiskies`}
+                to={`/whiskies?id=${whisky.id}`}
                 className="glass-panel block overflow-hidden hover:scale-[1.01] hover:shadow-lg transition-all duration-300 hover:shadow-amber-500/20 hover:border-amber-300/30 p-3 h-full"
               >
               {/* Whisky Image */}
