@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useHomeStats } from '@/hooks/useHomeStats'
+import { useFeaturedWhiskies } from '@/hooks/useFeaturedWhiskies'
+import { FeaturedWhiskies } from '@/components/FeaturedWhiskies'
 import { motion } from 'framer-motion'
 import { 
   Wine, 
@@ -20,6 +22,7 @@ export function HomePage() {
   const { t, i18n } = useTranslation()
   const { user, profile } = useAuth()
   const { stats, loading: statsLoading } = useHomeStats()
+  const { whiskies: featuredWhiskies, loading: featuredLoading } = useFeaturedWhiskies()
 
 
   // CRITICAL FIX: Memoized features to prevent re-creation
@@ -176,6 +179,9 @@ export function HomePage() {
           })}
         </motion.div>
       </section>
+
+      {/* Featured Whiskies Section */}
+      <FeaturedWhiskies whiskies={featuredWhiskies} loading={featuredLoading} />
 
       {/* Features Section */}
       <section>

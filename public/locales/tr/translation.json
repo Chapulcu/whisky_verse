@@ -398,6 +398,13 @@
       "events": "Etkinlik",
       "countries": "Ülke"
     },
+    "featured": {
+      "title": "Öne Çıkan Viskiler",
+      "subtitle": "Koleksiyonumuzdan en beğenilen ve yüksek puanlı viskiler",
+      "badge": "Öne Çıkan",
+      "viewDetails": "Detayları Gör",
+      "viewAll": "Tüm Viskileri Gör"
+    },
     "cta": {
       "title": "Yolculuğunuzu Başlatmaya Hazır mısınız?",
       "description": "Binlerce viski tutkununa katılın ve bugün mükemmel koleksiyonunuzu oluşturmaya başlayın."

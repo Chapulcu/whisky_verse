@@ -398,6 +398,13 @@
       "events": "Events",
       "countries": "Countries"
     },
+    "featured": {
+      "title": "Featured Whiskies",
+      "subtitle": "Most loved and highest rated whiskies from our collection",
+      "badge": "Featured",
+      "viewDetails": "View Details",
+      "viewAll": "View All Whiskies"
+    },
     "cta": {
       "title": "Ready to Start Your Journey?",
       "description": "Join thousands of whisky enthusiasts and start building your perfect collection today."
