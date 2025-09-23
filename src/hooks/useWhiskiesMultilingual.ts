@@ -22,6 +22,7 @@ export interface MultilingualWhiskyRow {
     color: string | null
     region: string | null
     type: string | null
+    country: string | null
     translation_status?: 'human' | 'machine' | 'pending' | 'failed'
   }>
 }
@@ -82,6 +83,11 @@ export function useWhiskiesMultilingual() {
       setError(null)
 
       // Base query: select base fields + joined translations
+      console.log(`🌍 Loading whiskies for language: ${lang}`)
+
+      // Debug: Raw query URL to check what's being requested
+      console.log('🔗 Full query will include whisky_translations join')
+
       let query = supabase
         .from('whiskies')
         .select(`
@@ -110,6 +116,7 @@ export function useWhiskiesMultilingual() {
             color,
             region,
             type,
+            country,
             translation_status
           )
         `, { count: 'exact' })
@@ -195,16 +202,40 @@ export function useWhiskiesMultilingual() {
       }
 
       const rows = (data || []) as MultilingualWhiskyRow[]
+      console.log(`📊 Received ${rows.length} whiskies from database`)
+
+      // Debug: Check raw data structure
+      console.log('🔬 Raw data sample:', rows.slice(0, 2).map(r => ({
+        id: r.id,
+        name: (r as any).name,
+        translations: r.whisky_translations
+      })))
+
       const mapped: MultilingualWhisky[] = rows.map(row => {
         const picked = pickBestTranslation(row, lang)
         const t = picked?.t as (MultilingualWhiskyRow['whisky_translations'] extends Array<infer U> ? U : any) | undefined
+
+        // Debug all whiskies for translation status
+        console.log(`🔍 Whisky ${row.id} (${(row as any).name}):`, {
+          requestedLang: lang,
+          availableTranslations: row.whisky_translations?.map(t => t.language_code) || [],
+          translationCount: row.whisky_translations?.length || 0,
+          pickedLang: picked?.langUsed,
+          usingFallback: !picked,
+          finalName: t?.name || (row as any).name,
+          hasDescription: !!(t?.description || (row as any).description),
+          hasAroma: !!(t?.aroma || (row as any).aroma),
+          hasTaste: !!(t?.taste || (row as any).taste),
+          hasFinish: !!(t?.finish || (row as any).finish),
+        })
+
         return {
           id: row.id,
           image_url: row.image_url,
           alcohol_percentage: row.alcohol_percentage,
           rating: row.rating,
           age_years: row.age_years,
-          country: row.country,
+          country: t?.country || row.country,
           name: t?.name || (row as any).name || '—',
           description: t?.description || (row as any).description || null,
           aroma: t?.aroma || (row as any).aroma || null,

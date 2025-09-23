@@ -201,8 +201,8 @@
 
   .dark .glass-panel {
     /* Dark mode - neredeyse tamamen şeffaf blur cam */
-    @apply bg-white/1 backdrop-blur-3xl border border-white/3 rounded-xl shadow-lg;
-    @apply hover:bg-white/2 hover:shadow-xl;
+    @apply bg-white/5 backdrop-blur-3xl border border-white/10 rounded-xl shadow-lg;
+    @apply hover:bg-white/10 hover:shadow-xl;
   }
 
   .glass-nav {
@@ -213,7 +213,7 @@
 
   .dark .glass-nav {
     /* Dark mode - çok şeffaf navbar */
-    @apply bg-white/1 backdrop-blur-3xl border border-white/2 shadow-lg;
+    @apply bg-white/5 backdrop-blur-3xl border border-white/10 shadow-lg;
   }
 
   .glass-card {
@@ -224,8 +224,8 @@
 
   .dark .glass-card {
     /* Dark mode - neredeyse tamamen şeffaf blur cam */
-    @apply bg-white/1 backdrop-blur-3xl border border-white/3 rounded-xl p-6 shadow-lg;
-    @apply hover:bg-white/2 hover:shadow-xl hover:scale-[1.02];
+    @apply bg-white/5 backdrop-blur-3xl border border-white/10 rounded-xl p-6 shadow-lg;
+    @apply hover:bg-white/10 hover:shadow-xl hover:scale-[1.02];
   }
 
   .glass-input {
@@ -238,8 +238,8 @@
 
   .dark .glass-input {
     /* Dark mode - çok şeffaf input */
-    @apply bg-white/1 backdrop-blur-2xl border border-white/4 rounded-lg px-4 py-3;
-    @apply focus:bg-white/2 focus:border-white/6 focus:shadow-lg;
+    @apply bg-white/5 backdrop-blur-2xl border border-white/10 rounded-lg px-4 py-3;
+    @apply focus:bg-white/10 focus:border-white/20 focus:shadow-lg;
   }
 
   .glass-table {
@@ -249,7 +249,7 @@
 
   .dark .glass-table {
     /* Dark mode - çok şeffaf tablo */
-    @apply bg-white/1 backdrop-blur-3xl border border-white/3 rounded-xl overflow-hidden shadow-lg;
+    @apply bg-white/5 backdrop-blur-3xl border border-white/10 rounded-xl overflow-hidden shadow-lg;
   }
 
   /* Card Styles */

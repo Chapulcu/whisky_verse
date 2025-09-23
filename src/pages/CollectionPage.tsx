@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
 import { Navigate, Link } from 'react-router-dom'
-import { useUserCollection } from '@/hooks/useUserCollection'
+import { useUserCollectionMultilingual, MultilingualUserWhiskyDB } from '@/hooks/useUserCollectionMultilingual'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   BookOpen,
@@ -34,23 +34,23 @@ import {
 import toast from 'react-hot-toast'
 
 export function CollectionPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { user } = useAuth()
-  const { 
-    collection, 
-    loading, 
+  const {
+    collection,
+    loading,
     error,
-    loadCollection, 
-    updateCollectionItem, 
-    removeFromCollection 
-  } = useUserCollection()
+    loadCollection,
+    updateCollectionItem,
+    removeFromCollection
+  } = useUserCollectionMultilingual(i18n.language as any)
 
   const [searchTerm, setSearchTerm] = useState('')
   const [editingRating, setEditingRating] = useState<number | null>(null)
   const [editingNotes, setEditingNotes] = useState<number | null>(null)
   const [ratingValue, setRatingValue] = useState(0)
   const [notesValue, setNotesValue] = useState('')
-  const [selectedWhisky, setSelectedWhisky] = useState<any>(null)
+  const [selectedWhisky, setSelectedWhisky] = useState<MultilingualUserWhiskyDB['whisky'] | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [filterType, setFilterType] = useState<'all' | 'tasted' | 'untasted'>('all')
   const [sortBy, setSortBy] = useState<'name' | 'rating' | 'added_date' | 'country' | 'type'>('added_date')
@@ -186,7 +186,7 @@ export function CollectionPage() {
     setNotesValue('')
   }
 
-  const handleWhiskyDetail = (whisky: any) => {
+  const handleWhiskyDetail = (whisky: MultilingualUserWhiskyDB['whisky']) => {
     setSelectedWhisky(whisky)
     setIsModalOpen(true)
   }
