@@ -426,6 +426,7 @@ export function EventsPage() {
   }
 
   const openEditModal = (event: Event) => {
+    console.log('🎯 Opening edit modal for event:', event.id, event.title)
     setEditingEvent(event)
     setEditForm({
       group_id: event.group_id.toString(),
@@ -437,6 +438,7 @@ export function EventsPage() {
       is_active: event.is_active
     })
     setShowEditModal(true)
+    console.log('✅ Edit modal state set to true')
   }
 
   const updateEvent = async (e: React.FormEvent) => {
@@ -955,7 +957,11 @@ export function EventsPage() {
 
       {/* Edit Event Modal */}
       {showEditModal && editingEvent && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div>
+          {console.log('🎭 Rendering edit modal:', showEditModal, editingEvent?.title)}
+        </div>) &&
+      (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}

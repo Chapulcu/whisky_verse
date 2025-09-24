@@ -40,9 +40,17 @@ export function GroupsPage() {
   const [myGroups, setMyGroups] = useState<Group[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingGroup, setEditingGroup] = useState<Group | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [activeTab, setActiveTab] = useState<'discover' | 'my-groups'>('discover')
   const [createForm, setCreateForm] = useState({
+    name: '',
+    description: '',
+    is_public: true,
+    member_limit: 50
+  })
+  const [editForm, setEditForm] = useState({
     name: '',
     description: '',
     is_public: true,
@@ -384,6 +392,23 @@ export function GroupsPage() {
                 {activeTab === 'my-groups' && (
                   <div className="flex gap-1">
                     <button
+                      onClick={() => {
+                        console.log('🛠️ Group manage button clicked:', group.id, group.name)
+                        setEditingGroup(group)
+                        setEditForm({
+                          name: group.name,
+                          description: group.description || '',
+                          is_public: group.is_public,
+                          member_limit: group.member_limit
+                        })
+                        setShowEditModal(true)
+                      }}
+                      className="p-1 text-blue-500 hover:text-blue-600 transition-colors"
+                      title="Grubu Yönet"
+                    >
+                      <Settings className="w-4 h-4" />
+                    </button>
+                    <button
                       onClick={() => deleteGroup(group.id)}
                       className="p-1 text-red-500 hover:text-red-600 transition-colors"
                       title="Grubu Sil"
@@ -417,9 +442,9 @@ export function GroupsPage() {
             </div>
 
             {/* Actions */}
-            <div className="flex gap-2">
-              {activeTab === 'discover' && (
-                group.is_member ? (
+            {activeTab === 'discover' && (
+              <div className="flex gap-2">
+                {group.is_member ? (
                   <button
                     onClick={() => leaveGroup(group.id)}
                     className="btn-glass flex-1 text-red-600 dark:text-red-400"
@@ -435,16 +460,9 @@ export function GroupsPage() {
                     <UserPlus className="w-4 h-4" />
                     {group.member_count >= group.member_limit ? t('groupsPage.fullLabel') : t('groupsPage.joinButton')}
                   </button>
-                )
-              )}
-              
-              {activeTab === 'my-groups' && (
-                <button className="btn-secondary flex-1 flex items-center justify-center gap-2">
-                  <Settings className="w-4 h-4" />
-                  {t('groupsPage.manageButton')}
-                </button>
-              )}
-            </div>
+                )}
+              </div>
+            )}
           </motion.div>
         ))}
       </div>
@@ -563,6 +581,136 @@ export function GroupsPage() {
                   disabled={!createForm.name.trim()}
                 >
                   {t('groupsPage.createModal.createButton')}
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Edit Group Modal */}
+      {showEditModal && editingGroup && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="card-strong max-w-md w-full max-h-[90vh] overflow-y-auto"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold text-gradient">Grubu Düzenle</h3>
+              <button
+                onClick={() => {
+                  setShowEditModal(false)
+                  setEditingGroup(null)
+                }}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+              >
+                ×
+              </button>
+            </div>
+
+            <form onSubmit={async (e) => {
+              e.preventDefault()
+              if (!editingGroup) return
+
+              try {
+                const { error } = await supabase
+                  .from('groups')
+                  .update({
+                    name: editForm.name,
+                    description: editForm.description || null,
+                    is_public: editForm.is_public,
+                    member_limit: editForm.member_limit
+                  })
+                  .eq('id', editingGroup.id)
+
+                if (error) throw error
+
+                toast.success('Grup başarıyla güncellendi!')
+                setShowEditModal(false)
+                setEditingGroup(null)
+                loadMyGroups()
+              } catch (error: any) {
+                console.error('Error updating group:', error)
+                toast.error(error.message || 'Grup güncellenirken hata oluştu')
+              }
+            }} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Grup Adı *
+                </label>
+                <input
+                  type="text"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                  className="input-glass"
+                  placeholder="Grup adını girin"
+                  required
+                  maxLength={100}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Açıklama
+                </label>
+                <textarea
+                  value={editForm.description}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                  className="input-glass"
+                  rows={3}
+                  placeholder="Grup açıklamasını girin"
+                  maxLength={500}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Görünürlük
+                  </label>
+                  <select
+                    value={editForm.is_public ? 'public' : 'private'}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, is_public: e.target.value === 'public' }))}
+                    className="input-glass"
+                  >
+                    <option value="public">Herkese Açık</option>
+                    <option value="private">Özel</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    Üye Limiti
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="1000"
+                    value={editForm.member_limit}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, member_limit: parseInt(e.target.value) || 50 }))}
+                    className="input-glass"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditModal(false)
+                    setEditingGroup(null)
+                  }}
+                  className="btn-glass flex-1"
+                >
+                  İptal
+                </button>
+                <button
+                  type="submit"
+                  className="btn-primary flex-1"
+                  disabled={!editForm.name.trim()}
+                >
+                  Güncelle
                 </button>
               </div>
             </form>

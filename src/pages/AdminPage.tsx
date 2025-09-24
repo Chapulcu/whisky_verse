@@ -1058,6 +1058,7 @@ export function AdminPage() {
   }
 
   const handleEditGroup = (group: Group) => {
+    console.log('🏛️ Opening group edit modal for:', group.id, group.name)
     setEditingGroup(group)
     setGroupForm({
       name: group.name,
@@ -1068,6 +1069,7 @@ export function AdminPage() {
       image_url: group.image_url || '',
       selectedImageFile: null
     })
+    console.log('✅ Group edit state set:', group)
   }
 
   const handleSaveGroup = async () => {
@@ -3723,7 +3725,10 @@ export function AdminPage() {
                         </div>
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => handleEditGroup(group)}
+                            onClick={() => {
+                              console.log('🖱️ Group edit button clicked!', group.id, group.name)
+                              handleEditGroup(group)
+                            }}
                             className="p-2 text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                             title={t('admin.editGroup')}
                           >
@@ -3875,7 +3880,11 @@ export function AdminPage() {
             {/* Edit Group Modal */}
             <AnimatePresence>
               {editingGroup && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                <div>
+                  {console.log('🎭 Rendering group edit modal:', editingGroup?.name)}
+                </div>) &&
+              (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
