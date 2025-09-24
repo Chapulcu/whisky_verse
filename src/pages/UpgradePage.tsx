@@ -42,21 +42,21 @@ export function UpgradePage() {
 
   const PLAN_FEATURES = {
     vip: [
-      'Sınırsız viski koleksiyonu',
-      'Özel VIP etkinliklere katılım',
-      'Premium viski önerileri',
-      'Detaylı analitik raporlar',
-      'VIP rozetleri ve statü',
-      'Öncelikli destek'
+      t('upgradePage.vipFeatures.0'),
+      t('upgradePage.vipFeatures.1'),
+      t('upgradePage.vipFeatures.2'),
+      t('upgradePage.vipFeatures.3'),
+      t('upgradePage.vipFeatures.4'),
+      t('upgradePage.vipFeatures.5')
     ],
     premium_vip: [
-      'Tüm VIP özellikler',
-      'Özel grup oluşturma',
-      'Etkinlik planlama araçları',
-      'Gelişmiş filtreleme seçenekleri',
-      'CSV export/import yetkisi',
-      'Premium rozetler ve unvanlar',
-      '7/24 premium destek'
+      t('upgradePage.premiumFeatures.0'),
+      t('upgradePage.premiumFeatures.1'),
+      t('upgradePage.premiumFeatures.2'),
+      t('upgradePage.premiumFeatures.3'),
+      t('upgradePage.premiumFeatures.4'),
+      t('upgradePage.premiumFeatures.5'),
+      t('upgradePage.premiumFeatures.6')
     ]
   }
 
@@ -97,7 +97,7 @@ export function UpgradePage() {
       }
     } catch (error) {
       console.error('Error loading data:', error)
-      toast.error('Planlar yüklenirken hata oluştu')
+      toast.error(t('plansLoadingError'))
     } finally {
       setPageLoading(false)
     }
@@ -108,14 +108,14 @@ export function UpgradePage() {
     const subscriptionStatus = urlParams.get('subscription')
 
     if (subscriptionStatus === 'success') {
-      toast.success('🎉 VIP üyeliğiniz başarıyla aktifleştirildi!')
+      toast.success(t('vipMembershipActivated'))
       window.history.replaceState({}, document.title, window.location.pathname)
       
       setTimeout(() => {
         loadPlansAndSubscription()
       }, 2000)
     } else if (subscriptionStatus === 'cancelled') {
-      toast.error('Ödeme iptal edildi. İstediğiniz zaman tekrar deneyebilirsiniz!')
+      toast.error(t('paymentCancelled'))
       window.history.replaceState({}, document.title, window.location.pathname)
     }
   }
@@ -127,12 +127,12 @@ export function UpgradePage() {
 
   const handleSubscribe = async (planType: string) => {
     if (!user) {
-      toast.error('VIP üyelik için giriş yapmalısınız')
+      toast.error(t('loginRequiredVip'))
       return
     }
 
     if (subscription) {
-      toast.error('Zaten aktif bir üyeliğiniz bulunuyor')
+      toast.error(t('existingMembership'))
       return
     }
 
@@ -149,14 +149,14 @@ export function UpgradePage() {
       if (error) throw error
 
       if (data?.data?.checkoutUrl) {
-        toast.success('Ödeme sayfasına yönlendiriliyorsunuz...')
+        toast.success(t('upgradePage.toasts.redirectingToPayment'))
         window.location.href = data.data.checkoutUrl
       } else {
-        throw new Error('Checkout URL alınamadı')
+        throw new Error(t('upgradePage.toasts.checkoutUrlError'))
       }
     } catch (error: any) {
       console.error('Subscription error:', error)
-      toast.error(error.message || 'Üyelik oluşturulurken hata oluştu')
+      toast.error(error.message || t('membershipCreationError'))
     } finally {
       setLoading(null)
     }
@@ -186,11 +186,10 @@ export function UpgradePage() {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gradient mb-4">
-            VIP Üyelik Planları
+            {t('upgradePage.title')}
           </h1>
           <p className="text-xl text-text-secondary max-w-2xl mx-auto">
-            WhiskyVerse'te premium deneyimi yaşayın ve viski tutkularınızı 
-            bir üst seviyeye taşıyın
+            {t('upgradePage.subtitle')}
           </p>
         </div>
 
@@ -203,10 +202,10 @@ export function UpgradePage() {
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-whiskey-gold mb-1">
-                  Aktif VIP Üyeliğiniz
+                  {t('upgradePage.activeSubscription.title')}
                 </h3>
                 <p className="text-text-secondary">
-                  {subscription.wverse_plans.plan_type === 'vip' ? 'VIP Üyelik' : 'Premium VIP'} planınız aktif
+                  {subscription.wverse_plans.plan_type === 'vip' ? t('upgradePage.activeSubscription.vipMembership') : t('upgradePage.activeSubscription.premiumVip')} {t('upgradePage.activeSubscription.description')}
                 </p>
               </div>
               <div className="text-right">
@@ -214,7 +213,7 @@ export function UpgradePage() {
                   {formatPrice(subscription.wverse_plans.price)}/ay
                 </p>
                 <p className="text-xs text-text-secondary">
-                  Aylık limit: {subscription.wverse_plans.monthly_limit}
+                  {t('upgradePage.activeSubscription.monthlyLimit')}: {subscription.wverse_plans.monthly_limit}
                 </p>
               </div>
             </div>
@@ -241,7 +240,7 @@ export function UpgradePage() {
                 {isPremium && (
                   <div className="absolute top-0 right-0 bg-gradient-to-r from-whiskey-gold to-whiskey-amber text-white px-4 py-1 rounded-bl-lg">
                     <Star className="w-4 h-4 inline mr-1" />
-                    En Popüler
+                    {t('upgradePage.popularBadge')}
                   </div>
                 )}
 
@@ -259,7 +258,7 @@ export function UpgradePage() {
                   </div>
                   
                   <h3 className="text-2xl font-bold mb-2">
-                    {plan.plan_type === 'vip' ? 'VIP Üyelik' : 'Premium VIP'}
+                    {plan.plan_type === 'vip' ? t('upgradePage.activeSubscription.vipMembership') : t('upgradePage.activeSubscription.premiumVip')}
                   </h3>
                   
                   <div className="text-4xl font-bold text-gradient mb-1">
@@ -267,7 +266,7 @@ export function UpgradePage() {
                   </div>
                   
                   <p className="text-text-secondary">
-                    /ay • Aylık {plan.monthly_limit} işlem
+                    {t('upgradePage.pricing.monthly')} • {t('upgradePage.activeSubscription.monthlyLimit')} {plan.monthly_limit} {t('upgradePage.pricing.transactions')}
                   </p>
                 </div>
 
@@ -294,7 +293,7 @@ export function UpgradePage() {
                   {loading === plan.plan_type ? (
                     <>
                       <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
-                      İşlem Yapılıyor...
+                      {t('upgradePage.buttons.processing')}
                     </>
                   ) : isCurrentPlan ? (
                     <>
@@ -312,7 +311,7 @@ export function UpgradePage() {
                 {!user && (
                   <div className="mt-3 flex items-start gap-2 text-xs text-text-secondary">
                     <AlertCircle className="w-4 h-4 mt-0.5 text-whiskey-amber" />
-                    <p>VIP üyelik için önce giriş yapmalısınız</p>
+                    <p>{t('upgradePage.loginRequired')}</p>
                   </div>
                 )}
               </motion.div>
@@ -322,17 +321,16 @@ export function UpgradePage() {
 
         {/* Benefits Section */}
         <div className="glass-strong rounded-2xl p-8">
-          <h2 className="text-2xl font-bold text-center mb-8">VIP Üyelik Avantajları</h2>
+          <h2 className="text-2xl font-bold text-center mb-8">{t('upgradePage.benefits.title')}</h2>
           
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center">
               <div className="w-16 h-16 bg-whiskey-amber/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Users className="w-8 h-8 text-whiskey-amber" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">Özel Topluluk</h3>
+              <h3 className="text-lg font-semibold mb-2">{t('upgradePage.benefits.community.title')}</h3>
               <p className="text-text-secondary text-sm">
-                VIP üyeler için özel gruplar ve etkinlikler. 
-                Diğer viski tutkunları ile bağlantı kurun.
+                {t('upgradePage.benefits.community.description')}
               </p>
             </div>
             
@@ -340,10 +338,9 @@ export function UpgradePage() {
               <div className="w-16 h-16 bg-whiskey-bronze/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Calendar className="w-8 h-8 text-whiskey-bronze" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">Özel Etkinlikler</h3>
+              <h3 className="text-lg font-semibold mb-2">{t('upgradePage.benefits.events.title')}</h3>
               <p className="text-text-secondary text-sm">
-                VIP sadece tadım etkinlikleri, masterclass'lar ve 
-                özel sürüm viski lansmanları.
+                {t('upgradePage.benefits.events.description')}
               </p>
             </div>
             
@@ -351,10 +348,9 @@ export function UpgradePage() {
               <div className="w-16 h-16 bg-whiskey-gold/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Wine className="w-8 h-8 text-whiskey-gold-dark" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">Premium İçerik</h3>
+              <h3 className="text-lg font-semibold mb-2">{t('upgradePage.benefits.content.title')}</h3>
               <p className="text-text-secondary text-sm">
-                Detaylı viski analizleri, uzman tavsiyeleri ve 
-                kişiselleştirilmiş öneriler.
+                {t('upgradePage.benefits.content.description')}
               </p>
             </div>
           </div>
@@ -363,8 +359,7 @@ export function UpgradePage() {
         {/* Security Note */}
         <div className="text-center mt-8">
           <p className="text-xs text-text-secondary">
-            🔒 Tüm ödemeler Stripe ile güvenli şekilde işlenir. 
-            Kredi kartı bilgileriniz saklanmaz.
+            {t('upgradePage.security')}
           </p>
         </div>
       </motion.div>

@@ -13,6 +13,7 @@ interface ThemeToggleProps {
 
 export function ThemeToggle({ className = '' }: ThemeToggleProps) {
   const { theme, setTheme } = useTheme()
+  const { t } = useTranslation()
 
   // Simple cycle: light -> dark -> system -> light
   const handleThemeToggle = useCallback(() => {
@@ -45,9 +46,9 @@ export function ThemeToggle({ className = '' }: ThemeToggleProps) {
 
   const getThemeLabel = () => {
     switch (theme) {
-      case 'light': return 'Light Mode'
-      case 'dark': return 'Dark Mode'
-      default: return 'System Mode'
+      case 'light': return t('theme.lightMode')
+      case 'dark': return t('theme.darkMode')
+      default: return t('theme.systemMode')
     }
   }
 
@@ -72,17 +73,20 @@ export function LanguageToggle({ className = '' }: { className?: string }) {
   const languages = [
     { code: 'tr', name: 'Türkçe', flag: '🇹🇷' },
     { code: 'en', name: 'English', flag: '🇺🇸' },
+    { code: 'ru', name: 'Русский', flag: '🇷🇺' },
   ]
 
-  // Simple toggle between TR and EN
+  // Cycle through TR -> EN -> RU -> TR
   const handleLanguageToggle = useCallback(() => {
     console.log('🌍 Language toggle clicked, current:', i18n.language)
     
-    const nextLanguage = i18n.language === 'tr' ? 'en' : 'tr'
-    console.log('🌍 Setting language to:', nextLanguage)
+    const currentIndex = languages.findIndex(lang => lang.code === i18n.language)
+    const nextIndex = (currentIndex + 1) % languages.length
+    const nextLanguage = languages[nextIndex].code
     
+    console.log('🌍 Setting language to:', nextLanguage)
     i18n.changeLanguage(nextLanguage)
-  }, [i18n])
+  }, [i18n, languages])
 
   const currentLanguage = languages.find(lang => lang.code === i18n.language) || languages[0]
 
@@ -102,6 +106,7 @@ export function LanguageToggle({ className = '' }: { className?: string }) {
 
 export function UserMenu({ className = '' }: { className?: string }) {
   const { user, profile, signOut } = useAuth()
+  const { t } = useTranslation()
   const [showLogoutModal, setShowLogoutModal] = useState(false)
 
   const handleLogoutClick = useCallback(() => {
@@ -162,11 +167,11 @@ export function UserMenu({ className = '' }: { className?: string }) {
                 <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center">
                   <LogOut className="w-5 h-5 text-red-500" />
                 </div>
-                <h3 className="text-lg font-semibold">Çıkış Yap</h3>
+                <h3 className="text-lg font-semibold">{t('modals.logoutConfirmation')}</h3>
               </div>
               
               <p className="text-slate-600 dark:text-slate-400 mb-6">
-                Hesabınızdan çıkış yapmak istediğinizden emin misiniz?
+                {t('modals.confirmLogout')}
               </p>
               
               <div className="flex gap-3">
@@ -174,14 +179,14 @@ export function UserMenu({ className = '' }: { className?: string }) {
                   onClick={handleCancelLogout}
                   className="flex-1 px-4 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 rounded-lg transition-colors font-medium"
                 >
-                  İptal
+                  {t('actions.cancel')}
                 </button>
                 <button
                   onClick={handleConfirmLogout}
                   className="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors flex items-center justify-center gap-2 font-medium"
                 >
                   <LogOut className="w-4 h-4" />
-                  Çıkış Yap
+                  {t('modals.logout')}
                 </button>
               </div>
             </motion.div>

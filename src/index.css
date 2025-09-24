@@ -52,12 +52,35 @@
       linear-gradient(rgba(6, 182, 212, 0.05) 1px, transparent 1px), 
       linear-gradient(90deg, rgba(6, 182, 212, 0.05) 1px, transparent 1px);
     background-size: 50px 50px;
+    position: relative;
   }
 
   .dark .cyber-bg {
     background-image: 
       linear-gradient(rgba(6, 182, 212, 0.1) 1px, transparent 1px), 
       linear-gradient(90deg, rgba(6, 182, 212, 0.1) 1px, transparent 1px);
+  }
+
+  /* Enhanced background image handling for responsive design */
+  .cyber-bg[style*="background-image"] {
+    background-blend-mode: soft-light;
+    background-size: cover !important;
+    background-position: center center !important;
+    background-attachment: fixed !important;
+    min-height: 100vh;
+  }
+
+  /* Mobile optimizations for background images */
+  @media (max-width: 768px) {
+    .cyber-bg[style*="background-image"] {
+      background-attachment: scroll !important;
+      background-size: cover !important;
+    }
+  }
+
+  /* Ensure proper layering for custom backgrounds */
+  .cyber-bg .backdrop-blur-overlay {
+    pointer-events: none;
   }
 }
 
@@ -114,9 +137,119 @@
   .btn-glass {
     @apply glass;
     @apply text-slate-800 dark:text-slate-200;
+  }
+
+  /* Glassmorphism Button Styles */
+  .glass-button {
+    @apply glass;
+    @apply text-slate-700 dark:text-slate-200;
+    @apply font-medium;
+    @apply transition-all duration-200;
+    @apply border border-white/20 dark:border-white/10;
+    @apply hover:bg-white/10 dark:hover:bg-white/5;
+    @apply active:bg-white/20 dark:active:bg-white/10;
+    @apply backdrop-blur-sm;
+    @apply shadow-lg hover:shadow-xl;
+    @apply min-h-[44px] min-w-[44px]; /* Touch-friendly minimum size */
+  }
+
+  .glass-button-primary {
+    @apply glass-button;
+    @apply bg-amber-500/20 dark:bg-amber-400/20;
+    @apply text-amber-800 dark:text-amber-200;
+    @apply border-amber-300/30 dark:border-amber-400/20;
+    @apply hover:bg-amber-500/30 dark:hover:bg-amber-400/30;
+    @apply active:bg-amber-500/40 dark:active:bg-amber-400/40;
+  }
+
+  .glass-button-secondary {
+    @apply glass-button;
+    @apply bg-blue-500/20 dark:bg-blue-400/20;
+    @apply text-blue-800 dark:text-blue-200;
+    @apply border-blue-300/30 dark:border-blue-400/20;
+    @apply hover:bg-blue-500/30 dark:hover:bg-blue-400/30;
+    @apply active:bg-blue-500/40 dark:active:bg-blue-400/40;
+  }
+
+  .glass-button-success {
+    @apply glass-button;
+    @apply bg-green-500/20 dark:bg-green-400/20;
+    @apply text-green-800 dark:text-green-200;
+    @apply border-green-300/30 dark:border-green-400/20;
+    @apply hover:bg-green-500/30 dark:hover:bg-green-400/30;
+    @apply active:bg-green-500/40 dark:active:bg-green-400/40;
+  }
+
+  .glass-button-danger {
+    @apply glass-button;
+    @apply bg-red-500/20 dark:bg-red-400/20;
+    @apply text-red-800 dark:text-red-200;
+    @apply border-red-300/30 dark:border-red-400/20;
+    @apply hover:bg-red-500/30 dark:hover:bg-red-400/30;
+    @apply active:bg-red-500/40 dark:active:bg-red-400/40;
     @apply hover:bg-white/20 dark:hover:bg-white/10;
     @apply font-medium px-6 py-3 rounded-lg;
     @apply transition-all duration-300 transform hover:scale-105;
+  }
+
+  /* Enhanced Glassmorphism - Admin Panel Style */
+  .glass-panel {
+    /* Light mode - mevcut tasarım */
+    @apply bg-white/10 backdrop-blur-md border border-white/20 rounded-xl shadow-xl;
+    @apply transition-all duration-300 hover:bg-white/15 hover:shadow-2xl;
+  }
+
+  .dark .glass-panel {
+    /* Dark mode - neredeyse tamamen şeffaf blur cam */
+    @apply bg-white/5 backdrop-blur-3xl border border-white/10 rounded-xl shadow-lg;
+    @apply hover:bg-white/10 hover:shadow-xl;
+  }
+
+  .glass-nav {
+    /* Light mode - mevcut tasarım */
+    @apply bg-white/10 backdrop-blur-md border border-white/20 shadow-xl;
+    @apply transition-all duration-300;
+  }
+
+  .dark .glass-nav {
+    /* Dark mode - çok şeffaf navbar */
+    @apply bg-white/5 backdrop-blur-3xl border border-white/10 shadow-lg;
+  }
+
+  .glass-card {
+    /* Light mode - mevcut tasarım */
+    @apply bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6 shadow-xl;
+    @apply transition-all duration-300 hover:bg-white/15 hover:shadow-2xl hover:scale-[1.02];
+  }
+
+  .dark .glass-card {
+    /* Dark mode - neredeyse tamamen şeffaf blur cam */
+    @apply bg-white/5 backdrop-blur-3xl border border-white/10 rounded-xl p-6 shadow-lg;
+    @apply hover:bg-white/10 hover:shadow-xl hover:scale-[1.02];
+  }
+
+  .glass-input {
+    /* Light mode - mevcut tasarım */
+    @apply bg-white/10 backdrop-blur-md border border-white/20 rounded-lg px-4 py-3;
+    @apply text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400;
+    @apply focus:ring-2 focus:ring-primary-500 focus:border-transparent;
+    @apply transition-all duration-200;
+  }
+
+  .dark .glass-input {
+    /* Dark mode - çok şeffaf input */
+    @apply bg-white/5 backdrop-blur-2xl border border-white/10 rounded-lg px-4 py-3;
+    @apply focus:bg-white/10 focus:border-white/20 focus:shadow-lg;
+  }
+
+  .glass-table {
+    /* Light mode - mevcut tasarım */
+    @apply bg-white/10 backdrop-blur-md border border-white/20 rounded-xl overflow-hidden shadow-xl;
+  }
+
+  .dark .glass-table {
+    /* Dark mode - çok şeffaf tablo */
+    @apply bg-white/5 backdrop-blur-3xl border border-white/10 rounded-xl overflow-hidden shadow-lg;
   }
 
   /* Card Styles */
@@ -560,4 +693,14 @@
   @apply placeholder:text-slate-500 dark:placeholder:text-slate-400;
   @apply focus:bg-white dark:focus:bg-slate-800;
   @apply focus:border-amber-500 dark:focus:border-amber-400;
+}
+
+/* Hide scrollbar for horizontal scroll containers */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
 }

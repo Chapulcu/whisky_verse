@@ -1,5 +1,11 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
+import toast from 'react-hot-toast'
+import { requestCache } from '@/utils/requestCache'
+
+// Retry configuration
+const RETRY_DELAYS = [300, 800, 1500] // Exponential backoff in milliseconds
+const MAX_RETRIES = RETRY_DELAYS.length
 
 export interface SimpleWhiskyDB {
   id: number
@@ -24,7 +30,50 @@ export interface SimpleWhiskyDB {
 export function useSimpleWhiskiesDB() {
   const [whiskies, setWhiskies] = useState<SimpleWhiskyDB[]>([])
   const [loading, setLoading] = useState(true)
+  const [isRefetching, setIsRefetching] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const requestIdRef = useRef(0)
+
+  // Retry helper function (stable via useCallback)
+  const retryWithBackoff = useCallback(async (
+    operation: () => Promise<any>,
+    currentRequestId: number,
+    retryCount = 0
+  ): Promise<any> => {
+    try {
+      return await operation()
+    } catch (error: any) {
+      // Check if request is still valid
+      if (currentRequestId !== requestIdRef.current) {
+        throw new Error('Request cancelled')
+      }
+
+      // Check if error is retryable
+      const isRetryableError =
+        error.code === 'PGRST301' || // Connection error
+        error.code === 'PGRST302' || // Too many connections
+        error.message?.includes('fetch') || // Network error
+        error.message?.includes('timeout') || // Timeout error
+        (error.status >= 500 && error.status < 600) // Server errors
+
+      if (!isRetryableError || retryCount >= MAX_RETRIES) {
+        throw error
+      }
+
+      // Wait before retry
+      const delay = RETRY_DELAYS[retryCount]
+      console.log(`Retrying request in ${delay}ms (attempt ${retryCount + 1}/${MAX_RETRIES})`)
+
+      await new Promise(resolve => setTimeout(resolve, delay))
+
+      // Check again if request is still valid after delay
+      if (currentRequestId !== requestIdRef.current) {
+        throw new Error('Request cancelled during retry')
+      }
+
+      return retryWithBackoff(operation, currentRequestId, retryCount + 1)
+    }
+  }, [])
 
   const loadWhiskies = useCallback(async (
     limit?: number,
@@ -33,8 +82,16 @@ export function useSimpleWhiskiesDB() {
     countryFilter?: string,
     typeFilter?: string
   ) => {
+    // Race condition guard: increment request ID and capture current request
+    const currentRequestId = ++requestIdRef.current
+
     try {
-      setLoading(true)
+      // Keep previous data if we already have some; avoid full-screen loading flicker
+      if (whiskies.length === 0) {
+        setLoading(true)
+      } else {
+        setIsRefetching(true)
+      }
       setError(null)
 
       let query = supabase
@@ -60,22 +117,60 @@ export function useSimpleWhiskiesDB() {
         query = query.range(offset, offset + limit - 1)
       }
 
-      const { data, error: fetchError } = await query
+      // Create cache key for deduplication
+      const cacheKey = {
+        type: 'whiskies',
+        limit,
+        offset,
+        searchTerm,
+        countryFilter,
+        typeFilter
+      }
+
+      // Execute query with retry mechanism and deduplication
+      const { data, error: fetchError } = await requestCache.deduplicate(
+        cacheKey,
+        () => retryWithBackoff(async () => {
+          const result = await query
+          return result
+        }, currentRequestId),
+        10000 // 10 second cache for whiskies
+      )
+
+      // Check if this is still the latest request before updating state
+      if (currentRequestId !== requestIdRef.current) {
+        console.log(`Request ${currentRequestId} ignored - newer request ${requestIdRef.current} exists`)
+        return
+      }
 
       if (fetchError) {
         console.error('Error loading whiskies:', fetchError)
         setError(fetchError.message)
+        toast.error('Viskiler yüklenirken hata oluştu')
         return
       }
 
       setWhiskies(data || [])
-    } catch (err) {
-      console.error('Unexpected error loading whiskies:', err)
-      setError('Unexpected error occurred')
+    } catch (err: any) {
+      // Check if this is still the latest request before updating error state
+      if (currentRequestId === requestIdRef.current) {
+        console.error('Unexpected error loading whiskies:', err)
+        const errorMessage = err.message === 'Request cancelled' ?
+          'İstek iptal edildi' : 'Beklenmeyen bir hata oluştu'
+        setError(errorMessage)
+
+        if (err.message !== 'Request cancelled') {
+          toast.error('Viskiler yüklenirken beklenmeyen hata oluştu')
+        }
+      }
     } finally {
-      setLoading(false)
+      // Only update loading state if this is still the latest request
+      if (currentRequestId === requestIdRef.current) {
+        setLoading(false)
+        setIsRefetching(false)
+      }
     }
-  }, [])
+  }, [retryWithBackoff, whiskies.length])
 
   const addWhisky = useCallback(async (whiskyData: Partial<SimpleWhiskyDB>) => {
     try {
@@ -90,6 +185,10 @@ export function useSimpleWhiskiesDB() {
       }
 
       setWhiskies(prev => [data, ...prev])
+
+      // Invalidate whiskies cache
+      requestCache.invalidate({ type: 'whiskies' })
+
       return { data, error: null }
     } catch (err: any) {
       console.error('Error adding whisky:', err)
@@ -111,6 +210,10 @@ export function useSimpleWhiskiesDB() {
       }
 
       setWhiskies(prev => prev.map(w => w.id === id ? data : w))
+
+      // Invalidate whiskies cache
+      requestCache.invalidate({ type: 'whiskies' })
+
       return { data, error: null }
     } catch (err: any) {
       console.error('Error updating whisky:', err)
@@ -130,6 +233,10 @@ export function useSimpleWhiskiesDB() {
       }
 
       setWhiskies(prev => prev.filter(w => w.id !== id))
+
+      // Invalidate whiskies cache
+      requestCache.invalidate({ type: 'whiskies' })
+
       return { error: null }
     } catch (err: any) {
       console.error('Error deleting whisky:', err)
@@ -137,13 +244,52 @@ export function useSimpleWhiskiesDB() {
     }
   }, [])
 
+  // Refetch on window focus and online events
+  useEffect(() => {
+    const handleWindowFocus = () => {
+      console.log('Window focused - refetching whiskies')
+      loadWhiskies()
+    }
+
+    const handleOnline = () => {
+      console.log('Connection restored - refetching whiskies')
+      loadWhiskies()
+    }
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log('Page became visible - refetching whiskies')
+        loadWhiskies()
+      }
+    }
+
+    // Add event listeners
+    window.addEventListener('focus', handleWindowFocus)
+    window.addEventListener('online', handleOnline)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    // Cleanup function
+    return () => {
+      window.removeEventListener('focus', handleWindowFocus)
+      window.removeEventListener('online', handleOnline)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [loadWhiskies])
+
   useEffect(() => {
     loadWhiskies()
+
+    // Cleanup on unmount
+    return () => {
+      // Clear any pending operations
+      requestIdRef.current++
+    }
   }, [])
 
   return {
     whiskies,
     loading,
+    isRefetching,
     error,
     loadWhiskies,
     addWhisky,

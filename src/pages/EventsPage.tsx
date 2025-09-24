@@ -4,12 +4,12 @@ import { useAuth } from '@/contexts/AuthContext'
 import { Navigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { motion } from 'framer-motion'
-import { 
-  Calendar, 
-  Plus, 
-  Search, 
-  Crown, 
-  MapPin, 
+import {
+  Calendar,
+  Plus,
+  Search,
+  Crown,
+  MapPin,
   Clock,
   Users,
   UserCheck,
@@ -18,9 +18,13 @@ import {
   Trash2,
   Edit,
   Eye,
-  Lock
+  Lock,
+  CalendarPlus,
+  ChevronDown,
+  Download
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { generateCalendarLinks, downloadIcsFile, type CalendarEvent } from '@/utils/calendarUtils'
 
 interface Event {
   id: number
@@ -53,9 +57,21 @@ export function EventsPage() {
   const [myGroups, setMyGroups] = useState<Group[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null)
+  const [openCalendarDropdown, setOpenCalendarDropdown] = useState<number | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [activeTab, setActiveTab] = useState<'discover' | 'my-events'>('discover')
   const [createForm, setCreateForm] = useState({
+    group_id: '',
+    title: '',
+    description: '',
+    start_date: '',
+    location: '',
+    max_participants: 20,
+    is_active: true
+  })
+  const [editForm, setEditForm] = useState({
     group_id: '',
     title: '',
     description: '',
@@ -125,12 +141,18 @@ export function EventsPage() {
             .eq('event_id', event.id)
 
           // Check if user is registered
-          const { data: registrationData } = await supabase
+          const { data: registrationData, error: regError } = await supabase
             .from('event_participants')
             .select('*')
             .eq('event_id', event.id)
             .eq('user_id', user?.id || '')
             .maybeSingle()
+
+          if (regError) {
+            console.error('❌ Registration check error:', regError)
+          }
+
+          console.log(`🔍 Event ${event.id}: registrationData =`, registrationData, 'is_registered =', !!registrationData)
 
           return {
             ...event,
@@ -146,7 +168,7 @@ export function EventsPage() {
       setEvents(eventsWithDetails)
     } catch (error) {
       console.error('Error loading events:', error)
-      toast.error('Etkinlikler yüklenemedi')
+      toast.error(t('eventsPage.toasts.eventsLoadError'))
     } finally {
       setLoading(false)
     }
@@ -242,7 +264,7 @@ export function EventsPage() {
 
       if (participantError) throw participantError
 
-      toast.success('Etkinlik başarıyla oluşturuldu!')
+      toast.success(t('eventsPage.toasts.eventCreatedSuccess'))
       setShowCreateModal(false)
       setCreateForm({
         group_id: '',
@@ -257,38 +279,88 @@ export function EventsPage() {
       loadMyEvents()
     } catch (error: any) {
       console.error('Error creating event:', error)
-      toast.error(error.message || 'Etkinlik oluşturulurken hata oluştu')
+      toast.error(error.message || t('eventsPage.toasts.eventCreateError'))
     }
   }
 
   const registerForEvent = async (eventId: number) => {
     if (!user) return
 
+    console.log('🎯 Registering for event:', eventId, 'User:', user.id)
+
+    // Optimistic update
+    setEvents(prevEvents =>
+      prevEvents.map(event =>
+        event.id === eventId
+          ? {
+              ...event,
+              is_registered: true,
+              participant_count: event.participant_count + 1
+            }
+          : event
+      )
+    )
+
     try {
-      const { error } = await supabase
+      console.log('📡 Inserting to event_participants...')
+      const { data, error } = await supabase
         .from('event_participants')
         .insert({
           event_id: eventId,
           user_id: user.id,
           status: 'registered'
         })
+        .select()
 
-      if (error) throw error
+      if (error) {
+        console.error('❌ Insert error:', error)
+        throw error
+      }
 
-      toast.success('Etkinliğe kaydınız alındı!')
-      loadEvents()
+      console.log('✅ Successfully registered:', data)
+      toast.success(t('eventsPage.toasts.registrationSuccess'))
+
+      // Don't reload - trust optimistic update
+      // The API call was successful, so our optimistic update is correct
     } catch (error: any) {
-      console.error('Error registering for event:', error)
+      console.error('❌ Error registering for event:', error)
+
+      // Revert optimistic update on error
+      setEvents(prevEvents =>
+        prevEvents.map(event =>
+          event.id === eventId
+            ? {
+                ...event,
+                is_registered: false,
+                participant_count: event.participant_count - 1
+              }
+            : event
+        )
+      )
+
       if (error.code === '23505') {
-        toast.error('Zaten bu etkinliğe kayıtlısınız')
+        toast.error(t('eventsPage.toasts.alreadyRegistered'))
       } else {
-        toast.error('Kayıt olurken hata oluştu')
+        toast.error(t('eventsPage.toasts.registrationError'))
       }
     }
   }
 
   const unregisterFromEvent = async (eventId: number) => {
     if (!user) return
+
+    // Optimistic update
+    setEvents(prevEvents =>
+      prevEvents.map(event =>
+        event.id === eventId
+          ? {
+              ...event,
+              is_registered: false,
+              participant_count: Math.max(0, event.participant_count - 1)
+            }
+          : event
+      )
+    )
 
     try {
       const { error } = await supabase
@@ -299,18 +371,32 @@ export function EventsPage() {
 
       if (error) throw error
 
-      toast.success('Etkinlik kaydınız iptal edildi')
-      loadEvents()
+      toast.success(t('eventsPage.toasts.registrationCancelled'))
+      // Don't reload - trust optimistic update
     } catch (error) {
       console.error('Error unregistering from event:', error)
-      toast.error('Kayıt iptal edilirken hata oluştu')
+
+      // Revert optimistic update on error
+      setEvents(prevEvents =>
+        prevEvents.map(event =>
+          event.id === eventId
+            ? {
+                ...event,
+                is_registered: true,
+                participant_count: event.participant_count + 1
+              }
+            : event
+        )
+      )
+
+      toast.error(t('eventsPage.toasts.cancelRegistrationError'))
     }
   }
 
   const deleteEvent = async (eventId: number) => {
     if (!user) return
     
-    if (!confirm('Bu etkinliği silmek istediğinizden emin misiniz?')) return
+    if (!confirm(t('eventsPage.toasts.deleteConfirm'))) return
 
     try {
       // Delete participants first
@@ -330,12 +416,60 @@ export function EventsPage() {
 
       if (error) throw error
 
-      toast.success('Etkinlik silindi')
+      toast.success(t('eventsPage.toasts.eventDeletedSuccess'))
       loadEvents()
       loadMyEvents()
     } catch (error) {
       console.error('Error deleting event:', error)
-      toast.error('Etkinlik silinirken hata oluştu')
+      toast.error(t('eventsPage.toasts.deleteError'))
+    }
+  }
+
+  const openEditModal = (event: Event) => {
+    console.log('🎯 Opening edit modal for event:', event.id, event.title)
+    setEditingEvent(event)
+    setEditForm({
+      group_id: event.group_id.toString(),
+      title: event.title,
+      description: event.description || '',
+      start_date: event.start_date.slice(0, 16), // Format for datetime-local
+      location: event.location || '',
+      max_participants: event.max_participants,
+      is_active: event.is_active
+    })
+    setShowEditModal(true)
+    console.log('✅ Edit modal state set to true')
+  }
+
+  const updateEvent = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!user || !editingEvent) return
+
+    try {
+      const { error } = await supabase
+        .from('events')
+        .update({
+          group_id: parseInt(editForm.group_id),
+          title: editForm.title,
+          description: editForm.description || null,
+          start_date: editForm.start_date,
+          location: editForm.location || null,
+          max_participants: editForm.max_participants,
+          is_active: editForm.is_active
+        })
+        .eq('id', editingEvent.id)
+        .eq('created_by', user.id)
+
+      if (error) throw error
+
+      toast.success(t('eventsPage.toasts.eventUpdatedSuccess'))
+      setShowEditModal(false)
+      setEditingEvent(null)
+      loadEvents()
+      loadMyEvents()
+    } catch (error: any) {
+      console.error('Error updating event:', error)
+      toast.error(error.message || t('eventsPage.toasts.eventUpdateError'))
     }
   }
 
@@ -349,6 +483,34 @@ export function EventsPage() {
 
   const isEventPast = (dateString: string) => {
     return new Date(dateString) < new Date()
+  }
+
+  const handleAddToCalendar = (event: Event, type: 'google' | 'apple' | 'outlook' | 'ics') => {
+    const calendarEvent: CalendarEvent = {
+      title: event.title,
+      description: event.description || `WhiskyVerse etkinliği: ${event.title}`,
+      location: event.location || '',
+      startDate: event.start_date,
+    }
+
+    const links = generateCalendarLinks(calendarEvent)
+
+    switch (type) {
+      case 'google':
+        window.open(links.google, '_blank')
+        break
+      case 'apple':
+        window.open(links.apple, '_blank')
+        break
+      case 'outlook':
+        window.open(links.outlook, '_blank')
+        break
+      case 'ics':
+        downloadIcsFile(calendarEvent)
+        break
+    }
+
+    setOpenCalendarDropdown(null)
   }
 
   const filteredEvents = events.filter(event => 
@@ -369,39 +531,39 @@ export function EventsPage() {
     <div className="space-y-8">
       {/* Header */}
       <div className="text-center">
-        <h1 className="text-3xl md:text-4xl font-cyber font-bold text-gradient mb-4 flex items-center justify-center gap-3">
-          <Calendar className="w-10 h-10" />
-          Viski Etkinlikleri
-          <Crown className="w-8 h-8 text-yellow-500" />
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-cyber font-bold text-gradient mb-4 flex items-center justify-center gap-2 sm:gap-3">
+          <Calendar className="w-8 h-8 sm:w-10 sm:h-10" />
+          {t('eventsPage.title')}
+          <Crown className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-500" />
         </h1>
         <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
-          Viski tadım etkinlikleri düzenleyin, katılın ve unutulmaz deneyimler yaşayın
+          {t('eventsPage.subtitle')}
         </p>
       </div>
 
       {/* Tabs */}
-      <div className="card">
+      <div className="glass-panel p-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
             <button
               onClick={() => setActiveTab('discover')}
-              className={`px-4 py-2 rounded-lg font-medium transition-all ${
+              className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-all text-sm sm:text-base ${
                 activeTab === 'discover'
                   ? 'bg-primary-500 text-white shadow-lg'
                   : 'text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100'
               }`}
             >
-              Etkinlikleri Keşfet
+              {t('eventsPage.tabs.discover')}
             </button>
             <button
               onClick={() => setActiveTab('my-events')}
-              className={`px-4 py-2 rounded-lg font-medium transition-all ${
+              className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-all text-sm sm:text-base ${
                 activeTab === 'my-events'
                   ? 'bg-primary-500 text-white shadow-lg'
                   : 'text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100'
               }`}
             >
-              Etkinliklerim ({myEvents.length})
+              {t('eventsPage.tabs.myEvents')} ({myEvents.length})
             </button>
           </div>
           
@@ -409,10 +571,10 @@ export function EventsPage() {
             onClick={() => setShowCreateModal(true)}
             className="btn-primary flex items-center gap-2"
             disabled={myGroups.length === 0}
-            title={myGroups.length === 0 ? 'Etkinlik oluşturmak için önce bir grup oluşturmalısınız' : ''}
+            title={myGroups.length === 0 ? t('eventsPage.groupRequiredTitle') : ''}
           >
             <Plus className="w-4 h-4" />
-            Yeni Etkinlik Oluştur
+            {t('eventsPage.createButton')}
           </button>
         </div>
 
@@ -422,7 +584,7 @@ export function EventsPage() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
             <input
               type="text"
-              placeholder="Etkinlik ara..."
+              placeholder={t('eventsPage.searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="input-glass pl-10"
@@ -433,19 +595,19 @@ export function EventsPage() {
 
       {/* No Groups Warning */}
       {myGroups.length === 0 && (
-        <div className="card bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
+        <div className="glass-cardbg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
           <div className="flex items-center gap-3 text-yellow-800 dark:text-yellow-200">
             <Crown className="w-5 h-5" />
             <div>
-              <h3 className="font-medium">Etkinlik Oluşturabilmek İçin Grup Gerekli</h3>
-              <p className="text-sm mt-1">Etkinlik oluşturabilmek için önce bir grup oluşturmalı veya yöneticisi olduğunuz bir gruba sahip olmalısınız.</p>
+              <h3 className="font-medium">{t('eventsPage.groupRequired.title')}</h3>
+              <p className="text-sm mt-1">{t('eventsPage.groupRequired.description')}</p>
             </div>
           </div>
         </div>
       )}
 
       {/* Events Grid */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {(activeTab === 'discover' ? filteredEvents : myEvents).map((event, index) => {
           const { date, time } = formatDateTime(event.start_date)
           const isPast = isEventPast(event.start_date)
@@ -459,28 +621,28 @@ export function EventsPage() {
               className={`card group hover:scale-105 ${isPast ? 'opacity-75' : ''}`}
             >
               {/* Header */}
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-2 flex-1">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
-                    <Calendar className="w-6 h-6 text-white" />
+              <div className="flex items-start justify-between mb-4 gap-2">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 truncate">
+                    <h3 className="text-base sm:text-lg font-semibold text-slate-800 dark:text-slate-200 truncate">
                       {event.title}
                     </h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 truncate">
+                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 truncate">
                       {event.group_name}
                     </p>
                   </div>
                 </div>
-                
-                <div className="flex items-center gap-2 ml-2">
+
+                <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                   {event.is_active ? (
-                    <div title="Herkese Açık">
+                    <div title={t('eventsPage.publicTooltip')}>
                       <Eye className="w-4 h-4 text-green-500" />
                     </div>
                   ) : (
-                    <div title="Özel">
+                    <div title={t('eventsPage.privateTooltip')}>
                       <Lock className="w-4 h-4 text-orange-500" />
                     </div>
                   )}
@@ -489,7 +651,7 @@ export function EventsPage() {
                     <button
                       onClick={() => deleteEvent(event.id)}
                       className="p-1 text-red-500 hover:text-red-600 transition-colors"
-                      title="Etkinliği Sil"
+                      title={t('eventsPage.deleteTooltip')}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -506,60 +668,122 @@ export function EventsPage() {
 
               {/* Event Details */}
               <div className="space-y-2 mb-4">
-                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                  <Calendar className="w-4 h-4 text-primary-500" />
-                  <span>{date} - {time}</span>
-                  {isPast && <span className="text-red-500">(Geçmiş)</span>}
+                <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
+                  <Calendar className="w-4 h-4 text-primary-500 flex-shrink-0" />
+                  <span className="truncate">{date} - {time}</span>
+                  {isPast && <span className="text-red-500 text-xs">{t('eventsPage.pastLabel')}</span>}
                 </div>
-                
+
                 {event.location && (
-                  <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                    <MapPin className="w-4 h-4 text-primary-500" />
+                  <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
+                    <MapPin className="w-4 h-4 text-primary-500 flex-shrink-0" />
                     <span className="truncate">{event.location}</span>
                   </div>
                 )}
-                
-                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                  <Users className="w-4 h-4 text-primary-500" />
-                  <span>{event.participant_count}/{event.max_participants} katılımcı</span>
+
+                <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
+                  <Users className="w-4 h-4 text-primary-500 flex-shrink-0" />
+                  <span className="truncate">{event.participant_count}/{event.max_participants} {t('eventsPage.participantsLabel')}</span>
                 </div>
               </div>
 
-              {/* Actions */}
-              <div className="flex gap-2">
+              {/* Calendar & Actions */}
+              <div className="space-y-3">
+                {/* Add to Calendar */}
+                <div className="relative">
+                  <button
+                    onClick={() => setOpenCalendarDropdown(openCalendarDropdown === event.id ? null : event.id)}
+                    className="w-full btn-glass flex items-center justify-center gap-2 text-xs sm:text-sm"
+                  >
+                    <CalendarPlus className="w-4 h-4 flex-shrink-0" />
+                    <span className="hidden sm:inline">Takvime Ekle</span>
+                    <span className="sm:hidden">Takvim</span>
+                    <ChevronDown className={`w-3 h-3 transition-transform ${openCalendarDropdown === event.id ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {/* Calendar Dropdown */}
+                  {openCalendarDropdown === event.id && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-10">
+                      <div className="p-2 space-y-1">
+                        <button
+                          onClick={() => handleAddToCalendar(event, 'google')}
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md flex items-center gap-2"
+                        >
+                          <Calendar className="w-4 h-4 text-blue-500" />
+                          Google Calendar
+                        </button>
+                        <button
+                          onClick={() => handleAddToCalendar(event, 'apple')}
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md flex items-center gap-2"
+                        >
+                          <Calendar className="w-4 h-4 text-gray-600" />
+                          Apple Calendar
+                        </button>
+                        <button
+                          onClick={() => handleAddToCalendar(event, 'outlook')}
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md flex items-center gap-2"
+                        >
+                          <Calendar className="w-4 h-4 text-blue-600" />
+                          Outlook Calendar
+                        </button>
+                        <button
+                          onClick={() => handleAddToCalendar(event, 'ics')}
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md flex items-center gap-2"
+                        >
+                          <Download className="w-4 h-4 text-green-600" />
+                          .ics Dosyası İndir
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-2">
                 {activeTab === 'discover' && !isPast && (
                   event.is_registered ? (
                     <button
                       onClick={() => unregisterFromEvent(event.id)}
-                      className="btn-glass flex-1 text-red-600 dark:text-red-400 flex items-center justify-center gap-2"
+                      className="btn-glass flex-1 text-red-600 dark:text-red-400 flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm"
                     >
-                      <UserCheck className="w-4 h-4" />
-                      Kaydı İptal Et
+                      <UserCheck className="w-4 h-4 flex-shrink-0" />
+                      <span className="hidden sm:inline">{t('eventsPage.cancelRegistrationButton')}</span>
+                      <span className="sm:hidden">İptal</span>
                     </button>
                   ) : (
                     <button
                       onClick={() => registerForEvent(event.id)}
-                      className="btn-primary flex-1 flex items-center justify-center gap-2"
+                      className="btn-primary flex-1 flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm"
                       disabled={!event.can_register}
                     >
-                      <UserPlus className="w-4 h-4" />
-                      {!event.can_register ? 'Dolu' : 'Katıl'}
+                      <UserPlus className="w-4 h-4 flex-shrink-0" />
+                      <span className="hidden sm:inline">
+                        {!event.can_register ? t('eventsPage.fullLabel') : t('eventsPage.joinButton')}
+                      </span>
+                      <span className="sm:hidden">
+                        {!event.can_register ? 'Dolu' : 'Katıl'}
+                      </span>
                     </button>
                   )
                 )}
                 
                 {activeTab === 'my-events' && !isPast && (
-                  <button className="btn-secondary flex-1 flex items-center justify-center gap-2">
-                    <Settings className="w-4 h-4" />
-                    Yönet
+                  <button
+                    onClick={() => openEditModal(event)}
+                    className="btn-secondary flex-1 flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm"
+                  >
+                    <Settings className="w-4 h-4 flex-shrink-0" />
+                    <span className="hidden sm:inline">{t('eventsPage.manageButton')}</span>
+                    <span className="sm:hidden">Yönet</span>
                   </button>
                 )}
                 
                 {isPast && (
                   <button className="btn-glass flex-1 cursor-not-allowed" disabled>
-                    Etkinlik Bitti
+                    Event Ended
                   </button>
                 )}
+                </div>
               </div>
             </motion.div>
           )
@@ -572,12 +796,12 @@ export function EventsPage() {
         <div className="text-center py-12">
           <Calendar className="w-16 h-16 text-slate-400 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-slate-600 dark:text-slate-300 mb-2">
-            {activeTab === 'discover' ? 'Etkinlik bulunamadı' : 'Henüz etkinlik oluşturmadınız'}
+            {activeTab === 'discover' ? t('eventsPage.emptyStates.noEventsFound') : t('eventsPage.emptyStates.noEventsCreated')}
           </h3>
           <p className="text-slate-500 dark:text-slate-400 mb-4">
             {activeTab === 'discover' 
-              ? 'Arama kriterlerinizi değiştirerek tekrar deneyin'
-              : 'İlk etkinliğinizi oluşturun ve viski severlerle buluşun'
+              ? t('eventsPage.emptyStates.tryDifferentSearch')
+              : t('eventsPage.emptyStates.createFirstEvent')
             }
           </p>
           {activeTab === 'my-events' && myGroups.length > 0 && (
@@ -586,7 +810,7 @@ export function EventsPage() {
               className="btn-primary inline-flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
-              Etkinlik Oluştur
+              {t('eventsPage.createButton')}
             </button>
           )}
         </div>
@@ -601,7 +825,7 @@ export function EventsPage() {
             className="card-strong max-w-md w-full max-h-[90vh] overflow-y-auto"
           >
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-gradient">Yeni Etkinlik Oluştur</h3>
+              <h3 className="text-xl font-semibold text-gradient">{t('eventsPage.createModal.title')}</h3>
               <button
                 onClick={() => setShowCreateModal(false)}
                 className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
@@ -621,7 +845,7 @@ export function EventsPage() {
                   className="input-glass"
                   required
                 >
-                  <option value="">Grup seçin</option>
+                  <option value="">{t('eventsPage.createModal.selectGroup')}</option>
                   {myGroups.map(group => (
                     <option key={group.id} value={group.id}>{group.name}</option>
                   ))}
@@ -630,14 +854,14 @@ export function EventsPage() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Etkinlik Başlığı *
+                  {t('eventsPage.createModal.eventTitle')} *
                 </label>
                 <input
                   type="text"
                   value={createForm.title}
                   onChange={(e) => setCreateForm(prev => ({ ...prev, title: e.target.value }))}
                   className="input-glass"
-                  placeholder="Örn: Scotch Whisky Tadım Gecesi"
+                  placeholder={t('eventsPage.createModal.eventTitlePlaceholder')}
                   required
                   maxLength={255}
                 />
@@ -645,13 +869,13 @@ export function EventsPage() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Açıklama
+                  {t('eventsPage.createModal.description')}
                 </label>
                 <textarea
                   value={createForm.description}
                   onChange={(e) => setCreateForm(prev => ({ ...prev, description: e.target.value }))}
                   className="input-glass min-h-[100px] resize-none"
-                  placeholder="Etkinlik hakkında detaylı bilgi..."
+                  placeholder={t('eventsPage.createModal.descriptionPlaceholder')}
                   rows={4}
                 />
               </div>
@@ -679,13 +903,13 @@ export function EventsPage() {
                   value={createForm.location}
                   onChange={(e) => setCreateForm(prev => ({ ...prev, location: e.target.value }))}
                   className="input-glass"
-                  placeholder="Örn: İstanbul, Beşiktaş - Whisky Bar"
+                  placeholder={t('eventsPage.createModal.locationPlaceholder')}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Maksimum Katılımcı
+                  {t('eventsPage.createModal.maxParticipants')}
                 </label>
                 <input
                   type="number"
@@ -706,7 +930,7 @@ export function EventsPage() {
                   className="w-4 h-4 text-primary-600 border-slate-300 rounded focus:ring-primary-500"
                 />
                 <label htmlFor="event_is_active" className="text-sm text-slate-700 dark:text-slate-300">
-                  Herkese açık etkinlik (Diğer kullanıcılar etkinliği görebilir ve katılabilir)
+                  {t('eventsPage.createModal.publicEvent')}
                 </label>
               </div>
 
@@ -716,14 +940,156 @@ export function EventsPage() {
                   onClick={() => setShowCreateModal(false)}
                   className="btn-glass flex-1"
                 >
-                  İptal
+                  {t('eventsPage.createModal.cancelButton')}
                 </button>
                 <button
                   type="submit"
                   className="btn-primary flex-1"
                   disabled={!createForm.title.trim() || !createForm.group_id || !createForm.start_date}
                 >
-                  Oluştur
+                  {t('eventsPage.createModal.createButton')}
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Edit Event Modal */}
+      {showEditModal && editingEvent && (
+        <div>
+          {console.log('🎭 Rendering edit modal:', showEditModal, editingEvent?.title)}
+        </div>) &&
+      (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="card-strong max-w-md w-full max-h-[90vh] overflow-y-auto"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold text-gradient">Etkinlik Düzenle</h3>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+              >
+                ×
+              </button>
+            </div>
+
+            <form onSubmit={updateEvent} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Grup *
+                </label>
+                <select
+                  value={editForm.group_id}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, group_id: e.target.value }))}
+                  className="input-glass"
+                  required
+                >
+                  <option value="">Grup seçin</option>
+                  {myGroups.map(group => (
+                    <option key={group.id} value={group.id}>{group.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Etkinlik Başlığı *
+                </label>
+                <input
+                  type="text"
+                  value={editForm.title}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
+                  className="input-glass"
+                  placeholder="Etkinlik başlığını girin"
+                  required
+                  maxLength={255}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Açıklama
+                </label>
+                <textarea
+                  value={editForm.description}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                  className="input-glass min-h-[100px] resize-none"
+                  placeholder="Etkinlik açıklamasını girin"
+                  rows={4}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Tarih ve Saat *
+                </label>
+                <input
+                  type="datetime-local"
+                  value={editForm.start_date}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, start_date: e.target.value }))}
+                  className="input-glass"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Konum
+                </label>
+                <input
+                  type="text"
+                  value={editForm.location}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, location: e.target.value }))}
+                  className="input-glass"
+                  placeholder="Etkinlik konumunu girin"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Maksimum Katılımcı
+                </label>
+                <input
+                  type="number"
+                  value={editForm.max_participants}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, max_participants: parseInt(e.target.value) || 20 }))}
+                  className="input-glass"
+                  min={editingEvent.participant_count || 2}
+                  max={500}
+                />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="edit_event_is_active"
+                  checked={editForm.is_active}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, is_active: e.target.checked }))}
+                  className="w-4 h-4 text-primary-600 border-slate-300 rounded focus:ring-primary-500"
+                />
+                <label htmlFor="edit_event_is_active" className="text-sm text-slate-700 dark:text-slate-300">
+                  Etkinlik aktif
+                </label>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="btn-glass flex-1"
+                >
+                  İptal
+                </button>
+                <button
+                  type="submit"
+                  className="btn-primary flex-1"
+                  disabled={!editForm.title.trim() || !editForm.group_id || !editForm.start_date}
+                >
+                  Güncelle
                 </button>
               </div>
             </form>

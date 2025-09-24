@@ -243,11 +243,11 @@ export function AddWhiskyModal({ isOpen, onClose, onSuccess }: AddWhiskyModalPro
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Basic Info */}
             <div className="form-section">
-              <h3 className="form-label text-xl mb-4">Temel Bilgiler</h3>
+              <h3 className="form-label text-xl mb-4">{t('admin.basicInfo')}</h3>
               
               <div className="form-group">
                 <label className="form-label">
-                  Viski Adı *
+                  {t('admin.whiskyName')} *
                 </label>
                 <input
                   type="text"
@@ -261,7 +261,7 @@ export function AddWhiskyModal({ isOpen, onClose, onSuccess }: AddWhiskyModalPro
 
               <div className="form-group">
                 <label className="form-label">
-                  Tip *
+                  [{t('admin.whiskyType')}] *
                 </label>
                 <select
                   required
@@ -277,7 +277,7 @@ export function AddWhiskyModal({ isOpen, onClose, onSuccess }: AddWhiskyModalPro
 
               <div className="form-group">
                 <label className="form-label">
-                  Ülke *
+                  [{t('admin.whiskyCountry')}] *
                 </label>
                 <input
                   type="text"
@@ -291,7 +291,7 @@ export function AddWhiskyModal({ isOpen, onClose, onSuccess }: AddWhiskyModalPro
 
               <div className="form-group">
                 <label className="form-label">
-                  Bölge
+                  [{t('admin.whiskyRegion')}] *
                 </label>
                 <input
                   type="text"
@@ -304,7 +304,7 @@ export function AddWhiskyModal({ isOpen, onClose, onSuccess }: AddWhiskyModalPro
 
               <div className="form-group">
                 <label className="form-label">
-                  Alkol Oranı (%) *
+                  [{t('admin.whiskyABV')}] (%) *
                 </label>
                 <input
                   type="number"
@@ -325,7 +325,7 @@ export function AddWhiskyModal({ isOpen, onClose, onSuccess }: AddWhiskyModalPro
               
               <div className="form-group">
                 <label className="form-label">
-                  Renk
+                 [{t('admin.whiskyColor')}]
                 </label>
                 <input
                   type="text"
@@ -338,7 +338,7 @@ export function AddWhiskyModal({ isOpen, onClose, onSuccess }: AddWhiskyModalPro
 
               <div className="form-group">
                 <label className="form-label">
-                  Koku
+                  [{t('admin.whiskyAroma')}]
                 </label>
                 <textarea
                   value={formData.aroma}
@@ -350,7 +350,7 @@ export function AddWhiskyModal({ isOpen, onClose, onSuccess }: AddWhiskyModalPro
 
               <div className="form-group">
                 <label className="form-label">
-                  Damak Tadı
+                  [{t('admin.whiskyTaste')}]
                 </label>
                 <textarea
                   value={formData.taste}
@@ -362,7 +362,7 @@ export function AddWhiskyModal({ isOpen, onClose, onSuccess }: AddWhiskyModalPro
 
               <div className="form-group">
                 <label className="form-label">
-                  Bitiş Tadı
+                  [{t('admin.whiskyFinish')}]
                 </label>
                 <textarea
                   value={formData.finish}
@@ -377,7 +377,7 @@ export function AddWhiskyModal({ isOpen, onClose, onSuccess }: AddWhiskyModalPro
           {/* Description */}
           <div className="form-group">
             <label className="form-label">
-              Açıklama
+              [{t('admin.whiskyDescription')}]
             </label>
             <textarea
               value={formData.description}
@@ -390,7 +390,7 @@ export function AddWhiskyModal({ isOpen, onClose, onSuccess }: AddWhiskyModalPro
           {/* Image Upload */}
           <div className="form-group">
             <label className="form-label">
-              Viski Resmi
+             [{t('admin.whiskyImage')}]
             </label>
             <div className="border-2 border-dashed border-whiskey-amber/30 dark:border-whiskey-bronze/40 rounded-2xl p-8 bg-whiskey-amber/5 dark:bg-whiskey-bronze/5">
               <input
@@ -420,7 +420,7 @@ export function AddWhiskyModal({ isOpen, onClose, onSuccess }: AddWhiskyModalPro
               className="btn-glass px-6 py-3 rounded-xl"
               disabled={loading}
             >
-              İptal
+              [{t('admin.whiskyClose')}]
             </button>
             <button
               type="submit"
@@ -430,12 +430,12 @@ export function AddWhiskyModal({ isOpen, onClose, onSuccess }: AddWhiskyModalPro
               {loading ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                  Ekleniyor...
+                  [{t('admin.whiskyAdding')}]
                 </>
               ) : (
                 <>
                   <Save className="w-5 h-5" />
-                  Viski Ekle
+                  [{t('admin.whiskyAdd')}]
                 </>
               )}
             </button>

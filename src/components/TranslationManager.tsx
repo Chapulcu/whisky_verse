@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { X, Globe, Save, Loader2, CheckCircle, AlertCircle } from 'lucide-react'
 import { useWhiskyTranslations, WhiskyTranslation } from '@/hooks/useMultilingualWhiskies'
@@ -22,19 +22,12 @@ export function TranslationManager({ whiskyId, onClose, onSave }: TranslationMan
   const { t } = useTranslation()
   const { user, profile } = useAuth()
   const { updateTranslation, getAllTranslations, loading } = useWhiskyTranslations()
-  
-  // Admin check - if not admin, close modal immediately
-  if (!user || profile?.role !== 'admin') {
-    console.warn('Translation manager accessed by non-admin user')
-    onClose()
-    return null
-  }
   const [activeLanguage, setActiveLanguage] = useState('tr')
   const [translations, setTranslations] = useState<Record<string, Partial<WhiskyTranslation>>>({})
   const [loadingTranslations, setLoadingTranslations] = useState(true)
   const [savingLanguages, setSavingLanguages] = useState<Set<string>>(new Set())
 
-  const loadTranslations = async () => {
+  const loadTranslations = useCallback(async () => {
     setLoadingTranslations(true)
     try {
       const result = await getAllTranslations(whiskyId)
@@ -42,29 +35,43 @@ export function TranslationManager({ whiskyId, onClose, onSave }: TranslationMan
         acc[translation.language_code] = translation
         return acc
       }, {} as Record<string, WhiskyTranslation>)
-      
+
       setTranslations(translationMap)
     } catch (error) {
       console.error('Error loading translations:', error)
     } finally {
       setLoadingTranslations(false)
     }
-  }
+  }, [getAllTranslations, whiskyId])
 
   useEffect(() => {
-    loadTranslations()
-  }, [whiskyId])
+    if (user && profile?.role === 'admin') {
+      loadTranslations()
+    }
+  }, [whiskyId, loadTranslations, user, profile?.role])
+
+  // Admin check - if not admin, close modal immediately
+  if (!user || profile?.role !== 'admin') {
+    console.warn('Translation manager accessed by non-admin user')
+    onClose()
+    return null
+  }
 
   const handleSave = async (languageCode: string) => {
     const translation = translations[languageCode]
+    console.log('TranslationManager: Starting save, translation data:', translation)
+    
     if (!translation?.name?.trim()) {
+      console.log('TranslationManager: Name validation failed')
       toast.error(t('whiskyNameRequired'))
       return
     }
 
+    console.log('TranslationManager: Setting loading state for language:', languageCode)
     setSavingLanguages(prev => new Set(prev).add(languageCode))
     
     try {
+      console.log('TranslationManager: Starting save for language:', languageCode)
       const result = await updateTranslation(whiskyId, languageCode, {
         name: translation.name!,
         type: translation.type || '',
@@ -75,11 +82,18 @@ export function TranslationManager({ whiskyId, onClose, onSave }: TranslationMan
         color: translation.color || ''
       })
 
+      console.log('TranslationManager: Save result:', result)
       if (result.success) {
-        // Reload translations to get updated completion status
+        // Re-enable translations reload now that saves work properly
         await loadTranslations()
         onSave?.()
+      } else {
+        console.error('TranslationManager: Save failed:', result.error)
+        toast.error(`Çeviri kaydedilemedi: ${result.error}`)
       }
+    } catch (error) {
+      console.error('TranslationManager: Save error:', error)
+      toast.error('Çeviri kaydederken hata oluştu')
     } finally {
       setSavingLanguages(prev => {
         const newSet = new Set(prev)
@@ -90,8 +104,14 @@ export function TranslationManager({ whiskyId, onClose, onSave }: TranslationMan
   }
 
   const handleSaveAll = async () => {
-    const promises = languages.map(lang => handleSave(lang.code))
-    await Promise.all(promises)
+    console.log('TranslationManager: Starting sequential save for all languages')
+    // Save languages sequentially to avoid conflicts
+    for (const lang of languages) {
+      console.log(`TranslationManager: Saving ${lang.code}...`)
+      await handleSave(lang.code)
+      console.log(`TranslationManager: ${lang.code} save completed`)
+    }
+    console.log('TranslationManager: All languages saved')
   }
 
   const updateTranslationField = (languageCode: string, field: string, value: string) => {
@@ -160,8 +180,8 @@ export function TranslationManager({ whiskyId, onClose, onSave }: TranslationMan
           <div className="flex items-center gap-2">
             <button
               onClick={handleSaveAll}
-              disabled={loading}
-              className="px-4 py-2 bg-emerald-600/20 hover:bg-emerald-500/30 text-emerald-200 hover:text-emerald-100 backdrop-blur-md border border-emerald-400/20 hover:border-emerald-300/30 rounded-lg transition-all duration-300 shadow-lg hover:shadow-emerald-500/25 text-sm font-medium flex items-center gap-2"
+              disabled={savingLanguages.size > 0}
+              className="px-4 py-2 bg-emerald-600/20 hover:bg-emerald-500/30 text-emerald-200 hover:text-emerald-100 backdrop-blur-md border border-emerald-400/20 hover:border-emerald-300/30 rounded-lg transition-all duration-300 shadow-lg hover:shadow-emerald-500/25 text-sm font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               {t('saveAll')}

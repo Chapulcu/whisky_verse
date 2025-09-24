@@ -1,0 +1,461 @@
+# 🔌 WhiskyVerse API Reference
+
+## Overview
+WhiskyVerse uses **Supabase** as backend-as-a-service with PostgreSQL database, Row Level Security (RLS), and auto-generated REST API. This reference covers all database interactions, authentication flows, and key API patterns used in the React 18.3.1 + TypeScript 5.6.2 frontend.
+
+## 🛠️ Technology Stack Integration
+- **Frontend**: React hooks with Supabase JS client
+- **Backend**: Supabase (PostgreSQL + API layer)
+- **Auth**: JWT-based authentication with RLS
+- **Real-time**: Supabase subscriptions for live updates
+
+## Authentication
+
+### Base Configuration
+```typescript
+import { supabase } from '@/lib/supabase'
+```
+
+### Authentication Endpoints
+
+#### Sign In
+```typescript
+const { data, error } = await supabase.auth.signInWithPassword({
+  email: string,
+  password: string
+})
+```
+
+#### Sign Up  
+```typescript
+const { data, error } = await supabase.auth.signUp({
+  email: string,
+  password: string,
+  options: {
+    data: {
+      full_name: string
+    }
+  }
+})
+```
+
+#### Sign Out
+```typescript
+await supabase.auth.signOut()
+```
+
+#### Reset Password
+```typescript
+const { error } = await supabase.auth.resetPasswordForEmail(email, {
+  redirectTo: `${window.location.origin}/reset-password`
+})
+```
+
+## Database Tables & Operations
+
+### 1. Profiles
+**Table:** `profiles`
+**Purpose:** User profile information
+
+#### Get Profile
+```typescript
+const { data, error } = await supabase
+  .from('profiles')
+  .select('*')
+  .eq('id', userId)
+  .single()
+```
+
+#### Update Profile
+```typescript
+const { data, error } = await supabase
+  .from('profiles')
+  .update({
+    full_name: string,
+    bio?: string,
+    location?: string,
+    website?: string,
+    phone?: string,
+    birth_date?: string,
+    language: 'tr' | 'en'
+  })
+  .eq('id', userId)
+```
+
+### 2. Whiskies
+**Table:** `whiskies`
+**Purpose:** Whisky database with multilingual support
+
+#### Get All Whiskies
+```typescript
+const { data, error } = await supabase
+  .from('whiskies')
+  .select(`
+    *,
+    whisky_translations!inner(
+      name,
+      description,
+      tasting_notes,
+      language
+    )
+  `)
+  .eq('whisky_translations.language', language)
+```
+
+#### Create Whisky (Admin)
+```typescript
+const { data, error } = await supabase
+  .from('whiskies')
+  .insert({
+    brand: string,
+    type: string,
+    age: number,
+    alcohol_percentage: number,
+    price: number,
+    image_url?: string,
+    is_active: boolean
+  })
+```
+
+#### Update Whisky (Admin)
+```typescript
+const { data, error } = await supabase
+  .from('whiskies')
+  .update(updateData)
+  .eq('id', whiskyId)
+```
+
+#### Delete Whisky (Admin)
+```typescript
+const { data, error } = await supabase
+  .from('whiskies')
+  .delete()
+  .eq('id', whiskyId)
+```
+
+### 3. Collections
+**Table:** `collections`
+**Purpose:** User whisky collections
+
+#### Get User Collection
+```typescript
+const { data, error } = await supabase
+  .from('collections')
+  .select(`
+    *,
+    whiskies (
+      *,
+      whisky_translations!inner (
+        name,
+        description,
+        language
+      )
+    )
+  `)
+  .eq('user_id', userId)
+  .eq('whiskies.whisky_translations.language', language)
+```
+
+#### Add to Collection
+```typescript
+const { data, error } = await supabase
+  .from('collections')
+  .insert({
+    user_id: string,
+    whisky_id: number,
+    rating?: number,
+    notes?: string,
+    purchase_date?: string,
+    purchase_price?: number
+  })
+```
+
+### 4. Groups (NEW)
+**Table:** `groups`
+**Purpose:** Community groups
+
+#### Get All Groups
+```typescript
+const { data, error } = await supabase
+  .from('groups')
+  .select(`
+    *,
+    group_members(count),
+    profiles!groups_created_by_fkey(full_name, avatar_url)
+  `)
+  .eq('is_active', true)
+```
+
+#### Create Group
+```typescript
+const { data, error } = await supabase
+  .from('groups')
+  .insert({
+    name: string,
+    description: string,
+    type: 'public' | 'private',
+    created_by: string,
+    max_members?: number
+  })
+```
+
+#### Join Group
+```typescript
+const { data, error } = await supabase
+  .from('group_members')
+  .insert({
+    group_id: number,
+    user_id: string,
+    role: 'member' | 'admin'
+  })
+```
+
+### 5. Events (NEW)
+**Table:** `events`
+**Purpose:** Group events and meetups
+
+#### Get Events
+```typescript
+const { data, error } = await supabase
+  .from('events')
+  .select(`
+    *,
+    groups(name),
+    profiles!events_created_by_fkey(full_name, avatar_url),
+    event_participants(count)
+  `)
+  .gte('start_date', new Date().toISOString())
+  .order('start_date', { ascending: true })
+```
+
+#### Create Event
+```typescript
+const { data, error } = await supabase
+  .from('events')
+  .insert({
+    title: string,
+    description: string,
+    group_id?: number,
+    created_by: string,
+    start_date: string,
+    end_date?: string,
+    location?: string,
+    max_participants?: number,
+    event_type: 'tasting' | 'meetup' | 'education' | 'other'
+  })
+```
+
+#### Join Event
+```typescript
+const { data, error } = await supabase
+  .from('event_participants')
+  .insert({
+    event_id: number,
+    user_id: string
+  })
+```
+
+### 6. Background Settings (NEW)
+**Table:** `site_background_settings`
+**Purpose:** Site-wide background management
+
+#### Get Current Background
+```typescript
+const { data, error } = await supabase
+  .from('site_background_settings')
+  .select('*')
+  .eq('is_active', true)
+  .single()
+```
+
+#### Update Background (Admin)
+```typescript
+const { data, error } = await supabase
+  .from('site_background_settings')
+  .update({
+    light_background_url?: string,
+    dark_background_url?: string,
+    light_background_video_url?: string,
+    dark_background_video_url?: string,
+    background_type: 'image' | 'video',
+    is_active: true
+  })
+  .eq('id', settingsId)
+```
+
+## Storage Operations
+
+### Upload File
+```typescript
+const { data, error } = await supabase.storage
+  .from('site-assets')
+  .upload(filePath, file, {
+    cacheControl: '3600',
+    upsert: false
+  })
+```
+
+### Get Public URL
+```typescript
+const { data: { publicUrl } } = supabase.storage
+  .from('site-assets')
+  .getPublicUrl(filePath)
+```
+
+### Delete File
+```typescript
+const { error } = await supabase.storage
+  .from('site-assets')
+  .remove([filePath])
+```
+
+## Real-time Subscriptions
+
+### Listen to Table Changes
+```typescript
+const subscription = supabase
+  .channel('table-changes')
+  .on('postgres_changes', 
+    { 
+      event: '*', 
+      schema: 'public', 
+      table: 'tableName' 
+    }, 
+    (payload) => {
+      console.log('Change received!', payload)
+    }
+  )
+  .subscribe()
+```
+
+## Error Handling
+
+### Common Error Codes
+- `PGRST116`: No rows returned
+- `PGRST204`: Column not found
+- `23505`: Unique constraint violation
+- `42501`: Insufficient privileges (RLS)
+
+### Error Handling Pattern
+```typescript
+const { data, error } = await supabaseOperation()
+
+if (error) {
+  console.error('Database error:', error)
+  
+  if (error.code === 'PGRST116') {
+    // Handle no data found
+  } else if (error.code === '23505') {
+    // Handle duplicate entry
+  } else {
+    // Handle generic error
+    toast.error('İşlem başarısız: ' + error.message)
+  }
+  return
+}
+
+// Process successful data
+processData(data)
+```
+
+## Rate Limiting & Best Practices
+
+### Query Optimization
+- Use `.select()` to specify needed columns
+- Use `.single()` when expecting one result
+- Use `.limit()` for pagination
+- Use proper indexes on filtered columns
+
+### Security Best Practices
+- All tables use Row Level Security (RLS)
+- Admin operations check user role
+- File uploads validate MIME types
+- Input validation on all operations
+
+### Performance Considerations
+- Use `.eq()` for exact matches
+- Use `.ilike()` for case-insensitive search
+- Cache frequently accessed data
+- Use real-time subscriptions sparingly
+
+## Custom Hooks Reference
+
+### useBackgroundManagement
+```typescript
+const {
+  settings,
+  loading,
+  uploading,
+  uploadBackgroundImage,
+  uploadBackgroundVideo,
+  removeBackgroundImage,
+  removeBackgroundVideo,
+  getCurrentBackgroundUrl,
+  getCurrentBackgroundVideoUrl,
+  isVideoBackground
+} = useBackgroundManagement()
+```
+
+### useAuth
+```typescript
+const {
+  user,
+  profile,
+  loading,
+  signIn,
+  signUp,
+  signOut,
+  resetPassword,
+  updateProfile
+} = useAuth()
+```
+
+### useMultilingualWhiskies
+```typescript
+const {
+  whiskies,
+  loading,
+  error,
+  refetch
+} = useMultilingualWhiskies()
+```
+
+## Environment Variables
+
+### Required Variables
+```env
+VITE_SUPABASE_URL=your-supabase-url
+VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+```
+
+### Optional Variables
+```env
+VITE_APP_URL=http://localhost:5173
+NODE_ENV=development
+```
+
+## Testing Utilities
+
+### Database Test Helpers
+```typescript
+// Create test user
+export const createTestUser = async () => {
+  const { data, error } = await supabase.auth.signUp({
+    email: 'test@example.com',
+    password: 'testpassword123'
+  })
+  return { data, error }
+}
+
+// Clean test data
+export const cleanTestData = async () => {
+  await supabase.from('collections').delete().eq('user_id', testUserId)
+  await supabase.from('profiles').delete().eq('id', testUserId)
+}
+```
+
+---
+
+**Last Updated:** September 15, 2025  
+**Version:** 2.1.0  
+**Maintainer:** WhiskyVerse Development Team

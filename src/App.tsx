@@ -1,7 +1,11 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { queryClient } from '@/lib/queryClient'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { AgeVerification } from '@/components/AgeVerification'
 import { Layout } from '@/components/Layout'
 import { HomePage } from '@/pages/HomePage'
 import { AuthPage } from '@/pages/AuthPage'
@@ -19,18 +23,20 @@ import './index.css'
 
 // CRITICAL FIX: Safe page wrapper to prevent hooks violations
 function SafePage({ children }: { children: React.ReactNode }) {
+  const { t } = useTranslation()
+  
   return (
     <ErrorBoundary fallback={
       <div className="text-center py-8">
         <div className="glass-strong rounded-xl p-6 max-w-md mx-auto">
           <p className="text-red-600 dark:text-red-400 font-medium mb-4">
-            Bu sayfa yüklenirken bir hata oluştu
+            {t('pageLoadError')}
           </p>
           <button 
             onClick={() => window.location.reload()}
             className="btn-primary px-4 py-2"
           >
-            Sayfayı Yenile
+            {t('refreshPage')}
           </button>
         </div>
       </div>
@@ -41,10 +47,22 @@ function SafePage({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
+  const [isAgeVerified, setIsAgeVerified] = useState(false)
+
+  // Show age verification first, then the app
+  if (!isAgeVerified) {
+    return (
+      <ErrorBoundary>
+        <AgeVerification onVerified={() => setIsAgeVerified(true)} />
+      </ErrorBoundary>
+    )
+  }
+
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <Router>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <Router>
           <Routes>
             <Route path="/" element={<Layout />}>
               <Route index element={
@@ -104,8 +122,9 @@ function App() {
               } />
             </Route>
           </Routes>
-        </Router>
-      </AuthProvider>
+          </Router>
+        </AuthProvider>
+      </QueryClientProvider>
     </ErrorBoundary>
   )
 }

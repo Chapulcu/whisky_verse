@@ -92,6 +92,12 @@ cp .env.example .env
 # .env dosyasını Supabase bilgilerinizle düzenleyin
 ```
 
+⚠️ **ÖNEMLİ GÜVENLİK UYARISI:**
+- `.env` dosyaları Git'e commit edilmez (`.gitignore` ile korunur)
+- Supabase URL'leri ve API anahtarlarını kimse ile paylaşmayın
+- Production değerlerini development değerlerinden ayrı tutun
+- API anahtarlarını public repository'lerde **asla** paylaşmayın
+
 4. **Uygulamayı başlatın:**
 ```bash
 npm run dev
@@ -126,6 +132,10 @@ Detaylı dokümantasyon için [docs/](docs/) klasörüne göz atın:
 - [Production Guide](docs/deployment/DOCKER_DEPLOYMENT_GUIDE.md) - Production yapılandırması
 
 ### 💻 Geliştirme
+- [Developer Guide](docs/DEVELOPER_GUIDE.md) - Kapsamlı geliştirici rehberi
+- [API Reference](docs/API_REFERENCE.md) - Tüm API endpoint'leri
+- [Component Architecture](docs/COMPONENT_ARCHITECTURE.md) - Sistem mimarisi
+- [Background Setup](BACKGROUND_SETUP.md) - Arka plan yönetimi kurulumu
 - [Lokal Geliştirme](docs/development/LOCAL_SETUP_STATUS.md) - Development environment
 - [Veritabanı Komutları](docs/development/database-commands.md) - DB yönetimi
 
@@ -198,7 +208,7 @@ Bu proje özel lisans altında dağıtılmaktadır. Detaylar için [LICENSE](LIC
 
 **Talip Akhan**
 - 📧 Email: akhantalip@gmail.com
-- 💼 LinkedIn: [linkedin.com/in/talipakhan]([https://linkedin.com/in/talipakhan](https://www.linkedin.com/in/talip-akhan-48491515/))
+- 💼 LinkedIn: [https://www.linkedin.com/in/talip-akhan-48491515/](https://www.linkedin.com/in/talip-akhan-48491515/)
 - 🐙 GitHub: [@talipakhan](https://github.com/Chapulcu)
 
 ---
@@ -212,13 +222,56 @@ Herhangi bir sorun yaşarsanız:
 3. Detaylı açıklama ve log dosyaları ekleyin
 4. Email ile iletişime geçin: akhantalip@gmail.com
 
+## 🆕 Son Güncellemeler
+
+### 🔧 Admin Panel Geliştirmeleri (v2.1)
+- ✅ **Tam fonksiyonel admin paneli** - CRUD operasyonları
+- ✅ **Grup yönetimi** - Topluluk grupları oluşturma/yönetme
+- ✅ **Etkinlik yönetimi** - Viski etkinlikleri düzenleme
+- ✅ **Gelişmiş viski yönetimi** - Detaylı viski bilgileri
+- ✅ **Kullanıcı yönetimi** - Role yönetimi ve kullanıcı kontrolü
+- ✅ **CSV Import/Export** - Toplu veri işlemleri
+- ✅ **Dil seçenekleri** - TR/EN viski bilgileri
+- ✅ **Background Management System** - Resim/video yükleme ve yönetimi
+
+### 🎨 UI/UX İyileştirmeleri
+- ✅ **Modern profile sayfası** - Card-based responsive tasarım
+- ✅ **Enhanced collection page** - Büyük viski resimleri
+- ✅ **Navigation controls** - Düzeltilmiş tema/dil değiştirme
+- ✅ **Glass morphism design** - Modern görsel efektler
+- ✅ **Logout modal** - Güvenli çıkış konfirmasyonu
+- ✅ **Dynamic Background System** - Tema-aware arka plan sistemi
+- ✅ **Video Background Support** - HTML5 video arka plan desteği
+
+### 🗄️ Database İyileştirmeleri
+- ✅ **Groups & Events tables** - Yeni veri yapıları
+- ✅ **RLS policies** - Güvenlik politikaları
+- ✅ **Admin role management** - Role tabanlı erişim
+- ✅ **Schema synchronization** - Frontend-backend uyumu
+- ✅ **Background Settings table** - Site arka plan yönetimi
+- ✅ **Storage bucket configuration** - Resim/video dosya desteği
+
+### 📚 Dokümantasyon
+- ✅ **Kapsamlı development summary** - Tüm değişikliklerin dökümü
+- ✅ **Database scripts** - SQL schema dosyaları
+- ✅ **Troubleshooting guides** - Sorun giderme rehberleri
+- ✅ **API Reference** - Tüm endpoint'ler ve operasyonlar
+- ✅ **Developer Guide** - Geliştirici onboarding rehberi
+- ✅ **Component Architecture** - Sistem mimarisi dokümantasyonu
+
 ## 🎯 Roadmap
 
+- [x] Admin panel geliştirmeleri
+- [x] Grup ve etkinlik yönetimi
+- [x] UI/UX modernizasyonu
+- [x] Background Management System
+- [x] Video Background Support
+- [x] Comprehensive Documentation
+- [ ] Bulk operations (toplu işlemler)
+- [ ] Advanced search ve filtering
 - [ ] Mobil uygulama (React Native)
-- [ ] Advanced filtering ve search
 - [ ] Social media entegrasyonu
 - [ ] Whisky recommendation engine
-- [ ] Event ve meetup sistemi
 - [ ] Marketplace özelliği
 
 ---

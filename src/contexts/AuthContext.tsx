@@ -33,10 +33,35 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+// Map Supabase auth errors to user-friendly messages
+function mapAuthError(error: any) {
+  const code = error?.code || error?.status || ''
+  const message = (error?.message || '').toLowerCase()
+  if (code === 'invalid_credentials' || message.includes('invalid login credentials')) {
+    return { ...error, message: 'E-posta veya şifre hatalı' }
+  }
+  if (message.includes('email not confirmed') || message.includes('email not confirmed')) {
+    return { ...error, message: 'E-posta doğrulanmamış. Lütfen e-postanızı kontrol edin.' }
+  }
+  if (message.includes('otp') || message.includes('one-time') || message.includes('magic')) {
+    return { ...error, message: 'Tek kullanımlık giriş kodu doğrulanamadı.' }
+  }
+  if (message.includes('rate') || message.includes('too many')) {
+    return { ...error, message: 'Çok fazla deneme yaptınız. Lütfen kısa bir süre sonra tekrar deneyin.' }
+  }
+  if (typeof error === 'string') {
+    return { message: error }
+  }
+  return error
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<SupabaseUser | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
+  
+  // Development mode session persistence
+  const [isHMRRecovering, setIsHMRRecovering] = useState(false)
 
   // Load user profile from database
   const loadUserProfile = useCallback(async (userId: string) => {
@@ -126,30 +151,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Initialize auth state
   useEffect(() => {
     let mounted = true
+    let sessionCheckTimeout: NodeJS.Timeout
 
-    // Get initial session
-    const getInitialSession = async () => {
+    // Get initial session with retry logic for HMR
+    const getInitialSession = async (isRetry = false) => {
       try {
+        if (isRetry) {
+          setIsHMRRecovering(true)
+          // Small delay to allow Supabase to stabilize after HMR
+          await new Promise(resolve => setTimeout(resolve, 100))
+        }
+        
         const { data: { session }, error } = await supabase.auth.getSession()
         
         if (!mounted) return
         
         if (error) {
           console.error('Error getting session:', error.message)
+          // Retry logic for both development and production
+          if (!isRetry) {
+            console.log('🔄 Retrying session recovery...')
+            sessionCheckTimeout = setTimeout(() => getInitialSession(true), import.meta.env.DEV ? 500 : 2000)
+            return
+          }
           setLoading(false)
+          setIsHMRRecovering(false)
           return
         }
 
         if (session?.user) {
+          console.log('✅ Session recovered:', session.user.id)
           setUser(session.user)
           await loadUserProfile(session.user.id)
+        } else if (isRetry) {
+          console.log('⚠️ No session after retry - user may be logged out')
         }
         
         setLoading(false)
+        setIsHMRRecovering(false)
       } catch (error) {
         console.error('Error initializing auth:', error)
         if (mounted) {
           setLoading(false)
+          setIsHMRRecovering(false)
         }
       }
     }
@@ -159,9 +203,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.id)
+        console.log('🔐 Auth state changed:', event, session?.user?.id)
         
         if (!mounted) return
+
+        // Skip SIGNED_IN events during HMR recovery to avoid double-processing
+        if (event === 'SIGNED_IN' && isHMRRecovering) {
+          console.log('🔄 Skipping SIGNED_IN during HMR recovery')
+          return
+        }
 
         if (session?.user) {
           setUser(session.user)
@@ -177,9 +227,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       mounted = false
+      if (sessionCheckTimeout) {
+        clearTimeout(sessionCheckTimeout)
+      }
       subscription.unsubscribe()
     }
-  }, [loadUserProfile])
+  }, [])
 
   // Sign in method
   const signIn = async (email: string, password: string) => {
@@ -190,7 +243,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
 
       if (error) {
-        return { error }
+        return { error: mapAuthError(error) }
       }
 
       return { data, error: null }
@@ -213,7 +266,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
 
       if (error) {
-        return { error }
+        return { error: mapAuthError(error) }
       }
 
       return { data, error: null }
@@ -262,7 +315,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
 
       if (error) {
-        return { error }
+        return { error: mapAuthError(error) }
       }
 
       return { error: null }
@@ -277,7 +330,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.updateUser({ password })
 
       if (error) {
-        return { error }
+        return { error: mapAuthError(error) }
       }
 
       return { error: null }

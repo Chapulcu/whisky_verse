@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { motion } from 'framer-motion'
 import { 
@@ -20,15 +20,15 @@ import {
   Grid3X3,
   List,
   ChevronLeft,
-  ChevronRight,
-  Globe
+  ChevronRight
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuth } from '@/contexts/AuthContext'
 import { useWhiskyUpload } from '@/hooks/useWhiskyUpload'
-import { useMultilingualWhiskies, MultilingualWhisky } from '@/hooks/useMultilingualWhiskies'
-import { useSimpleWhiskiesDB, SimpleWhiskyDB } from '@/hooks/useSimpleWhiskiesDB'
-import { TranslationManager } from '@/components/TranslationManager'
+import { useWhiskiesMultilingual, MultilingualWhisky } from '@/hooks/useWhiskiesMultilingual'
+import { useUserCollection } from '@/hooks/useUserCollection'
+import { WhiskyErrorBoundary } from '@/components/WhiskyErrorBoundary'
+import { WhiskySkeleton, WhiskySkeletonMini } from '@/components/WhiskySkeleton'
 
 interface UserWhisky {
   id: number
@@ -38,32 +38,43 @@ interface UserWhisky {
   personal_notes: string | null
 }
 
-export function WhiskiesPage() {
-  const { t } = useTranslation()
+function WhiskiesPageContent() {
+  const { t, i18n } = useTranslation()
   const { user, profile } = useAuth()
+  const [searchParams, setSearchParams] = useSearchParams()
   
   const { uploadWhiskyImage, isUploading } = useWhiskyUpload()
-  const { whiskies: simpleWhiskies, loading: simpleLoading, loadWhiskies: loadSimpleWhiskies } = useSimpleWhiskiesDB()
-  
-  // Convert simple whiskies to multilingual format for compatibility
-  const whiskies = simpleWhiskies.map(w => ({ ...w, language_code: 'tr' })) as MultilingualWhisky[]
-  const whiskyLoading = simpleLoading
-  const loadWhiskies = loadSimpleWhiskies
+  const { whiskies, totalCount, loading: whiskyLoading, isRefetching: whiskyRefetching, loadWhiskies } = useWhiskiesMultilingual()
+  const { collection: userCollection, loading: userCollectionLoading, addToCollection: addToCollectionHook, updateCollectionItem } = useUserCollection()
+
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [userWhiskies, setUserWhiskies] = useState<UserWhisky[]>([])
-  const [loading, setLoading] = useState(true)
+
+  // Convert collection to legacy format for compatibility
+  const userWhiskies = userCollection.map(item => ({
+    id: item.id,
+    whisky_id: item.whisky_id,
+    tasted: item.tasted,
+    rating: item.rating,
+    personal_notes: item.personal_notes
+  }))
+
+  // Combined loading state for both whiskies and user collection
+  const loading = whiskyLoading || userCollectionLoading
+  const [isSearching, setIsSearching] = useState(false)
   // Removed old searchTerm state - now using localSearchTerm and debouncedSearchTerm
   const [selectedCountry, setSelectedCountry] = useState('')
   const [selectedType, setSelectedType] = useState('')
+  const [selectedLetter, setSelectedLetter] = useState('')
   const [showFilters, setShowFilters] = useState(false)
+
+  // Cleanup refs for memory management
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(12)
   const [gridColumns, setGridColumns] = useState<2 | 3 | 4 | 5 | 6>(3)
   const [showAddModal, setShowAddModal] = useState(false)
   const [viewingWhisky, setViewingWhisky] = useState<MultilingualWhisky | null>(null)
-  const [showTranslationManager, setShowTranslationManager] = useState(false)
-  const [translatingWhisky, setTranslatingWhisky] = useState<MultilingualWhisky | null>(null)
   const [showImageViewer, setShowImageViewer] = useState(false)
   const [viewingImage, setViewingImage] = useState<{ url: string; name: string } | null>(null)
   const [addForm, setAddForm] = useState({
@@ -83,167 +94,314 @@ export function WhiskiesPage() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string>('')
 
-  // Translation management handlers
-  const handleManageTranslations = (whisky: MultilingualWhisky) => {
-    setTranslatingWhisky(whisky)
-    setShowTranslationManager(true)
-  }
 
-  const loadUserCollection = async () => {
-    if (!user) {
-      console.log('No user found, skipping user collection load')
-      return
-    }
+  // loadUserCollection is now handled by useUserCollection hook
 
-    try {
-      console.log('Loading user collection for user:', user.id)
-      const { data, error } = await supabase
-        .from('user_whiskies')
-        .select('*')
-        .eq('user_id', user.id)
-
-      if (error) {
-        console.error('Error loading user collection:', error)
-        throw error
-      }
-      
-      console.log('User collection loaded:', { count: data?.length || 0, data })
-      setUserWhiskies(data || [])
-    } catch (error) {
-      console.error('Error loading user collection:', error)
-      toast.error('Kullanıcı koleksiyonu yüklenemedi')
-    }
-  }
-
-  // Fetch whiskies and user collection
-  useEffect(() => {
-    setLoading(whiskyLoading)
-    if (user) {
-      loadUserCollection()
-    }
-  }, [whiskyLoading, user])
+  // Note: Loading state and user collection are now handled by hooks automatically
 
   // Local search state to prevent excessive API calls
   const [localSearchTerm, setLocalSearchTerm] = useState('')
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
 
-  // Debounce the search term
+  // Debounce the search term with proper cleanup
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
+    // Clear previous timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+    }
+
+    timeoutRef.current = setTimeout(() => {
       setDebouncedSearchTerm(localSearchTerm)
     }, 300)
 
-    return () => clearTimeout(timeoutId)
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    }
   }, [localSearchTerm])
 
-  // Load whiskies only when debounced search term changes
+  // Handle URL query parameter for whisky ID
+  useEffect(() => {
+    const whiskyId = searchParams.get('id')
+    if (whiskyId) {
+      const whiskyIdNum = parseInt(whiskyId)
+      console.log('🔗 URL parameter detected - Whisky ID:', whiskyIdNum)
+
+      // First try to find in loaded whiskies
+      if (whiskies.length > 0) {
+        console.log('📚 Searching in loaded whiskies:', whiskies.length, 'items')
+        const targetWhisky = whiskies.find(w => w.id === whiskyIdNum)
+        if (targetWhisky) {
+          console.log('✅ Found whisky in loaded list:', targetWhisky.name)
+          setViewingWhisky(targetWhisky)
+          // Clear the URL parameter after a short delay to ensure modal opens
+          setTimeout(() => {
+            setSearchParams(prev => {
+              const newParams = new URLSearchParams(prev)
+              newParams.delete('id')
+              return newParams
+            })
+          }, 100)
+          return
+        } else {
+          console.log('❌ Whisky not found in loaded list, will fetch from database')
+        }
+      } else {
+        console.log('📭 No whiskies loaded yet, will fetch from database')
+      }
+
+      // If not found in loaded whiskies, fetch directly from database
+      const fetchWhiskyById = async () => {
+        try {
+          console.log('🔄 Fetching whisky from database with ID:', whiskyIdNum)
+          console.log('🌍 Current language:', i18n.language)
+
+          // Use the same query structure as useWhiskiesMultilingual hook
+          const { data: whiskyData, error: whiskyError } = await supabase
+            .from('whiskies')
+            .select(`
+              id,
+              name,
+              image_url,
+              alcohol_percentage,
+              rating,
+              age_years,
+              country,
+              region,
+              type,
+              description,
+              aroma,
+              taste,
+              finish,
+              color,
+              created_at,
+              whisky_translations:whisky_translations (
+                language_code,
+                name,
+                description,
+                aroma,
+                taste,
+                finish,
+                color,
+                region,
+                type,
+                country,
+                translation_status
+              )
+            `)
+            .eq('id', whiskyIdNum)
+            .single()
+
+          if (whiskyError || !whiskyData) {
+            console.error('❌ Error fetching whisky by ID:', whiskyError)
+            return
+          }
+
+          console.log('✅ Whisky fetched from database:', whiskyData.name)
+          console.log('📝 Available translations:', whiskyData.whisky_translations?.map(t => t.language_code) || [])
+
+          // Apply same translation logic as useWhiskiesMultilingual
+          const currentLang = i18n.language as 'tr' | 'en' | 'ru'
+          let bestTranslation = null
+
+          // For Turkish, prefer original data
+          if (currentLang !== 'tr' && whiskyData.whisky_translations) {
+            // Try to find translation for current language first
+            const pref = [currentLang, 'tr', 'en'] as ('tr' | 'en' | 'ru')[]
+            for (const code of pref) {
+              const t = whiskyData.whisky_translations.find(x => x.language_code === code)
+              if (t) {
+                bestTranslation = t
+                console.log(`🎯 Using ${code} translation for ${currentLang}`)
+                break
+              }
+            }
+          }
+
+          // Build MultilingualWhisky object with proper localization
+          const whisky: MultilingualWhisky = {
+            id: whiskyData.id,
+            image_url: whiskyData.image_url,
+            alcohol_percentage: whiskyData.alcohol_percentage,
+            rating: whiskyData.rating,
+            age_years: whiskyData.age_years,
+            country: bestTranslation?.country || whiskyData.country,
+            name: bestTranslation?.name || whiskyData.name,
+            description: bestTranslation?.description || whiskyData.description,
+            aroma: bestTranslation?.aroma || whiskyData.aroma,
+            taste: bestTranslation?.taste || whiskyData.taste,
+            finish: bestTranslation?.finish || whiskyData.finish,
+            color: bestTranslation?.color || whiskyData.color,
+            region: bestTranslation?.region || whiskyData.region,
+            type: bestTranslation?.type || whiskyData.type,
+            language_code: bestTranslation ? bestTranslation.language_code : currentLang,
+            translation_status: bestTranslation?.translation_status || (currentLang === 'tr' ? 'human' : undefined)
+          }
+
+          console.log('🎯 Final localized whisky data:', {
+            name: whisky.name,
+            language_code: whisky.language_code,
+            hasDescription: !!whisky.description,
+            hasAroma: !!whisky.aroma,
+            hasTaste: !!whisky.taste,
+            hasFinish: !!whisky.finish
+          })
+
+          setViewingWhisky(whisky)
+          // Clear the URL parameter after a short delay to ensure modal opens
+          setTimeout(() => {
+            setSearchParams(prev => {
+              const newParams = new URLSearchParams(prev)
+              newParams.delete('id')
+              return newParams
+            })
+          }, 100)
+        } catch (error) {
+          console.error('💥 Error fetching whisky:', error)
+        }
+      }
+
+      fetchWhiskyById()
+    }
+  }, [searchParams, whiskies, setSearchParams, i18n.language])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    }
+  }, [])
+
+  // Load whiskies when search/filter/page/size or language changes (server-side pagination)
   useEffect(() => {
     if (debouncedSearchTerm.length >= 3 || debouncedSearchTerm.length === 0) {
-      loadWhiskies(undefined, 0, debouncedSearchTerm)
+      setIsSearching(true)
+      const offset = (currentPage - 1) * itemsPerPage
+      loadWhiskies(i18n.language as any, itemsPerPage, offset, debouncedSearchTerm, selectedCountry, selectedType)
+        .finally(() => setIsSearching(false))
     }
-  }, [debouncedSearchTerm])
+  }, [debouncedSearchTerm, selectedCountry, selectedType, currentPage, itemsPerPage, i18n.language, loadWhiskies])
 
   const addToCollection = async (whiskyId: number) => {
     if (!user) {
-      toast.error('Koleksiyona eklemek için giriş yapmalısınız')
+      toast.error(t('loginRequiredCollection'))
       return
     }
 
-    console.log('Adding whisky to collection:', { whiskyId, userId: user.id })
+    // Check if already in collection first
+    const isAlreadyInCollection = userWhiskies.some(uw => uw.whisky_id === whiskyId)
+    if (isAlreadyInCollection) {
+      toast.error(t('whiskyAlreadyInCollection'))
+      return
+    }
+
+    // Optimistic update: Add to local state immediately
+    const optimisticItem = {
+      id: Date.now(), // Temporary ID
+      whisky_id: whiskyId,
+      tasted: false,
+      rating: null,
+      personal_notes: null
+    }
+
+    // Create a fake collection item for optimistic update
+    const optimisticCollectionItem = {
+      id: optimisticItem.id,
+      user_id: user.id,
+      whisky_id: whiskyId,
+      tasted: false,
+      rating: null,
+      personal_notes: null,
+      tasted_at: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      whisky: whiskies.find(w => w.id === whiskyId) || null
+    }
+
+    // Immediately update UI
+    const setOptimisticCollection = (prev: any[]) => [optimisticCollectionItem, ...prev]
 
     try {
-      // Check if already in collection first (without .single() to avoid 406 error)
-      const { data: existingEntries, error: checkError } = await supabase
-        .from('user_whiskies')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('whisky_id', whiskyId)
+      // Show immediate feedback
+      toast.success(t('whiskiesPage.toasts.addedToCollection'))
 
-      if (checkError) {
-        console.error('Error checking for existing entry:', checkError)
-        throw checkError
-      }
+      const result = await addToCollectionHook(whiskyId)
 
-      if (existingEntries && existingEntries.length > 0) {
-        console.log('Whisky already in collection:', existingEntries)
-        toast.error('Bu viski zaten koleksiyonunuzda')
+      if (result.error) {
+        console.error('Error adding to collection:', result.error)
+
+        // Rollback optimistic update
+        // The hook will handle the actual state management
+
+        if (result.error.code === '23505') {
+          toast.error(t('whiskyAlreadyInCollection'))
+        } else {
+          toast.error(t('addToCollectionError'))
+        }
         return
       }
 
-      console.log('No existing entry found, adding to collection')
-
-      const { data, error } = await supabase
-        .from('user_whiskies')
-        .insert({
-          user_id: user.id,
-          whisky_id: whiskyId,
-          tasted: false,
-          created_at: new Date().toISOString()
-        })
-        .select()
-
-      if (error) {
-        console.error('Error inserting into collection:', error)
-        throw error
-      }
-
-      console.log('Successfully added to collection:', data)
-
-      // Reload user collection to update local state
-      await loadUserCollection()
-      
-      // Also trigger a storage event to notify other components
-      window.dispatchEvent(new CustomEvent('collectionUpdated', { 
-        detail: { action: 'added', whiskyId } 
+      // Trigger storage event to notify other components
+      window.dispatchEvent(new CustomEvent('collectionUpdated', {
+        detail: { action: 'added', whiskyId }
       }))
-      
-      toast.success('Koleksiyona eklendi!')
+
     } catch (error: any) {
       console.error('Error adding to collection:', error)
-      if (error.code === '23505') {
-        toast.error('Bu viski zaten koleksiyonunuzda')
-      } else {
-        toast.error('Koleksiyona eklenirken hata oluştu')
-      }
+      toast.error(t('addToCollectionError'))
     }
   }
 
   const markAsTasted = async (whiskyId: number) => {
     if (!user) return
 
-    try {
-      const userWhisky = userWhiskies.find(uw => uw.whisky_id === whiskyId)
-      
-      if (userWhisky) {
-        // Update existing record
-        const { error } = await supabase
-          .from('user_whiskies')
-          .update({
-            tasted: !userWhisky.tasted,
-            tasted_at: !userWhisky.tasted ? new Date().toISOString() : null
-          })
-          .eq('id', userWhisky.id)
+    const userWhisky = userWhiskies.find(uw => uw.whisky_id === whiskyId)
+    const newTastedStatus = userWhisky ? !userWhisky.tasted : true
 
-        if (error) throw error
+    // Optimistic update: Show immediate UI feedback
+    toast.success(t('whiskiesPage.toasts.statusUpdated'))
+
+    try {
+      if (userWhisky) {
+        // Update existing record using hook
+        const result = await updateCollectionItem(userWhisky.id, {
+          tasted: newTastedStatus,
+          tasted_at: newTastedStatus ? new Date().toISOString() : null
+        })
+
+        if (result.error) {
+          // Rollback toast
+          toast.error(t('whiskiesPage.toasts.statusUpdateError'))
+          throw result.error
+        }
       } else {
-        // Create new record
-        const { error } = await supabase
-          .from('user_whiskies')
-          .insert({
-            user_id: user.id,
-            whisky_id: whiskyId,
+        // Create new record using hook
+        const result = await addToCollectionHook(whiskyId)
+
+        if (result.error) {
+          toast.error(t('whiskiesPage.toasts.statusUpdateError'))
+          throw result.error
+        }
+
+        // Then update it to mark as tasted
+        if (result.data) {
+          const updateResult = await updateCollectionItem(result.data.id, {
             tasted: true,
             tasted_at: new Date().toISOString()
           })
 
-        if (error) throw error
+          if (updateResult.error) {
+            toast.error(t('whiskiesPage.toasts.statusUpdateError'))
+            throw updateResult.error
+          }
+        }
       }
-
-      await loadUserCollection()
-      toast.success('Durum güncellendi!')
     } catch (error) {
       console.error('Error updating tasted status:', error)
-      toast.error('Durum güncellenirken hata oluştu')
+      // Error toast already shown above
     }
   }
 
@@ -251,37 +409,20 @@ export function WhiskiesPage() {
     setViewingWhisky(whisky)
   }
 
-  const handleTranslateWhisky = (whisky: MultilingualWhisky) => {
-    setTranslatingWhisky(whisky)
-    setShowTranslationManager(true)
-  }
-
-  const handleTranslationSave = () => {
-    // Reload whiskies to get updated translations
-    loadWhiskies(undefined, 0, debouncedSearchTerm)
-    setShowTranslationManager(false)
-    setTranslatingWhisky(null)
-  }
 
   const handleImageClick = (imageUrl: string, whiskyName: string) => {
     setViewingImage({ url: imageUrl, name: whiskyName })
     setShowImageViewer(true)
   }
 
-  // Filter whiskies with memoization to prevent unnecessary re-renders
+  // Apply client-side letter filtering on top of server-side filtering
   const filteredWhiskies = useMemo(() => {
-    return whiskies.filter(whisky => {
-      const matchesSearch = localSearchTerm.length === 0 || localSearchTerm.length >= 3 ? 
-        (whisky.name.toLowerCase().includes(localSearchTerm.toLowerCase()) ||
-         whisky.type.toLowerCase().includes(localSearchTerm.toLowerCase()) ||
-         whisky.country.toLowerCase().includes(localSearchTerm.toLowerCase())) : true
-      
-      const matchesCountry = !selectedCountry || whisky.country === selectedCountry
-      const matchesType = !selectedType || whisky.type === selectedType
+    if (!selectedLetter) return whiskies
 
-      return matchesSearch && matchesCountry && matchesType
-    })
-  }, [whiskies, localSearchTerm, selectedCountry, selectedType])
+    return whiskies.filter(whisky =>
+      whisky.name.toLowerCase().startsWith(selectedLetter.toLowerCase())
+    )
+  }, [whiskies, selectedLetter])
 
   // Get unique countries and types for filters
   const countries = [...new Set(whiskies.map(w => w.country))].sort()
@@ -296,11 +437,11 @@ export function WhiskiesPage() {
     return userWhisky?.tasted || false
   }
 
-  // Pagination calculations
-  const totalPages = Math.ceil(filteredWhiskies.length / itemsPerPage)
+  // Pagination calculations from server totalCount
+  const totalPages = Math.max(1, Math.ceil((totalCount || 0) / itemsPerPage))
   const startIndex = (currentPage - 1) * itemsPerPage
-  const endIndex = startIndex + itemsPerPage
-  const paginatedWhiskies = filteredWhiskies.slice(startIndex, endIndex)
+  const endIndex = startIndex + (filteredWhiskies?.length || 0)
+  const paginatedWhiskies = filteredWhiskies
 
   // Pagination Component
   const PaginationControls = ({ className = '' }: { className?: string }) => {
@@ -309,7 +450,7 @@ export function WhiskiesPage() {
     return (
       <div className={`flex flex-col sm:flex-row items-center justify-between gap-4 ${className}`}>
         <div className="text-sm text-slate-600 dark:text-slate-300">
-          {startIndex + 1}-{Math.min(endIndex, filteredWhiskies.length)} / {filteredWhiskies.length} viski görüntülüyor
+          {Math.min(startIndex + 1, totalCount)}-{Math.min(startIndex + filteredWhiskies.length, totalCount)} / {totalCount} {t('whiskiesPage.showing')}
         </div>
         
         <div className="flex items-center gap-2">
@@ -317,7 +458,7 @@ export function WhiskiesPage() {
             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
             className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-slate-600 dark:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 backdrop-blur-md border border-white/20"
-            title="Önceki sayfa"
+            title={t('whiskiesPage.previousPage')}
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -355,7 +496,7 @@ export function WhiskiesPage() {
             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
             disabled={currentPage === totalPages}
             className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-slate-600 dark:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 backdrop-blur-md border border-white/20"
-            title="Sonraki sayfa"
+            title={t('whiskiesPage.nextPage')}
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -376,17 +517,17 @@ export function WhiskiesPage() {
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1)
-  }, [localSearchTerm, selectedCountry, selectedType])
+  }, [localSearchTerm, selectedCountry, selectedType, selectedLetter])
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       if (!file.type.startsWith('image/')) {
-        toast.error('Lütfen geçerli bir resim dosyası seçin')
+        toast.error(t('whiskiesPage.toasts.validImageFile'))
         return
       }
       if (file.size > 10 * 1024 * 1024) {
-        toast.error('Dosya boyutu 10MB\'den küçük olmalıdır')
+        toast.error(t('whiskiesPage.toasts.maxFileSize'))
         return
       }
       setSelectedImage(file)
@@ -424,17 +565,17 @@ export function WhiskiesPage() {
     e.preventDefault()
     
     if (!user) {
-      toast.error('Viski eklemek için giriş yapmalısınız')
+      toast.error(t('whiskiesPage.toasts.loginRequiredAdd'))
       return
     }
 
     if (!addForm.name.trim()) {
-      toast.error('Viski adı gereklidir')
+      toast.error(t('whiskiesPage.toasts.nameRequired'))
       return
     }
 
     if (!selectedImage) {
-      toast.error('Lütfen bir resim seçin')
+      toast.error(t('whiskiesPage.toasts.imageRequired'))
       return
     }
 
@@ -455,10 +596,11 @@ export function WhiskiesPage() {
       }
 
       await uploadWhiskyImage(selectedImage, whiskeyData)
-      
-      // Reload whiskies
-      await loadWhiskies(undefined, 0, debouncedSearchTerm)
-      
+
+      // Reload whiskies with current pagination
+      const offset = (currentPage - 1) * itemsPerPage
+      await loadWhiskies(i18n.language as any, itemsPerPage, offset, debouncedSearchTerm, selectedCountry, selectedType)
+
       // Reset and close
       setShowAddModal(false)
       resetAddForm()
@@ -469,8 +611,35 @@ export function WhiskiesPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="loading-spinner w-8 h-8 text-primary-500" />
+      <div className="space-y-8">
+        {/* Header skeleton */}
+        <div className="text-center mobile-card-spacing animate-pulse">
+          <div className="h-12 bg-slate-300 dark:bg-slate-700 rounded-md mx-auto mb-4 w-64"></div>
+          <div className="h-6 bg-slate-300 dark:bg-slate-700 rounded-md mx-auto max-w-2xl mb-6"></div>
+          {user && (
+            <div className="mt-6">
+              <div className="h-12 bg-slate-300 dark:bg-slate-700 rounded-md w-48 mx-auto"></div>
+            </div>
+          )}
+        </div>
+
+        {/* Search and filters skeleton */}
+        <div className="card space-y-4 animate-pulse">
+          <div className="h-12 bg-slate-300 dark:bg-slate-700 rounded-lg"></div>
+        </div>
+
+        {/* Results count skeleton */}
+        <div className="flex justify-between items-center gap-4 animate-pulse">
+          <div className="h-6 bg-slate-300 dark:bg-slate-700 rounded w-64"></div>
+          <div className="h-10 bg-slate-300 dark:bg-slate-700 rounded w-32"></div>
+        </div>
+
+        {/* Main content skeleton */}
+        <WhiskySkeleton
+          viewMode={viewMode}
+          gridColumns={gridColumns}
+          count={itemsPerPage}
+        />
       </div>
     )
   }
@@ -480,10 +649,10 @@ export function WhiskiesPage() {
       {/* Header */}
       <div className="text-center mobile-card-spacing">
         <h1 className="mobile-heading font-cyber font-bold text-gradient mb-4">
-          {t('whiskies')}
+          {t('whiskiesPage.title')}
         </h1>
         <p className="mobile-text-size text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
-          Dünyanın en iyi viskilerini keşfedin ve koleksiyonunuzu oluşturun
+          {t('whiskiesPage.subtitle')}
         </p>
         
         {user && (
@@ -493,28 +662,28 @@ export function WhiskiesPage() {
               className="btn-primary mobile-button mobile-touch-target touch-friendly inline-flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
-              Yeni Viski Ekle
+              {t('whiskiesPage.addNewWhisky')}
             </button>
           </div>
         )}
       </div>
 
       {/* Search and Filters */}
-      <div className="card space-y-4">
+      <div className="glass-panel space-y-4 p-6">
         {/* Search Bar */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
           <input
             type="text"
-            placeholder="Viski ara... (en az 3 karakter)"
+            placeholder={t('whiskiesPage.searchPlaceholder')}
             value={localSearchTerm}
             onChange={(e) => setLocalSearchTerm(e.target.value)}
-            className="input-glass pl-10 pr-32"
+            className="glass-input pl-10 pr-32 w-full"
             autoComplete="off"
           />
           {localSearchTerm.length > 0 && localSearchTerm.length < 3 && (
             <div className="absolute left-3 top-full mt-1 text-xs text-amber-500 z-10 bg-black/80 px-2 py-1 rounded">
-              Arama için en az 3 karakter gereklidir
+              {t('whiskiesPage.searchMinChars')}
             </div>
           )}
           <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
@@ -527,7 +696,7 @@ export function WhiskiesPage() {
                     ? 'bg-amber-500/30 text-amber-200 shadow-lg'
                     : 'text-slate-400 hover:text-slate-300 hover:bg-white/10'
                 }`}
-                title="Grid Görünümü"
+                title={t('whiskiesPage.gridView')}
               >
                 <Grid3X3 className="w-4 h-4" />
               </button>
@@ -538,7 +707,7 @@ export function WhiskiesPage() {
                     ? 'bg-amber-500/30 text-amber-200 shadow-lg'
                     : 'text-slate-400 hover:text-slate-300 hover:bg-white/10'
                 }`}
-                title="Liste Görünümü"
+                title={t('whiskiesPage.listView')}
               >
                 <List className="w-4 h-4" />
               </button>
@@ -547,25 +716,28 @@ export function WhiskiesPage() {
             <button
               onClick={() => setShowFilters(!showFilters)}
               className="btn-glass p-2 flex items-center gap-2"
+              title={t('whiskiesPage.toggleFilters')}
+              aria-label={t('whiskiesPage.toggleFilters')}
             >
               <Filter className="w-4 h-4" />
               <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
             </button>
             
             {/* Quick Clear Button - Always Visible */}
-            {(localSearchTerm || selectedCountry || selectedType) && (
+            {(localSearchTerm || selectedCountry || selectedType || selectedLetter) && (
               <button
                 onClick={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
                   setSelectedCountry('')
                   setSelectedType('')
+                  setSelectedLetter('')
                   setLocalSearchTerm('')
                   setDebouncedSearchTerm('')
                   setCurrentPage(1)
                 }}
                 className="btn-glass p-2 flex items-center gap-2 bg-red-500/20 hover:bg-red-500/30 text-red-200 border-red-400/20"
-                title="Tüm filtreleri temizle"
+                title={t('whiskiesPage.clearAllFilters')}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -579,18 +751,20 @@ export function WhiskiesPage() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="grid md:grid-cols-3 gap-4 pt-4 border-t border-white/10 dark:border-white/5"
+            className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-white/10 dark:border-white/5"
           >
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 {t('country')}
               </label>
               <select
+                id="countrySelect"
                 value={selectedCountry}
                 onChange={(e) => setSelectedCountry(e.target.value)}
-                className="input-glass"
+                className="glass-input w-full"
+                aria-label={t('country')}
               >
-                <option value="">Tüm Ülkeler</option>
+                <option value="">{t('whiskiesPage.allCountries')}</option>
                 {countries.map(country => (
                   <option key={country} value={country}>{country}</option>
                 ))}
@@ -598,22 +772,71 @@ export function WhiskiesPage() {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              <label htmlFor="typeSelect" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                 {t('whiskyType')}
               </label>
               <select
+                id="typeSelect"
                 value={selectedType}
                 onChange={(e) => setSelectedType(e.target.value)}
-                className="input-glass"
+                className="glass-input w-full"
+                aria-label={t('whiskyType')}
               >
-                <option value="">Tüm Tipler</option>
+                <option value="">{t('whiskiesPage.allTypes')}</option>
                 {types.map(type => (
                   <option key={type} value={type}>{type}</option>
                 ))}
               </select>
             </div>
-            
-            <div className="flex items-end">
+
+            {/* Alphabetical Filter */}
+            <div className="col-span-full">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+                <Filter className="w-4 h-4" />
+                {t('adminPage.whiskyManagement.filters.alphabetical')}
+              </label>
+              <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-4 shadow-xl">
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setSelectedLetter('')}
+                    className={`px-3 py-1.5 text-sm rounded-lg transition-all duration-200 ${
+                      selectedLetter === ''
+                        ? 'bg-amber-500 text-white shadow-lg'
+                        : 'bg-white/10 hover:bg-white/20 text-slate-600 dark:text-slate-400'
+                    }`}
+                  >
+                    {t('adminPage.whiskyManagement.filters.all')}
+                  </button>
+                  {'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(letter => {
+                    const count = whiskies.filter(w => w.name.toLowerCase().startsWith(letter.toLowerCase())).length
+                    return (
+                      <button
+                        key={letter}
+                        onClick={() => setSelectedLetter(letter)}
+                        disabled={count === 0}
+                        className={`px-3 py-1.5 text-sm rounded-lg transition-all duration-200 relative ${
+                          selectedLetter === letter
+                            ? 'bg-amber-500 text-white shadow-lg'
+                            : count > 0
+                            ? 'bg-white/10 hover:bg-white/20 text-slate-600 dark:text-slate-400'
+                            : 'bg-slate-300/20 text-slate-400 cursor-not-allowed'
+                        }`}
+                        title={`${count} viski`}
+                      >
+                        {letter}
+                        {count > 0 && (
+                          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                            {count > 99 ? '99+' : count}
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-end col-span-full">
               <button
                 onClick={(e) => {
                   e.preventDefault()
@@ -621,6 +844,7 @@ export function WhiskiesPage() {
                   console.log('Clear filters clicked') // Debug log
                   setSelectedCountry('')
                   setSelectedType('')
+                  setSelectedLetter('')
                   setLocalSearchTerm('')
                   setDebouncedSearchTerm('')
                   setCurrentPage(1) // Reset page to 1
@@ -628,7 +852,7 @@ export function WhiskiesPage() {
                 className="btn-glass w-full flex items-center justify-center gap-2"
               >
                 <X className="w-4 h-4" />
-                Filtreleri Temizle
+                {t('whiskiesPage.clearFilters')}
               </button>
             </div>
           </motion.div>
@@ -640,17 +864,19 @@ export function WhiskiesPage() {
       {/* Results Count and Grid Settings */}
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
         <div className="text-slate-600 dark:text-slate-300">
-          {filteredWhiskies.length} viski bulundu • Sayfa {currentPage} / {totalPages}
+          {totalCount} {t('whiskiesPage.whiskiesFound')} • {t('whiskiesPage.page')} {currentPage} / {totalPages}
         </div>
         
         {viewMode === 'grid' && (
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <span className="text-sm text-slate-600 dark:text-slate-300">Sütun:</span>
+              <span className="text-sm text-slate-600 dark:text-slate-300">{t('whiskiesPage.column')}:</span>
               <select
+                id="gridColumnsSelect"
                 value={gridColumns}
                 onChange={(e) => setGridColumns(Number(e.target.value) as 2 | 3 | 4 | 5 | 6)}
-                className="input-glass text-sm px-3 py-1"
+                className="glass-input text-sm px-3 py-1 w-full"
+                aria-label={t('whiskiesPage.column')}
               >
                 <option value={2}>2</option>
                 <option value={3}>3</option>
@@ -661,14 +887,16 @@ export function WhiskiesPage() {
             </div>
             
             <div className="flex items-center gap-2">
-              <span className="text-sm text-slate-600 dark:text-slate-300">Sayfa başı:</span>
+              <span className="text-sm text-slate-600 dark:text-slate-300">{t('whiskiesPage.perPage')}:</span>
               <select
+                id="itemsPerPageSelectGrid"
                 value={itemsPerPage}
                 onChange={(e) => {
                   setItemsPerPage(Number(e.target.value))
                   setCurrentPage(1)
                 }}
-                className="input-glass text-sm px-3 py-1"
+                className="glass-input text-sm px-3 py-1 w-full"
+                aria-label={t('whiskiesPage.perPage')}
               >
                 <option value={6}>6</option>
                 <option value={12}>12</option>
@@ -681,14 +909,16 @@ export function WhiskiesPage() {
         
         {viewMode === 'list' && (
           <div className="flex items-center gap-2">
-            <span className="text-sm text-slate-600 dark:text-slate-300">Sayfa başı:</span>
+            <span className="text-sm text-slate-600 dark:text-slate-300">{t('whiskiesPage.perPage')}:</span>
             <select
+              id="itemsPerPageSelectList"
               value={itemsPerPage}
               onChange={(e) => {
                 setItemsPerPage(Number(e.target.value))
                 setCurrentPage(1)
               }}
-              className="input-glass text-sm px-3 py-1"
+              className="glass-input text-sm px-3 py-1 w-full"
+              aria-label={t('whiskiesPage.perPage')}
             >
               <option value={5}>5</option>
               <option value={10}>10</option>
@@ -702,9 +932,19 @@ export function WhiskiesPage() {
       {/* Top Pagination */}
       <PaginationControls />
 
-      {/* Whiskies Grid/List */}
-      <div className={viewMode === 'grid' ? `grid grid-cols-1 ${gridColumnClasses[gridColumns]} gap-8` : 'space-y-4'}>
-        {paginatedWhiskies.map((whisky, index) => (
+      {/* Lightweight refetch/search indicator without clearing the list */}
+      {(isSearching || whiskyRefetching) && (
+        <div className="mb-4" data-testid="whisky-skeleton-mini">
+          <WhiskySkeletonMini />
+        </div>
+      )}
+
+      {/* Whiskies Grid/List - keep previous data while refetching */}
+      <div
+        data-testid="whisky-grid"
+        className={viewMode === 'grid' ? `grid grid-cols-1 ${gridColumnClasses[gridColumns]} gap-8` : 'space-y-4'}
+      >
+          {paginatedWhiskies.map((whisky, index) => (
           <motion.div
             key={whisky.id}
             initial={{ opacity: 0, y: 30 }}
@@ -722,7 +962,7 @@ export function WhiskiesPage() {
                   <button
                     onClick={() => handleViewWhisky(whisky)}
                     className="w-full h-full block cursor-pointer group"
-                    title="Detayları görüntüle"
+                    title={t('whiskiesPage.viewDetails')}
                   >
                     {whisky.image_url ? (
                       <img
@@ -745,21 +985,11 @@ export function WhiskiesPage() {
                     <button
                       onClick={() => handleViewWhisky(whisky)}
                       className="p-2 rounded-full bg-amber-600/20 hover:bg-amber-500/30 text-amber-100 hover:text-white backdrop-blur-md border border-amber-400/20 hover:border-amber-300/30 transition-all duration-300 shadow-lg hover:shadow-amber-500/25"
-                      title="Detayları Görüntüle"
+                      title={t('whiskiesPage.viewDetails')}
                     >
                       <Eye className="w-4 h-4" />
                     </button>
                     
-                    {/* Translation Management Button - for admin users only */}
-                    {user && profile && profile.role === 'admin' && (
-                      <button
-                        onClick={() => handleTranslateWhisky(whisky)}
-                        className="p-2 rounded-full bg-blue-600/20 hover:bg-blue-500/30 text-blue-100 hover:text-white backdrop-blur-md border border-blue-400/20 hover:border-blue-300/30 transition-all duration-300 shadow-lg hover:shadow-blue-500/25"
-                        title="Çevirileri Yönet"
-                      >
-                        <Globe className="w-4 h-4" />
-                      </button>
-                    )}
                     
                     {user && (
                       <>
@@ -771,7 +1001,7 @@ export function WhiskiesPage() {
                               ? 'bg-emerald-600/25 hover:bg-emerald-500/35 text-emerald-100 border-emerald-400/30 shadow-emerald-500/25'
                               : 'bg-orange-600/20 hover:bg-orange-500/30 text-orange-100 hover:text-white border-orange-400/20 hover:border-orange-300/30 shadow-orange-500/25'
                           }`}
-                          title={isInCollection(whisky.id) ? 'Koleksiyonda' : 'Koleksiyona Ekle'}
+                          title={isInCollection(whisky.id) ? t('whiskiesPage.inCollection') : t('whisky.addToCollection')}
                         >
                           {isInCollection(whisky.id) ? (
                             <Heart className="w-4 h-4 fill-current" />
@@ -787,7 +1017,7 @@ export function WhiskiesPage() {
                               ? 'bg-yellow-600/25 hover:bg-yellow-500/35 text-yellow-100 border-yellow-400/30 shadow-yellow-500/25'
                               : 'bg-amber-700/20 hover:bg-amber-600/30 text-amber-100 hover:text-white border-amber-500/20 hover:border-amber-400/30 shadow-amber-600/25'
                           }`}
-                          title={isTasted(whisky.id) ? 'Tadıldı' : 'Tadıldı Olarak İşaretle'}
+                          title={isTasted(whisky.id) ? t('whiskiesPage.tasted') : t('whiskiesPage.markTasted')}
                         >
                           <Star className={`w-4 h-4 ${isTasted(whisky.id) ? 'fill-current' : ''}`} />
                         </button>
@@ -802,7 +1032,7 @@ export function WhiskiesPage() {
                     <button
                       onClick={() => handleViewWhisky(whisky)}
                       className="text-left hover:text-amber-600 dark:hover:text-amber-400 transition-colors w-full"
-                      title="Detayları görüntüle"
+                      title={t('whiskiesPage.viewDetails')}
                     >
                       <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-2 leading-tight">
                         {whisky.name}
@@ -842,7 +1072,7 @@ export function WhiskiesPage() {
                   <button
                     onClick={() => handleViewWhisky(whisky)}
                     className="w-full h-full block cursor-pointer group"
-                    title="Detayları görüntüle"
+                    title={t('whiskiesPage.viewDetails')}
                   >
                     {whisky.image_url ? (
                       <img
@@ -867,7 +1097,7 @@ export function WhiskiesPage() {
                     <button
                       onClick={() => handleViewWhisky(whisky)}
                       className="text-left hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
-                      title="Detayları görüntüle"
+                      title={t('whiskiesPage.viewDetails')}
                     >
                       <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-1">
                         {whisky.name}
@@ -907,16 +1137,6 @@ export function WhiskiesPage() {
                     <Eye className="w-4 h-4" />
                   </button>
                   
-                  {/* Translation Management Button - for admin users only */}
-                  {user && profile && profile.role === 'admin' && (
-                    <button
-                      onClick={() => handleTranslateWhisky(whisky)}
-                      className="p-2 rounded-lg bg-blue-600/20 hover:bg-blue-500/30 text-blue-100 hover:text-white backdrop-blur-md border border-blue-400/20 hover:border-blue-300/30 transition-all duration-300 shadow-lg hover:shadow-blue-500/25 min-w-[44px] min-h-[44px] flex items-center justify-center"
-                      title="Çevirileri Yönet"
-                    >
-                      <Globe className="w-4 h-4" />
-                    </button>
-                  )}
                   
                   {user && (
                     <>
@@ -955,7 +1175,7 @@ export function WhiskiesPage() {
             )}
           </motion.div>
         ))}
-      </div>
+        </div>
 
       {/* Bottom Pagination */}
       <PaginationControls />
@@ -965,10 +1185,10 @@ export function WhiskiesPage() {
         <div className="text-center py-12">
           <Wine className="w-16 h-16 text-slate-400 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-slate-600 dark:text-slate-300 mb-2">
-            Viski bulunamadı
+            {t('whiskiesPage.noWhiskiesFound')}
           </h3>
           <p className="text-slate-500 dark:text-slate-400">
-            Arama kriterlerinizi değiştirerek tekrar deneyin
+            {t('whiskiesPage.changeSearchCriteria')}
           </p>
         </div>
       )}
@@ -983,7 +1203,7 @@ export function WhiskiesPage() {
           >
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-semibold bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
-                Yeni Viski Ekle
+                {t('whiskiesPage.addWhiskyModal.title')}
               </h3>
               <button
                 onClick={() => {
@@ -991,6 +1211,8 @@ export function WhiskiesPage() {
                   resetAddForm()
                 }}
                 className="modal-text-muted hover:text-slate-600 dark:hover:text-slate-300 p-2"
+                aria-label={t('common.close')}
+                title={t('common.close')}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -999,8 +1221,8 @@ export function WhiskiesPage() {
             <form onSubmit={handleAddWhisky} className="space-y-6">
               {/* Image Upload */}
               <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                  Viski Resmi *
+                <label htmlFor="whiskyImageInput" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
+                  {t('whiskiesPage.addWhiskyModal.whiskyImageRequired')}
                 </label>
                 <div className="flex items-start gap-4">
                   <div className="flex-1">
@@ -1009,6 +1231,7 @@ export function WhiskiesPage() {
                       type="file"
                       accept="image/*"
                       onChange={handleImageSelect}
+                      id="whiskyImageInput"
                       className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:bg-amber-500 file:text-white hover:file:bg-amber-600"
                     />
                   </div>
@@ -1016,7 +1239,7 @@ export function WhiskiesPage() {
                     <div className="w-24 h-24 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 flex-shrink-0">
                       <img 
                         src={imagePreview} 
-                        alt="Önizleme" 
+                        alt={t('whiskiesPage.addWhiskyModal.preview')} 
                         className="w-full h-full object-cover"
                       />
                     </div>
@@ -1027,25 +1250,27 @@ export function WhiskiesPage() {
               <div className="grid md:grid-cols-2 gap-4">
                 {/* Name */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                    Viski Adı *
+                  <label htmlFor="addNameInput" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
+                    {t('whiskiesPage.addWhiskyModal.whiskyNameRequired')}
                   </label>
                   <input
+                    id="addNameInput"
                     type="text"
                     value={addForm.name}
                     onChange={(e) => setAddForm(prev => ({ ...prev, name: e.target.value }))}
                     className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
-                    placeholder="Örn: Macallan 18"
+                    placeholder={t('whiskiesPage.addWhiskyModal.whiskyNamePlaceholder')}
                     required
                   />
                 </div>
 
                 {/* Type */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                    Tip
+                  <label htmlFor="addTypeSelect" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
+                    {t('whiskiesPage.addWhiskyModal.type')}
                   </label>
                   <select
+                    id="addTypeSelect"
                     value={addForm.type}
                     onChange={(e) => setAddForm(prev => ({ ...prev, type: e.target.value }))}
                     className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
@@ -1062,38 +1287,41 @@ export function WhiskiesPage() {
 
                 {/* Country */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                    Ülke
+                  <label htmlFor="addCountryInput" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
+                    {t('whisky.country')}
                   </label>
                   <input
+                    id="addCountryInput"
                     type="text"
                     value={addForm.country}
                     onChange={(e) => setAddForm(prev => ({ ...prev, country: e.target.value }))}
                     className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
-                    placeholder="Örn: İskoçya"
+                    placeholder={t('whiskiesPage.addWhiskyModal.countryPlaceholder')}
                   />
                 </div>
 
                 {/* Region */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                    Bölge
+                  <label htmlFor="addRegionInput" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
+                    {t('whiskiesPage.addWhiskyModal.region')}
                   </label>
                   <input
+                    id="addRegionInput"
                     type="text"
                     value={addForm.region}
                     onChange={(e) => setAddForm(prev => ({ ...prev, region: e.target.value }))}
                     className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
-                    placeholder="Örn: Speyside"
+                    placeholder={t('whiskiesPage.addWhiskyModal.regionPlaceholder')}
                   />
                 </div>
 
                 {/* Alcohol Percentage */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                    Alkol Oranı (%)
+                  <label htmlFor="addAbvInput" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
+                    {t('whiskiesPage.addWhiskyModal.alcoholPercent')}
                   </label>
                   <input
+                    id="addAbvInput"
                     type="number"
                     value={addForm.alcohol_percentage}
                     onChange={(e) => setAddForm(prev => ({ ...prev, alcohol_percentage: parseFloat(e.target.value) || 40 }))}
@@ -1107,7 +1335,7 @@ export function WhiskiesPage() {
                 {/* Rating */}
                 <div>
                   <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                    Puanlama (1-100)
+                    {t('whiskiesPage.addWhiskyModal.ratingLabel')}
                   </label>
                   <input
                     type="number"
@@ -1117,14 +1345,14 @@ export function WhiskiesPage() {
                     value={addForm.rating || ''}
                     onChange={(e) => setAddForm(prev => ({ ...prev, rating: e.target.value ? parseFloat(e.target.value) : null }))}
                     className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
-                    placeholder="Örn. 85.5"
+                    placeholder={t('whiskiesPage.addWhiskyModal.ratingPlaceholder')}
                   />
                 </div>
 
                 {/* Age */}
                 <div>
                   <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                    Yaş (Yıl)
+                    {t('whiskiesPage.addWhiskyModal.ageLabel')}
                   </label>
                   <input
                     type="number"
@@ -1133,21 +1361,21 @@ export function WhiskiesPage() {
                     value={addForm.age_years || ''}
                     onChange={(e) => setAddForm(prev => ({ ...prev, age_years: e.target.value ? parseInt(e.target.value) : null }))}
                     className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
-                    placeholder="Örn. 18 (NAS için boş bırakın)"
+                    placeholder={t('whiskiesPage.addWhiskyModal.agePlaceholder')}
                   />
                 </div>
 
                 {/* Color */}
                 <div>
                   <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                    Renk
+                    {t('whiskiesPage.addWhiskyModal.color')}
                   </label>
                   <input
                     type="text"
                     value={addForm.color}
                     onChange={(e) => setAddForm(prev => ({ ...prev, color: e.target.value }))}
                     className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
-                    placeholder="Örn: Koyu kehribar"
+                    placeholder={t('whiskiesPage.addWhiskyModal.colorPlaceholder')}
                   />
                 </div>
               </div>
@@ -1155,13 +1383,13 @@ export function WhiskiesPage() {
               {/* Aroma */}
               <div>
                 <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                  Aroma
+                  {t('whiskiesPage.addWhiskyModal.aroma')}
                 </label>
                 <textarea
                   value={addForm.aroma}
                   onChange={(e) => setAddForm(prev => ({ ...prev, aroma: e.target.value }))}
                   className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 min-h-[80px] resize-none"
-                  placeholder="Aroma notlarını açıklayın..."
+                  placeholder={t('whiskiesPage.addWhiskyModal.aromaPlaceholder')}
                   rows={3}
                 />
               </div>
@@ -1169,13 +1397,13 @@ export function WhiskiesPage() {
               {/* Taste */}
               <div>
                 <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                  Tat
+                  {t('whiskiesPage.addWhiskyModal.taste')}
                 </label>
                 <textarea
                   value={addForm.taste}
                   onChange={(e) => setAddForm(prev => ({ ...prev, taste: e.target.value }))}
                   className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 min-h-[80px] resize-none"
-                  placeholder="Tat notlarını açıklayın..."
+                  placeholder={t('whiskiesPage.addWhiskyModal.tastePlaceholder')}
                   rows={3}
                 />
               </div>
@@ -1183,13 +1411,13 @@ export function WhiskiesPage() {
               {/* Finish */}
               <div>
                 <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                  Final
+                  {t('whiskiesPage.addWhiskyModal.finish')}
                 </label>
                 <textarea
                   value={addForm.finish}
                   onChange={(e) => setAddForm(prev => ({ ...prev, finish: e.target.value }))}
                   className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 min-h-[80px] resize-none"
-                  placeholder="Final notlarını açıklayın..."
+                  placeholder={t('whiskiesPage.addWhiskyModal.finishPlaceholder')}
                   rows={3}
                 />
               </div>
@@ -1197,13 +1425,13 @@ export function WhiskiesPage() {
               {/* Description */}
               <div>
                 <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                  Genel Açıklama
+                  {t('whiskiesPage.addWhiskyModal.generalDescription')}
                 </label>
                 <textarea
                   value={addForm.description}
                   onChange={(e) => setAddForm(prev => ({ ...prev, description: e.target.value }))}
                   className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 min-h-[100px] resize-none"
-                  placeholder="Viski hakkında genel bilgiler..."
+                  placeholder={t('whiskiesPage.addWhiskyModal.descriptionPlaceholder')}
                   rows={4}
                 />
               </div>
@@ -1217,7 +1445,7 @@ export function WhiskiesPage() {
                   }}
                   className="flex-1 px-4 py-2 bg-slate-500/20 hover:bg-slate-500/30 text-slate-600 dark:text-slate-400 rounded-lg transition-colors"
                 >
-                  İptal
+                  {t('whiskiesPage.addWhiskyModal.cancel')}
                 </button>
                 <button
                   type="submit"
@@ -1229,7 +1457,7 @@ export function WhiskiesPage() {
                   ) : (
                     <Upload className="w-4 h-4" />
                   )}
-                  {isUploading ? 'Ekleniyor...' : 'Viski Ekle'}
+                  {isUploading ? t('whiskiesPage.addWhiskyModal.adding') : t('whiskiesPage.addWhiskyModal.addWhisky')}
                 </button>
               </div>
             </form>
@@ -1238,7 +1466,10 @@ export function WhiskiesPage() {
       )}
 
       {/* Whisky Detail Modal */}
-      {viewingWhisky && (
+      {viewingWhisky && (() => {
+        console.log('🎭 Rendering modal for whisky:', viewingWhisky.name)
+        return true
+      })() && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -1247,7 +1478,7 @@ export function WhiskiesPage() {
           >
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
-                Viski Detayları
+                {t('whiskiesPage.whiskyDetails')}
               </h3>
               <button
                 onClick={() => setViewingWhisky(null)}
@@ -1288,11 +1519,11 @@ export function WhiskiesPage() {
 
                 {/* Basic Information */}
                 <div className="modal-bg-section rounded-xl p-6 space-y-4">
-                  <h4 className="text-lg font-semibold modal-text-primary mb-4">Temel Bilgiler</h4>
+                  <h4 className="text-lg font-semibold modal-text-primary mb-4">{t('whiskiesPage.basicInfo')}</h4>
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm font-medium modal-text-muted">Tip</label>
+                      <label className="text-sm font-medium modal-text-muted">{t('whiskiesPage.type')}</label>
                       <div className="mt-1">
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
                           {viewingWhisky.type}
@@ -1301,13 +1532,13 @@ export function WhiskiesPage() {
                     </div>
                     
                     <div>
-                      <label className="text-sm font-medium modal-text-muted">Ülke</label>
+                      <label className="text-sm font-medium modal-text-muted">{t('whisky.country')}</label>
                       <p className="mt-1 modal-text-primary font-medium">{viewingWhisky.country}</p>
                     </div>
                     
                     {viewingWhisky.rating && (
                       <div>
-                        <label className="text-sm font-medium modal-text-muted">Puanlama</label>
+                        <label className="text-sm font-medium modal-text-muted">{t('whiskiesPage.rating')}</label>
                         <div className="mt-1 flex items-center gap-2">
                           <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
                             <Star className="w-3 h-3 mr-1 fill-current" />
@@ -1319,14 +1550,14 @@ export function WhiskiesPage() {
                     
                     {viewingWhisky.age_years && (
                       <div>
-                        <label className="text-sm font-medium modal-text-muted">Yaş</label>
-                        <p className="mt-1 modal-text-primary font-medium">{viewingWhisky.age_years} yıl</p>
+                        <label className="text-sm font-medium modal-text-muted">{t('whiskiesPage.age')}</label>
+                        <p className="mt-1 modal-text-primary font-medium">{viewingWhisky.age_years} {t('whiskiesPage.years')}</p>
                       </div>
                     )}
                     
                     {viewingWhisky.region && (
                       <div className="col-span-2">
-                        <label className="text-sm font-medium modal-text-muted">Bölge</label>
+                        <label className="text-sm font-medium modal-text-muted">{t('whisky.region')}</label>
                         <p className="mt-1 modal-text-primary font-medium flex items-center gap-2">
                           <MapPin className="w-4 h-4 text-amber-500" />
                           {viewingWhisky.region}
@@ -1336,7 +1567,7 @@ export function WhiskiesPage() {
                     
                     {viewingWhisky.color && (
                       <div className="col-span-2">
-                        <label className="text-sm font-medium modal-text-muted">Renk</label>
+                        <label className="text-sm font-medium modal-text-muted">{t('whisky.color')}</label>
                         <p className="mt-1 modal-text-primary">{viewingWhisky.color}</p>
                       </div>
                     )}
@@ -1346,7 +1577,7 @@ export function WhiskiesPage() {
                 {/* Collection Status */}
                 {user && (
                   <div className="modal-bg-section rounded-xl p-4">
-                    <h4 className="text-lg font-semibold modal-text-primary mb-3">Koleksiyon Durumu</h4>
+                    <h4 className="text-lg font-semibold modal-text-primary mb-3">{t('whiskiesPage.collectionStatus')}</h4>
                     <div className="flex items-center gap-4">
                       <button
                         onClick={() => addToCollection(viewingWhisky.id)}
@@ -1360,12 +1591,12 @@ export function WhiskiesPage() {
                         {isInCollection(viewingWhisky.id) ? (
                           <>
                             <Heart className="w-4 h-4 fill-current" />
-                            Koleksiyonda
+                            {t('whiskiesPage.inCollection')}
                           </>
                         ) : (
                           <>
                             <Plus className="w-4 h-4" />
-                            Koleksiyona Ekle
+                            {t('whisky.addToCollection')}
                           </>
                         )}
                       </button>
@@ -1379,7 +1610,7 @@ export function WhiskiesPage() {
                         }`}
                       >
                         <Star className={`w-4 h-4 ${isTasted(viewingWhisky.id) ? 'fill-current' : ''}`} />
-                        {isTasted(viewingWhisky.id) ? 'Tadıldı' : 'Tadıldı Olarak İşaretle'}
+                        {isTasted(viewingWhisky.id) ? t('whiskiesPage.tasted') : t('whiskiesPage.markTasted')}
                       </button>
                     </div>
                   </div>
@@ -1402,7 +1633,7 @@ export function WhiskiesPage() {
 
                 {/* Tasting Notes */}
                 <div className="space-y-4">
-                  <h4 className="text-lg font-semibold text-slate-800 dark:text-white">Tadim Notları</h4>
+                  <h4 className="text-lg font-semibold text-slate-800 dark:text-white">{t('whiskiesPage.tastingNotes')}</h4>
                   
                   {viewingWhisky.aroma && (
                     <div className="bg-white/20 dark:bg-slate-700/20 rounded-xl p-4">
@@ -1410,7 +1641,7 @@ export function WhiskiesPage() {
                         <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-center">
                           <span className="text-white text-sm font-medium">A</span>
                         </div>
-                        <h5 className="font-medium text-slate-800 dark:text-white">Koku</h5>
+                        <h5 className="font-medium text-slate-800 dark:text-white">{t('whiskiesPage.smell')}</h5>
                       </div>
                       <p className="text-slate-600 dark:text-slate-400 ml-10">{viewingWhisky.aroma}</p>
                     </div>
@@ -1422,7 +1653,7 @@ export function WhiskiesPage() {
                         <div className="w-8 h-8 bg-gradient-to-r from-amber-400 to-orange-500 rounded-full flex items-center justify-center">
                           <span className="text-white text-sm font-medium">T</span>
                         </div>
-                        <h5 className="font-medium text-slate-800 dark:text-white">Damak Tadı</h5>
+                        <h5 className="font-medium text-slate-800 dark:text-white">{t('whiskiesPage.palate')}</h5>
                       </div>
                       <p className="text-slate-600 dark:text-slate-400 ml-10">{viewingWhisky.taste}</p>
                     </div>
@@ -1434,7 +1665,7 @@ export function WhiskiesPage() {
                         <div className="w-8 h-8 bg-gradient-to-r from-purple-400 to-pink-500 rounded-full flex items-center justify-center">
                           <span className="text-white text-sm font-medium">F</span>
                         </div>
-                        <h5 className="font-medium text-slate-800 dark:text-white">Bitiş</h5>
+                        <h5 className="font-medium text-slate-800 dark:text-white">{t('whiskiesPage.finish')}</h5>
                       </div>
                       <p className="text-slate-600 dark:text-slate-400 ml-10">{viewingWhisky.finish}</p>
                     </div>
@@ -1443,7 +1674,7 @@ export function WhiskiesPage() {
                   {!viewingWhisky.aroma && !viewingWhisky.taste && !viewingWhisky.finish && (
                     <div className="text-center py-8">
                       <Wine className="w-12 h-12 mx-auto text-slate-400 mb-4" />
-                      <p className="text-slate-500 dark:text-slate-400">Henüz tadim notu eklenmemiş</p>
+                      <p className="text-slate-500 dark:text-slate-400">{t('whiskiesPage.noTastingNotes')}</p>
                     </div>
                   )}
                 </div>
@@ -1457,7 +1688,7 @@ export function WhiskiesPage() {
                 onClick={() => setViewingWhisky(null)}
                 className="px-6 py-2 bg-slate-500/20 hover:bg-slate-500/30 text-slate-600 dark:text-slate-400 rounded-lg transition-colors"
               >
-                Kapat
+                {t('whiskiesPage.close')}
               </button>
             </div>
           </motion.div>
@@ -1480,7 +1711,7 @@ export function WhiskiesPage() {
                 setViewingImage(null)
               }}
               className="absolute -top-12 right-0 p-2 text-white hover:text-gray-300 transition-colors z-10"
-              title="Kapat"
+              title={t('whiskiesPage.close')}
             >
               <X className="w-8 h-8" />
             </button>
@@ -1500,10 +1731,6 @@ export function WhiskiesPage() {
               />
             </div>
 
-            {/* Image Info */}
-            <div className="mt-4 text-center text-white/80 text-sm">
-              Resmi büyütmek için tıklayın
-            </div>
           </motion.div>
 
           {/* Background Click to Close */}
@@ -1517,14 +1744,15 @@ export function WhiskiesPage() {
         </div>
       )}
 
-      {/* Translation Manager */}
-      {showTranslationManager && translatingWhisky && (
-        <TranslationManager
-          whiskyId={translatingWhisky.id}
-          onClose={() => setShowTranslationManager(false)}
-          onSave={handleTranslationSave}
-        />
-      )}
     </div>
+  )
+}
+
+// Main export with Error Boundary
+export function WhiskiesPage() {
+  return (
+    <WhiskyErrorBoundary>
+      <WhiskiesPageContent />
+    </WhiskyErrorBoundary>
   )
 }

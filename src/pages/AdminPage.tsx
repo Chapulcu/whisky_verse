@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAdminOperations } from '@/hooks/useAdminOperations'
-import { useWhiskyUpload } from '@/hooks/useWhiskyUpload'
+import { useDirectWhiskyUpload } from '@/hooks/useDirectWhiskyUpload'
 import { supabase } from '@/lib/supabase'
-import { 
-  Users, 
-  Settings, 
-  Shield, 
-  Edit2, 
-  Trash2, 
+import {
+  Users,
+  Settings,
+  Shield,
+  Edit2,
+  Trash2,
   UserPlus,
   Crown,
   Mail,
@@ -32,10 +33,14 @@ import {
   Clock,
   MapPin as LocationIcon,
   Globe,
-  Lock
+  Lock,
+  Languages
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
+import { BackgroundManager } from '@/components/admin/BackgroundManager'
+import { AnalyticsDashboard } from '@/components/analytics/AnalyticsDashboard'
+import { TranslationManagement } from '@/components/admin/TranslationManagement'
 
 interface User {
   id: string
@@ -49,7 +54,7 @@ interface User {
 }
 
 interface Whisky {
-  age_years: number
+  age_years: number | null
   id: number
   name: string
   type: string
@@ -108,6 +113,7 @@ interface Event {
 }
 
 export function AdminPage() {
+  const { t } = useTranslation()
   const { user, profile } = useAuth()
   const { getAllUsers, updateUser, deleteUser, createAdmin, createUser, isLoading } = useAdminOperations()
   // CRITICAL FIX: Always start with empty state - no cache
@@ -115,7 +121,7 @@ export function AdminPage() {
   const [whiskies, setWhiskies] = useState<Whisky[]>([])
   const [groups, setGroups] = useState<Group[]>([])
   const [events, setEvents] = useState<Event[]>([])
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'whiskies' | 'groups' | 'events'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'whiskies' | 'groups' | 'events' | 'analytics' | 'background' | 'translations'>('overview')
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCountry, setSelectedCountry] = useState('')
   const [selectedType, setSelectedType] = useState('')
@@ -137,12 +143,14 @@ export function AdminPage() {
   const [isImporting, setIsImporting] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
+  const [isWhiskyLoading, setIsWhiskyLoading] = useState(false)
   // const [selectedWhiskies, setSelectedWhiskies] = useState<number[]>([])
   // const [isBulkDeleting, setIsBulkDeleting] = useState(false)
   // const [isBulkUpdating, setIsBulkUpdating] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const imageInputRef = useRef<HTMLInputElement>(null)
-  const { uploadWhiskyImage, isUploading } = useWhiskyUpload()
+  // Switch to API-based operations (no more Supabase timeout issues)
+  const { createWhiskyWithImage, updateWhisky, deleteWhisky, uploadImageDirect, isUploading } = useDirectWhiskyUpload()
   const [adminForm, setAdminForm] = useState({
     email: '',
     password: '',
@@ -178,7 +186,6 @@ export function AdminPage() {
     finish: string
     description: string
     image_url: string
-    language_code: 'tr' | 'en'
     selectedImageFile: File | null
   }>({
     name: '',
@@ -194,7 +201,6 @@ export function AdminPage() {
     finish: '',
     description: '',
     image_url: '',
-    language_code: 'tr',
     selectedImageFile: null
   })
 
@@ -300,7 +306,7 @@ export function AdminPage() {
       
     } catch (error) {
       console.error('AdminPage: Error loading whiskies:', error)
-      toast.error('Viskiler yüklenemedi: ' + (error as any).message)
+      toast.error(t('adminPage.toasts.whiskiesLoadError') + ': ' + (error as any).message)
     }
   }
 
@@ -337,7 +343,7 @@ export function AdminPage() {
       
     } catch (error) {
       console.error('AdminPage: Error loading groups:', error)
-      toast.error('Gruplar yüklenemedi: ' + (error as any).message)
+      toast.error(t('admin.groupsLoadError') + ': ' + (error as any).message)
     }
   }
 
@@ -359,7 +365,7 @@ export function AdminPage() {
           console.warn('Events table does not exist - creating empty array')
           setEvents([])
           localStorage.setItem('admin_events_cache', JSON.stringify([]))
-          toast.info('Events tablosu henüz oluşturulmamış')
+          toast(t('admin.eventsNotLoading'))
           return
         }
         
@@ -415,7 +421,7 @@ export function AdminPage() {
       
     } catch (error) {
       console.error('AdminPage: Error loading events:', error)
-      toast.error('Etkinlikler yüklenemedi: ' + (error as any).message)
+      toast.error(t('admin.eventsLoadError') + ': ' + (error as any).message)
     }
   }
 
@@ -506,8 +512,8 @@ export function AdminPage() {
         <div className="container mx-auto px-4 py-8">
           <div className="text-center bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 shadow-xl">
             <Shield className="w-16 h-16 mx-auto mb-4 text-red-500" />
-            <h1 className="text-2xl font-bold mb-4 text-red-600">Erişim Reddedildi</h1>
-            <p className="text-slate-600 dark:text-slate-400">Bu sayfaya erişim için admin yetkisi gereklidir.</p>
+            <h1 className="text-2xl font-bold mb-4 text-red-600">{t('admin.accessDenied')}</h1>
+            <p className="text-slate-600 dark:text-slate-400">{t('admin.adminAccessRequired')}</p>
             <p className="text-sm text-slate-500 mt-2">User: {user?.email} | Role: {profile?.role || 'loading...'}</p>
           </div>
         </div>
@@ -528,7 +534,7 @@ export function AdminPage() {
     if (!editingUser) return
     
     if (!editForm.full_name.trim()) {
-      toast.error('İsim alanı boş bırakılamaz')
+      toast.error(t('adminPage.toasts.nameRequired'))
       return
     }
 
@@ -549,7 +555,7 @@ export function AdminPage() {
   }
 
   const handleDeleteUser = async (userId: string, userEmail: string) => {
-    if (!confirm(`${userEmail} kullanıcısını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`)) {
+    if (!confirm(`${userEmail} ${t('adminPage.toasts.confirmDeleteUser')}`)) {
       return
     }
 
@@ -563,7 +569,7 @@ export function AdminPage() {
 
   const handleCreateAdmin = async () => {
     if (!adminForm.email.trim() || !adminForm.full_name.trim()) {
-      toast.error('Email ve isim alanları gereklidir')
+      toast.error(t('admin.emailAndNameRequired'))
       return
     }
 
@@ -584,22 +590,22 @@ export function AdminPage() {
 
   const handleCreateUser = async () => {
     if (!userForm.email.trim() || !userForm.full_name.trim()) {
-      toast.error('Email ve ad soyad alanları gereklidir')
+      toast.error(t('admin.emailAndFullNameRequired'))
       return
     }
 
     if (!userForm.password) {
-      toast.error('Şifre gereklidir')
+      toast.error(t('admin.passwordRequired'))
       return
     }
 
     if (userForm.password !== userForm.confirmPassword) {
-      toast.error('Şifreler eşleşmiyor')
+      toast.error(t('adminPage.toasts.passwordsMustMatch'))
       return
     }
 
     if (userForm.password.length < 6) {
-      toast.error('Şifre en az 6 karakter olmalıdır')
+      toast.error(t('adminPage.toasts.passwordMinLength'))
       return
     }
 
@@ -633,72 +639,109 @@ export function AdminPage() {
         return (
           <span className="inline-flex items-center gap-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-1 rounded-full text-xs font-medium">
             <Settings className="w-3 h-3" />
-            Admin
+            {t('admin.administrator')}
           </span>
         )
       case 'vip':
         return (
           <span className="inline-flex items-center gap-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-1 rounded-full text-xs font-medium">
             <Crown className="w-3 h-3" />
-            VIP
+            {t('admin.vipUser')}
           </span>
         )
       default:
         return (
           <span className="bg-slate-500/20 text-slate-600 dark:text-slate-400 px-2 py-1 rounded-full text-xs">
-            Üye
+            {t('admin.member')}
           </span>
         )
     }
   }
 
+  // Safe number conversion utilities
+  const parseNumber = (value: any): number | null => {
+    if (value === null || value === undefined || value === '') return null
+    const parsed = typeof value === 'string' ? parseFloat(value) : Number(value)
+    return isNaN(parsed) ? null : parsed
+  }
+
+  const parsePositiveInteger = (value: any): number | null => {
+    if (value === null || value === undefined || value === '') return null
+    const parsed = typeof value === 'string' ? parseInt(value, 10) : Number(value)
+    return isNaN(parsed) || parsed <= 0 ? null : parsed
+  }
+
+  const validateWhiskyForm = () => {
+    const errors: string[] = []
+
+    if (!whiskyForm.name.trim()) errors.push('Viski adı gerekli')
+    if (!whiskyForm.type.trim()) errors.push('Viski tipi gerekli')
+    if (!whiskyForm.country.trim()) errors.push('Ülke gerekli')
+
+    // Number validation according to database constraints
+    if (whiskyForm.alcohol_percentage < 0 || whiskyForm.alcohol_percentage > 100) {
+      errors.push('Alkol oranı 0-100 arasında olmalıdır')
+    }
+
+    // Database constraint: rating >= 1.0 AND rating <= 100.0 (or null)
+    if (whiskyForm.rating !== null && whiskyForm.rating !== undefined) {
+      if (whiskyForm.rating < 1 || whiskyForm.rating > 100) {
+        errors.push('Puan 1-100 arasında olmalıdır veya boş bırakılmalıdır')
+      }
+    }
+
+    // Database constraint: age_years > 0 AND age_years <= 100 (or null)
+    if (whiskyForm.age_years !== null && whiskyForm.age_years !== undefined) {
+      if (whiskyForm.age_years <= 0 || whiskyForm.age_years > 100) {
+        errors.push('Yaş 1-100 arasında olmalıdır veya boş bırakılmalıdır')
+      }
+    }
+
+    return errors
+  }
+
   const handleCreateWhisky = async () => {
-    if (!whiskyForm.name.trim() || !whiskyForm.type.trim() || !whiskyForm.country.trim()) {
-      toast.error('Ad, tip ve ülke alanları gereklidir')
+    console.log('🚀 handleCreateWhisky started', { whiskyForm })
+
+    const validationErrors = validateWhiskyForm()
+    if (validationErrors.length > 0) {
+      console.log('❌ Validation errors:', validationErrors)
+      toast.error('Form hatası: ' + validationErrors.join(', '))
       return
     }
 
+    console.log('✅ Validation passed, starting creation...')
+    setIsWhiskyLoading(true)
+
     try {
-      let imageUrl = whiskyForm.image_url.trim() || null
-      
-      // Upload image if a file is selected
-      if (whiskyForm.selectedImageFile) {
-        setUploadingImage(true)
-        try {
-          const uploadResult = await uploadWhiskyImage(whiskyForm.selectedImageFile)
-          imageUrl = uploadResult.publicUrl
-        } catch (uploadError: any) {
-          toast.error('Resim yüklenirken hata oluştu: ' + (uploadError.message || 'Bilinmeyen hata'))
-          setUploadingImage(false)
-          return
-        }
-        setUploadingImage(false)
+      // Prepare whisky data
+      const whiskyData = {
+        name: whiskyForm.name.trim(),
+        type: whiskyForm.type.trim(),
+        country: whiskyForm.country.trim(),
+        region: whiskyForm.region.trim() || undefined,
+        alcohol_percentage: parseNumber(whiskyForm.alcohol_percentage) || 40,
+        rating: whiskyForm.rating ? parseInt(whiskyForm.rating.toString()) : undefined,
+        age_years: parsePositiveInteger(whiskyForm.age_years) || undefined,
+        color: whiskyForm.color.trim() || undefined,
+        aroma: whiskyForm.aroma.trim() || undefined,
+        taste: whiskyForm.taste.trim() || undefined,
+        finish: whiskyForm.finish.trim() || undefined,
+        description: whiskyForm.description.trim() || undefined
       }
 
-      const { data, error } = await supabase
-        .from('whiskies')
-        .insert({
-          name: whiskyForm.name.trim(),
-          type: whiskyForm.type.trim(),
-          country: whiskyForm.country.trim(),
-          region: whiskyForm.region.trim() || null,
-          alcohol_percentage: whiskyForm.alcohol_percentage,
-          rating: whiskyForm.rating,
-          age_years: whiskyForm.age_years,
-          color: whiskyForm.color.trim() || null,
-          aroma: whiskyForm.aroma.trim() || null,
-          taste: whiskyForm.taste.trim() || null,
-          finish: whiskyForm.finish.trim() || null,
-          description: whiskyForm.description.trim() || null,
-          image_url: imageUrl,
-          created_by: user?.id
-        })
-        .select()
-        .single()
+      console.log('📊 Creating whisky with data:', whiskyData)
+      console.log('📁 Image file:', whiskyForm.selectedImageFile?.name || 'none')
 
-      if (error) throw error
+      // Use the new hook to create whisky with image
+      const result = await createWhiskyWithImage(
+        whiskyData,
+        whiskyForm.selectedImageFile || undefined
+      )
 
-      setIsCreatingWhisky(false)
+      console.log('✅ Whisky created successfully:', result)
+
+      // Reset form (modal will close in finally block)
       setWhiskyForm({
         name: '',
         type: '',
@@ -713,14 +756,18 @@ export function AdminPage() {
         finish: '',
         description: '',
         image_url: '',
-        language_code: 'tr',
         selectedImageFile: null
       })
+
+      // Reload whiskies list
       await loadWhiskies()
-      toast.success('Viski başarıyla eklendi!')
+
     } catch (error: any) {
-      console.error('Error creating whisky:', error)
-      toast.error('Viski eklenirken hata oluştu: ' + (error.message || 'Bilinmeyen hata'))
+      console.error('❌ Error creating whisky:', error)
+      toast.error('Viski oluşturma hatası: ' + (error.message || 'Bilinmeyen hata'))
+    } finally {
+      setIsWhiskyLoading(false)
+      setIsCreatingWhisky(false)
     }
   }
 
@@ -740,7 +787,6 @@ export function AdminPage() {
       finish: whisky.finish || '',
       description: whisky.description || '',
       image_url: whisky.image_url || '',
-      language_code: 'tr', // Default language for editing
       selectedImageFile: null
     })
   }
@@ -751,76 +797,49 @@ export function AdminPage() {
 
   const handleUpdateWhisky = async () => {
     if (!editingWhisky) {
-      toast.error('Güncellenecek viski bulunamadı')
+      toast.error('Düzenlenecek viski bulunamadı')
       return
     }
-    
-    if (!whiskyForm.name.trim() || !whiskyForm.type.trim() || !whiskyForm.country.trim()) {
-      toast.error('Ad, tip ve ülke alanları gereklidir')
+
+    const validationErrors = validateWhiskyForm()
+    if (validationErrors.length > 0) {
+      toast.error('Form hatası: ' + validationErrors.join(', '))
       return
     }
+
+    setIsWhiskyLoading(true)
 
     try {
-      console.log('🔄 Updating whisky:', editingWhisky.id, 'with data:', whiskyForm)
-      
-      let imageUrl = whiskyForm.image_url.trim() || null
-      
-      // Upload new image if a file is selected
-      if (whiskyForm.selectedImageFile) {
-        console.log('📸 Uploading new image...')
-        setUploadingImage(true)
-        try {
-          const uploadResult = await uploadWhiskyImage(whiskyForm.selectedImageFile)
-          imageUrl = uploadResult.publicUrl
-          console.log('✅ Image uploaded successfully:', imageUrl)
-        } catch (uploadError: any) {
-          console.error('❌ Image upload error:', uploadError)
-          toast.error('Resim yüklenirken hata oluştu: ' + (uploadError.message || 'Bilinmeyen hata'))
-          setUploadingImage(false)
-          return
-        }
-        setUploadingImage(false)
-      }
-
-      const updateData = {
+      // Prepare update data
+      const whiskyData = {
         name: whiskyForm.name.trim(),
         type: whiskyForm.type.trim(),
         country: whiskyForm.country.trim(),
-        region: whiskyForm.region.trim() || null,
-        alcohol_percentage: whiskyForm.alcohol_percentage,
-        rating: whiskyForm.rating,
-        age_years: whiskyForm.age_years,
-        color: whiskyForm.color.trim() || null,
-        aroma: whiskyForm.aroma.trim() || null,
-        taste: whiskyForm.taste.trim() || null,
-        finish: whiskyForm.finish.trim() || null,
-        description: whiskyForm.description.trim() || null,
-        image_url: imageUrl,
-        // language_code: whiskyForm.language_code, // Temporarily disabled - column may not exist
-        updated_at: new Date().toISOString()
+        region: whiskyForm.region.trim() || undefined,
+        alcohol_percentage: parseNumber(whiskyForm.alcohol_percentage) || 40,
+        rating: whiskyForm.rating ? parseInt(whiskyForm.rating.toString()) : undefined,
+        age_years: parsePositiveInteger(whiskyForm.age_years) || undefined,
+        color: whiskyForm.color.trim() || undefined,
+        aroma: whiskyForm.aroma.trim() || undefined,
+        taste: whiskyForm.taste.trim() || undefined,
+        finish: whiskyForm.finish.trim() || undefined,
+        description: whiskyForm.description.trim() || undefined
       }
 
-      console.log('📝 Updating with data:', updateData)
+      console.log('🔄 Updating whisky:', editingWhisky.id, whiskyData)
+      console.log('📁 New image file:', whiskyForm.selectedImageFile?.name || 'none')
 
-      console.log('📡 Sending update request to Supabase...')
-      const { data, error } = await supabase
-        .from('whiskies')
-        .update(updateData)
-        .eq('id', editingWhisky.id)
-        .select()
+      // Use API-based update (no more timeout issues!)
+      const result = await updateWhisky(
+        editingWhisky.id,
+        whiskyData,
+        whiskyForm.selectedImageFile || undefined
+      )
 
-      console.log('📡 Supabase response received:', { data, error })
+      console.log('✅ Whisky updated successfully:', result)
 
-      if (error) {
-        console.error('❌ Supabase update error:', error)
-        throw error
-      }
-
-      console.log('✅ Update successful:', data)
-      console.log('🚪 About to close modal and reset form...')
-
+      // Reset editing state and form
       setEditingWhisky(null)
-      // Reset form
       setWhiskyForm({
         name: '',
         type: '',
@@ -835,61 +854,58 @@ export function AdminPage() {
         finish: '',
         description: '',
         image_url: '',
-        language_code: 'tr',
         selectedImageFile: null
       })
-      
+
+      // Reload whiskies list
       await loadWhiskies()
-      toast.success('Viski başarıyla güncellendi!')
+
     } catch (error: any) {
-      console.error('Error updating whisky:', error)
-      toast.error('Viski güncellenirken hata oluştu: ' + (error.message || 'Bilinmeyen hata'))
+      console.error('❌ Error updating whisky:', error)
+      toast.error('Viski güncelleme hatası: ' + (error.message || 'Bilinmeyen hata'))
+
+      // Ensure modal closes even on error
+      setEditingWhisky(null)
+      setWhiskyForm({
+        name: '',
+        type: '',
+        country: '',
+        region: '',
+        alcohol_percentage: 40,
+        rating: null,
+        age_years: null,
+        color: '',
+        aroma: '',
+        taste: '',
+        finish: '',
+        description: '',
+        image_url: '',
+        selectedImageFile: null
+      })
+    } finally {
+      setIsWhiskyLoading(false)
     }
   }
 
   const handleDeleteWhisky = async (whiskyId: number, whiskyName: string) => {
-    if (!confirm(`"${whiskyName}" viskisini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`)) {
+    if (!confirm(`"${whiskyName}" viskisini silmek istediğinizden emin misiniz?`)) {
       return
     }
 
     try {
-      // First check if whisky is in any user collections
-      const { data: userWhiskies, error: checkError } = await supabase
-        .from('user_whiskies')
-        .select('id')
-        .eq('whisky_id', whiskyId)
-        .limit(1)
+      console.log('🗑️ Deleting whisky:', whiskyId, whiskyName)
 
-      if (checkError) throw checkError
+      // Use the new hook to delete whisky (it handles user collections automatically)
+      await deleteWhisky(whiskyId)
 
-      if (userWhiskies && userWhiskies.length > 0) {
-        const shouldProceed = confirm(
-          `Bu viski bazı kullanıcıların koleksiyonunda bulunuyor. Silmeye devam ederseniz, kullanıcı koleksiyonlarından da kaldırılacak. Devam etmek istediğinizden emin misiniz?`
-        )
-        if (!shouldProceed) return
+      console.log('✅ Whisky deleted successfully')
 
-        // Delete from user collections first
-        const { error: deleteUserWhiskiesError } = await supabase
-          .from('user_whiskies')
-          .delete()
-          .eq('whisky_id', whiskyId)
-
-        if (deleteUserWhiskiesError) throw deleteUserWhiskiesError
-      }
-
-      // Delete the whisky
-      const { error } = await supabase
-        .from('whiskies')
-        .delete()
-        .eq('id', whiskyId)
-
-      if (error) throw error
-
+      // Reload whiskies list
       await loadWhiskies()
-      toast.success('Viski başarıyla silindi!')
+
     } catch (error: any) {
-      console.error('Error deleting whisky:', error)
-      toast.error('Viski silinirken hata oluştu: ' + (error.message || 'Bilinmeyen hata'))
+      console.error('❌ Error deleting whisky:', error)
+      // Error is already shown by the hook via toast
     }
   }
 
@@ -915,11 +931,11 @@ export function AdminPage() {
 
   const handleBulkDeleteWhiskies = async () => {
     if (selectedWhiskies.length === 0) {
-      toast.error('Lütfen silmek istediğiniz viskileri seçin')
+      toast.error(t('admin.selectWhiskiesToDelete'))
       return
     }
 
-    if (!confirm(`${selectedWhiskies.length} adet viskiyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`)) {
+    if (!confirm(`${selectedWhiskies.length} ${t('adminPage.toasts.multipleDeleteConfirm')}`)) {
       return
     }
 
@@ -943,10 +959,10 @@ export function AdminPage() {
 
       setSelectedWhiskies([])
       await loadWhiskies()
-      toast.success(`${selectedWhiskies.length} viski başarıyla silindi!`)
+      toast.success(`${selectedWhiskies.length} ${t('admin.whiskiesDeletedSuccess')}`)
     } catch (error: any) {
       console.error('Error bulk deleting whiskies:', error)
-      toast.error('Viskiler silinirken hata oluştu: ' + (error.message || 'Bilinmeyen hata'))
+      toast.error(t('admin.whiskiesDeleteError') + ': ' + (error.message || 'Unknown error'))
     } finally {
       setIsBulkDeleting(false)
     }
@@ -966,7 +982,7 @@ export function AdminPage() {
   // Group CRUD Functions
   const handleCreateGroup = async () => {
     if (!groupForm.name.trim()) {
-      toast.error('Grup adı gereklidir')
+      toast.error(t('admin.groupNameRequired'))
       return
     }
 
@@ -1002,7 +1018,7 @@ export function AdminPage() {
       }
 
       console.log('Group created successfully:', data)
-      toast.success('Grup başarıyla oluşturuldu!')
+      toast.success(t('admin.groupCreatedSuccess'))
       
       // Add new group to state immediately instead of reloading
       if (data && data.length > 0) {
@@ -1026,7 +1042,7 @@ export function AdminPage() {
       })
     } catch (error) {
       console.error('Error creating group:', error)
-      toast.error('Grup oluşturulurken hata: ' + (error as any).message)
+      toast.error(t('admin.groupCreateError') + ': ' + (error as any).message)
       // Always close modal and reset form even on error
       setIsCreatingGroup(false)
       setGroupForm({
@@ -1042,6 +1058,7 @@ export function AdminPage() {
   }
 
   const handleEditGroup = (group: Group) => {
+    console.log('🏛️ Opening group edit modal for:', group.id, group.name)
     setEditingGroup(group)
     setGroupForm({
       name: group.name,
@@ -1052,13 +1069,14 @@ export function AdminPage() {
       image_url: group.image_url || '',
       selectedImageFile: null
     })
+    console.log('✅ Group edit state set:', group)
   }
 
   const handleSaveGroup = async () => {
     if (!editingGroup) return
     
     if (!groupForm.name.trim()) {
-      toast.error('Grup adı boş bırakılamaz')
+      toast.error(t('admin.groupNameCannotBeEmpty'))
       return
     }
 
@@ -1092,17 +1110,17 @@ export function AdminPage() {
       }
 
       console.log('Group updated successfully')
-      toast.success('Grup başarıyla güncellendi!')
+      toast.success(t('admin.groupUpdatedSuccess'))
       setEditingGroup(null)
       await loadGroups()
     } catch (error) {
       console.error('Error updating group:', error)
-      toast.error('Grup güncellenirken hata: ' + (error as any).message)
+      toast.error(t('admin.groupUpdateError') + ': ' + (error as any).message)
     }
   }
 
   const handleDeleteGroup = async (groupId: string, groupName: string) => {
-    if (!confirm(`"${groupName}" grubunu silmek istediğinizden emin misiniz? Tüm üyeler ve etkinlikler de silinecektir. Bu işlem geri alınamaz.`)) {
+    if (!confirm(`"${groupName}" ${t('adminPage.groupManagement.deleteConfirm')}`)) {
       return
     }
 
@@ -1139,7 +1157,7 @@ export function AdminPage() {
         return filteredGroups
       })
       
-      toast.success('Grup başarıyla silindi!')
+      toast.success(t('admin.groupDeletedSuccess'))
       
     } catch (error) {
       console.error('Error deleting group:', error)
@@ -1150,7 +1168,7 @@ export function AdminPage() {
   // Event CRUD Functions
   const handleCreateEvent = async () => {
     if (!eventForm.title.trim() || !eventForm.start_date) {
-      toast.error('Etkinlik adı ve başlangıç tarihi gereklidir')
+      toast.error(t('admin.eventNameAndDateRequired'))
       return
     }
 
@@ -1176,7 +1194,7 @@ export function AdminPage() {
 
       if (error) throw error
 
-      toast.success('Etkinlik başarıyla oluşturuldu!')
+      toast.success(t('admin.eventCreatedSuccess'))
       
       // Add new event to state immediately instead of reloading
       if (data && data.length > 0) {
@@ -1207,7 +1225,7 @@ export function AdminPage() {
       // No need to reload from DB
     } catch (error) {
       console.error('Error creating event:', error)
-      toast.error('Etkinlik oluşturulurken hata: ' + (error as any).message)
+      toast.error(t('admin.eventCreateError') + ': ' + (error as any).message)
     }
   }
 
@@ -1234,7 +1252,7 @@ export function AdminPage() {
     if (!editingEvent) return
     
     if (!eventForm.title.trim() || !eventForm.start_date) {
-      toast.error('Etkinlik adı ve başlangıç tarihi boş bırakılamaz')
+      toast.error(t('admin.eventNameAndDateCannotBeEmpty'))
       return
     }
 
@@ -1260,7 +1278,7 @@ export function AdminPage() {
 
       if (error) throw error
 
-      toast.success('Etkinlik başarıyla güncellendi!')
+      toast.success(t('admin.eventUpdatedSuccess'))
       setEditingEvent(null)
       // Update local state instead of reloading
       setEvents(prev => {
@@ -1274,12 +1292,12 @@ export function AdminPage() {
       })
     } catch (error) {
       console.error('Error updating event:', error)
-      toast.error('Etkinlik güncellenirken hata: ' + (error as any).message)
+      toast.error(t('admin.eventUpdateError') + ': ' + (error as any).message)
     }
   }
 
   const handleDeleteEvent = async (eventId: string, eventTitle: string) => {
-    if (!confirm(`"${eventTitle}" etkinliğini silmek istediğinizden emin misiniz? Tüm katılımcılar da silinecektir. Bu işlem geri alınamaz.`)) {
+    if (!confirm(`"${eventTitle}" ${t('adminPage.eventManagement.deleteConfirm')}`)) {
       return
     }
 
@@ -1316,7 +1334,7 @@ export function AdminPage() {
         return filteredEvents
       })
       
-      toast.success('Etkinlik başarıyla silindi!')
+      toast.success(t('admin.eventDeletedSuccess'))
       
     } catch (error) {
       console.error('Error deleting event:', error)
@@ -1394,10 +1412,10 @@ export function AdminPage() {
       link.click()
       document.body.removeChild(link)
       
-      toast.success(`${whiskies.length} viski başarıyla CSV formatında export edildi!`)
+      toast.success(`${whiskies.length} ${t('admin.csvExportSuccess')}`)
     } catch (error) {
       console.error('Error exporting CSV:', error)
-      toast.error('CSV export edilirken hata oluştu')
+      toast.error(t('admin.csvExportError'))
     } finally {
       setIsExporting(false)
     }
@@ -1409,7 +1427,7 @@ export function AdminPage() {
     if (!file) return
 
     if (!file.name.toLowerCase().endsWith('.csv')) {
-      toast.error('Lütfen geçerli bir CSV dosyası seçin')
+      toast.error(t('admin.selectValidCsvFile'))
       return
     }
 
@@ -1422,7 +1440,7 @@ export function AdminPage() {
         const lines = text.split('\n').filter(line => line.trim())
         
         if (lines.length < 2) {
-          toast.error('CSV dosyası en az 2 satır içermelidir (başlık + veri)')
+          toast.error(t('admin.csvMinimumRowsError'))
           setIsImporting(false)
           return
         }
@@ -1435,7 +1453,7 @@ export function AdminPage() {
         const missingRequired = requiredHeaders.filter(h => !headers.includes(h))
         
         if (missingRequired.length > 0) {
-          toast.error(`Gerekli sütunlar eksik: ${missingRequired.join(', ')}`)
+          toast.error(`${t('adminPage.toasts.csvColumnsError')}: ${missingRequired.join(', ')}`)
           setIsImporting(false)
           return
         }
@@ -1460,14 +1478,14 @@ export function AdminPage() {
 
             // Validate required fields
             if (!whiskyData.name || !whiskyData.type || !whiskyData.country) {
-              errors.push(`Satır ${i + 2}: Ad, tip ve ülke alanları gereklidir`)
+              errors.push(`Row ${i + 2}: ${t('admin.csvRowRequiredFields')}`)
               continue
             }
 
             // Convert alcohol percentage to number
             whiskyData.alcohol_percentage = parseFloat(whiskyData.alcohol_percentage) || 0
             if (whiskyData.alcohol_percentage <= 0 || whiskyData.alcohol_percentage > 100) {
-              errors.push(`Satır ${i + 2}: Geçersiz alkol oranı`)
+              errors.push(`${t('adminPage.toasts.csvInvalidAlcohol', {row: i + 2})}`)
               continue
             }
 
@@ -1478,19 +1496,19 @@ export function AdminPage() {
 
             validWhiskies.push(whiskyData)
           } catch (error) {
-            errors.push(`Satır ${i + 2}: Veri formatı hatası`)
+            errors.push(`${t('adminPage.toasts.csvDataError', {row: i + 2})}`)
           }
         }
 
         if (validWhiskies.length === 0) {
-          toast.error('Import edilecek geçerli viski bulunamadı')
+          toast.error(t('adminPage.toasts.csvNoValidWhiskies'))
           setIsImporting(false)
           return
         }
 
         // Show confirmation dialog
         const shouldProceed = confirm(
-          `${validWhiskies.length} adet viski import edilecek.${errors.length > 0 ? ` ${errors.length} hata göz ardı edilecek.` : ''} Devam etmek istiyor musunuz?`
+          `${validWhiskies.length} ${t('adminPage.toasts.csvImportConfirm')}${errors.length > 0 ? ` ${errors.length} ${t('admin.csvErrorsIgnored')}` : ''}`
         )
 
         if (!shouldProceed) {
@@ -1512,7 +1530,7 @@ export function AdminPage() {
 
           if (error) {
             console.error('Batch import error:', error)
-            toast.error(`Batch ${Math.floor(i/batchSize) + 1} import edilirken hata oluştu`)
+            toast.error(`Batch ${Math.floor(i/batchSize) + 1} ${t('admin.csvBatchImportError')}`)
             continue
           }
 
@@ -1522,7 +1540,7 @@ export function AdminPage() {
         await loadWhiskies()
         
         toast.success(
-          `✅ ${importedCount} viski başarıyla import edildi!${errors.length > 0 ? ` (${errors.length} hata göz ardı edildi)` : ''}`
+          `✅ ${importedCount} ${t('admin.csvImportSuccess')}${errors.length > 0 ? ` (${errors.length} errors ignored)` : ''}`
         )
 
         if (errors.length > 0 && errors.length <= 10) {
@@ -1531,7 +1549,7 @@ export function AdminPage() {
 
       } catch (error) {
         console.error('CSV parsing error:', error)
-        toast.error('CSV dosyası okunurken hata oluştu')
+        toast.error(t('admin.csvParsingError'))
       } finally {
         setIsImporting(false)
         // Reset file input
@@ -1542,7 +1560,7 @@ export function AdminPage() {
     }
 
     reader.onerror = () => {
-      toast.error('Dosya okunurken hata oluştu')
+      toast.error(t('admin.fileReadError'))
       setIsImporting(false)
     }
 
@@ -1573,13 +1591,13 @@ export function AdminPage() {
     const exampleData = [
       '"Macallan 18"',
       '"Single Malt"',
-      '"İskoçya"',
+      `"${t('admin.exampleScotland')}"`,
       '"Speyside"',
       '43.0',
       '"Altın"',
-      '"Vanilya, bal, meyveli"',
+      `"${t('admin.exampleVanilla')}"`,
       '"Bal, badem, hafif baharat"',
-      '"Uzun ve sıcak"',
+      `"${t('admin.exampleLongWarm')}"`,
       '"Premium İskoç viskisi"',
       '"https://example.com/image.jpg"'
     ]
@@ -1599,7 +1617,7 @@ export function AdminPage() {
     link.click()
     document.body.removeChild(link)
     
-    toast.success('CSV template dosyası indirildi!')
+    toast.success(t('admin.csvTemplateDownloaded'))
   }
 
   // Handle image file selection
@@ -1614,19 +1632,19 @@ export function AdminPage() {
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      toast.error('Lütfen geçerli bir resim dosyası seçin')
+      toast.error(t('admin.selectValidImageFile'))
       return
     }
 
     // Validate file size (10MB limit)
     if (file.size > 10 * 1024 * 1024) {
-      toast.error('Dosya boyutu 10MB\'den küçük olmalıdır')
+      toast.error(t('admin.fileSizeLimit'))
       return
     }
 
     console.log('File is valid, updating form')
     setWhiskyForm(prev => ({ ...prev, selectedImageFile: file, image_url: '' }))
-    toast.success('Resim dosyası seçildi: ' + file.name)
+    toast.success(t('admin.imageFileSelected') + ': ' + file.name)
   }
 
   // Trigger image file input
@@ -1655,7 +1673,7 @@ export function AdminPage() {
       fileInput.click()
     } else {
       console.error('No file input found for current modal state')
-      toast.error('Dosya girişi bulunamadı. Sayfayı yenileyin.')
+      toast.error(t('admin.fileInputNotFound'))
     }
   }
 
@@ -1675,14 +1693,15 @@ export function AdminPage() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent mb-2">
-            Yönetici Paneli
+            {t('admin.adminPanel')}
           </h1>
-          <p className="text-slate-600 dark:text-slate-400">Sistem yönetimi ve kullanıcı kontrolü</p>
+          <p className="text-slate-600 dark:text-slate-400">{t('admin.systemManagementDescription')}</p>
         </div>
 
         {/* Tabs */}
         <div className="mb-6">
-          <div className="flex space-x-1 bg-white/10 backdrop-blur-sm rounded-lg p-1">
+          {/* Desktop Navigation */}
+          <div className="hidden lg:flex space-x-1 bg-white/10 backdrop-blur-sm rounded-lg p-1">
             <button
               onClick={() => setActiveTab('overview')}
               className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -1692,7 +1711,7 @@ export function AdminPage() {
               }`}
             >
               <Settings className="w-4 h-4" />
-              Genel Bakış
+              {t('admin.overview')}
             </button>
             <button
               onClick={() => setActiveTab('users')}
@@ -1703,7 +1722,7 @@ export function AdminPage() {
               }`}
             >
               <Users className="w-4 h-4" />
-              Kullanıcı Yönetimi
+              {t('admin.userManagement')}
             </button>
             <button
               onClick={() => setActiveTab('whiskies')}
@@ -1714,7 +1733,7 @@ export function AdminPage() {
               }`}
             >
               <Wine className="w-4 h-4" />
-              Viski Yönetimi
+              {t('admin.whiskyManagement')}
             </button>
             <button
               onClick={() => setActiveTab('groups')}
@@ -1725,7 +1744,7 @@ export function AdminPage() {
               }`}
             >
               <Users2 className="w-4 h-4" />
-              Grup Yönetimi
+              {t('admin.groupManagement')}
             </button>
             <button
               onClick={() => setActiveTab('events')}
@@ -1736,7 +1755,160 @@ export function AdminPage() {
               }`}
             >
               <CalendarDays className="w-4 h-4" />
-              Etkinlik Yönetimi
+              {t('admin.eventManagement')}
+            </button>
+            <button
+              onClick={() => setActiveTab('analytics')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'analytics'
+                  ? 'bg-white/20 text-slate-800 dark:text-white'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
+              }`}
+            >
+              Analytics
+            </button>
+            <button
+              onClick={() => setActiveTab('background')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'background'
+                  ? 'bg-white/20 text-slate-800 dark:text-white'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
+              }`}
+            >
+              <Image className="w-4 h-4" />
+              {t('admin.background')}
+            </button>
+            <button
+              onClick={() => setActiveTab('translations')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'translations'
+                  ? 'bg-white/20 text-slate-800 dark:text-white'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
+              }`}
+            >
+              <Languages className="w-4 h-4" />
+              Çeviriler
+            </button>
+          </div>
+
+          {/* Mobile Navigation - Dropdown */}
+          <div className="lg:hidden mb-4">
+            <div className="relative">
+              <select
+                value={activeTab}
+                onChange={(e) => setActiveTab(e.target.value as any)}
+                className="w-full px-4 py-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent appearance-none"
+              >
+                <option value="overview">{t('admin.overview')}</option>
+                <option value="users">{t('admin.userManagement')}</option>
+                <option value="whiskies">{t('admin.whiskyManagement')}</option>
+                <option value="groups">{t('admin.groupManagement')}</option>
+                <option value="events">{t('admin.eventManagement')}</option>
+                <option value="analytics">Analytics</option>
+                <option value="background">{t('admin.background')}</option>
+                <option value="translations">Çeviriler</option>
+              </select>
+              {/* Custom dropdown arrow */}
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                <svg className="w-5 h-5 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          {/* Tablet Navigation - Scrollable */}
+          <div className="hidden md:flex lg:hidden overflow-x-auto bg-white/10 backdrop-blur-sm rounded-lg p-1 space-x-1 scrollbar-none"
+               style={{
+                 scrollbarWidth: 'none', /* Firefox */
+                 msOverflowStyle: 'none' /* IE and Edge */
+               }}>
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+                activeTab === 'overview'
+                  ? 'bg-white/20 text-slate-800 dark:text-white'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
+              }`}
+            >
+              <Settings className="w-4 h-4" />
+              {t('admin.overview')}
+            </button>
+            <button
+              onClick={() => setActiveTab('users')}
+              className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+                activeTab === 'users'
+                  ? 'bg-white/20 text-slate-800 dark:text-white'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
+              }`}
+            >
+              <Users className="w-4 h-4" />
+              {t('admin.userManagement')}
+            </button>
+            <button
+              onClick={() => setActiveTab('whiskies')}
+              className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+                activeTab === 'whiskies'
+                  ? 'bg-white/20 text-slate-800 dark:text-white'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
+              }`}
+            >
+              <Wine className="w-4 h-4" />
+              {t('admin.whiskyManagement')}
+            </button>
+            <button
+              onClick={() => setActiveTab('groups')}
+              className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+                activeTab === 'groups'
+                  ? 'bg-white/20 text-slate-800 dark:text-white'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
+              }`}
+            >
+              <Users2 className="w-4 h-4" />
+              {t('admin.groupManagement')}
+            </button>
+            <button
+              onClick={() => setActiveTab('events')}
+              className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+                activeTab === 'events'
+                  ? 'bg-white/20 text-slate-800 dark:text-white'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
+              }`}
+            >
+              <CalendarDays className="w-4 h-4" />
+              {t('admin.eventManagement')}
+            </button>
+            <button
+              onClick={() => setActiveTab('analytics')}
+              className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+                activeTab === 'analytics'
+                  ? 'bg-white/20 text-slate-800 dark:text-white'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
+              }`}
+            >
+              Analytics
+            </button>
+            <button
+              onClick={() => setActiveTab('background')}
+              className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+                activeTab === 'background'
+                  ? 'bg-white/20 text-slate-800 dark:text-white'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
+              }`}
+            >
+              <Image className="w-4 h-4" />
+              {t('admin.background')}
+            </button>
+            <button
+              onClick={() => setActiveTab('translations')}
+              className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+                activeTab === 'translations'
+                  ? 'bg-white/20 text-slate-800 dark:text-white'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'
+              }`}
+            >
+              <Languages className="w-4 h-4" />
+              Çeviriler
             </button>
           </div>
         </div>
@@ -1752,7 +1924,7 @@ export function AdminPage() {
               <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6 shadow-xl">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">Toplam Kullanıcı</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">{t('admin.totalUsers')}</p>
                     <p className="text-2xl font-bold text-slate-800 dark:text-white">{stats.totalUsers}</p>
                   </div>
                   <Users className="w-8 h-8 text-blue-500" />
@@ -1762,7 +1934,7 @@ export function AdminPage() {
               <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6 shadow-xl">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">Admin</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">{t('admin.administrator')}</p>
                     <p className="text-2xl font-bold text-slate-800 dark:text-white">{stats.adminCount}</p>
                   </div>
                   <Settings className="w-8 h-8 text-purple-500" />
@@ -1772,7 +1944,7 @@ export function AdminPage() {
               <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6 shadow-xl">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">VIP Üye</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">{t('admin.vipMember')}</p>
                     <p className="text-2xl font-bold text-slate-800 dark:text-white">{stats.vipCount}</p>
                   </div>
                   <Crown className="w-8 h-8 text-amber-500" />
@@ -1782,7 +1954,7 @@ export function AdminPage() {
               <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6 shadow-xl">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">Standart Üye</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">{t('admin.standardMember')}</p>
                     <p className="text-2xl font-bold text-slate-800 dark:text-white">{stats.regularCount}</p>
                   </div>
                   <Shield className="w-8 h-8 text-slate-500" />
@@ -1792,13 +1964,29 @@ export function AdminPage() {
               <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6 shadow-xl">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">Toplam Viski</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">{t('admin.totalWhiskies')}</p>
                     <p className="text-2xl font-bold text-slate-800 dark:text-white">{stats.totalWhiskies}</p>
                   </div>
                   <Wine className="w-8 h-8 text-amber-600" />
                 </div>
               </div>
             </div>
+          </motion.div>
+        )}
+
+        {/* Analytics Tab */}
+        {activeTab === 'analytics' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <div className="mb-6">
+              <h2 className="text-xl font-bold bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+                Analytics Dashboard
+              </h2>
+              <p className="text-slate-600 dark:text-slate-400">Gelişmiş analitik gösterge paneli ve interaktif grafikler</p>
+            </div>
+            <AnalyticsDashboard refreshInterval={300000} />
           </motion.div>
         )}
 
@@ -1817,14 +2005,14 @@ export function AdminPage() {
                   className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white rounded-lg transition-all duration-200"
                 >
                   <UserPlus className="w-4 h-4" />
-                  Kullanıcı Ekle
+                  {t('admin.addUser')}
                 </button>
                 <button
                   onClick={() => setIsCreatingAdmin(true)}
                   className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg transition-all duration-200"
                 >
                   <Crown className="w-4 h-4" />
-                  Admin Ekle
+                  {t('admin.addAdmin')}
                 </button>
                 
                 <button
@@ -1848,10 +2036,10 @@ export function AdminPage() {
                 <table className="w-full">
                   <thead className="bg-white/10">
                     <tr>
-                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-600 dark:text-slate-400">Kullanıcı</th>
-                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-600 dark:text-slate-400">Rol</th>
-                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-600 dark:text-slate-400">Kayıt Tarihi</th>
-                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-600 dark:text-slate-400">İşlemler</th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-600 dark:text-slate-400">{t('admin.user')}</th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-600 dark:text-slate-400">{t('admin.role')}</th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-600 dark:text-slate-400">{t('admin.registrationDate')}</th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-600 dark:text-slate-400">{t('admin.actions')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/10">
@@ -1885,7 +2073,7 @@ export function AdminPage() {
                             <button
                               onClick={() => handleEditUser(userItem)}
                               className="p-2 text-blue-500 hover:bg-blue-500/10 rounded-lg transition-colors"
-                              title="Düzenle"
+                              title={t('admin.edit')}
                             >
                               <Edit2 className="w-4 h-4" />
                             </button>
@@ -1967,7 +2155,7 @@ export function AdminPage() {
                   ) : (
                     <Settings className="w-4 h-4" />
                   )}
-                  {isLoading ? 'Yükleniyor...' : 'Tüm Viskileri Yenile'}
+                  {isLoading ? t('adminPage.whiskyManagement.loading') : t('adminPage.whiskyManagement.refreshAll')}
                 </button>
                 
                 {/* Hidden file input */}
@@ -1998,7 +2186,7 @@ export function AdminPage() {
                   onChange={(e) => setSelectedCountry(e.target.value)}
                   className="px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent w-full sm:w-auto text-slate-900 dark:text-white"
                 >
-                  <option value="" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">Tüm Ülkeler</option>
+                  <option value="" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">{t('admin.allCountries')}</option>
                   {countries.map(country => (
                     <option key={country} value={country} className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">{country}</option>
                   ))}
@@ -2009,7 +2197,7 @@ export function AdminPage() {
                   onChange={(e) => setSelectedType(e.target.value)}
                   className="px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent w-full sm:w-auto text-slate-900 dark:text-white"
                 >
-                  <option value="" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">Tüm Tipler</option>
+                  <option value="" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">{t('adminPage.whiskyManagement.filters.allTypes')}</option>
                   {types.map(type => (
                     <option key={type} value={type} className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">{type}</option>
                   ))}
@@ -2022,7 +2210,7 @@ export function AdminPage() {
               <div className="flex flex-col gap-3">
                 <h4 className="text-sm font-medium text-slate-600 dark:text-slate-400 flex items-center gap-2">
                   <Filter className="w-4 h-4" />
-                  Harf Filtresi
+                  {t('adminPage.whiskyManagement.filters.alphabetical')}
                 </h4>
                 <div className="flex flex-wrap gap-2">
                   <button
@@ -2033,7 +2221,7 @@ export function AdminPage() {
                         : 'bg-white/10 hover:bg-white/20 text-slate-600 dark:text-slate-400'
                     }`}
                   >
-                    Tümü
+                    {t('adminPage.whiskyManagement.filters.all')}
                   </button>
                   {'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(letter => {
                     const count = whiskies.filter(w => w.name.toLowerCase().startsWith(letter.toLowerCase())).length
@@ -2069,11 +2257,11 @@ export function AdminPage() {
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <div className="text-sm text-slate-600 dark:text-slate-400">
-                    <span className="font-medium text-slate-800 dark:text-white">{filteredWhiskies.length}</span> viski bulundu
-                    <span className="ml-2 text-xs opacity-60">(Toplam yüklü: {whiskies.length})</span>
+                    <span className="font-medium text-slate-800 dark:text-white">{filteredWhiskies.length}</span> {t('adminPage.whiskyManagement.filters.whiskitotalsFound')} 
+                    <span className="ml-2 text-xs opacity-60">({t('adminPage.whiskyManagement.filters.totalLoaded')}: {whiskies.length})</span>
                     {filteredWhiskies.length > 0 && (
                       <span className="ml-2">
-                        ({startIndex + 1}-{Math.min(endIndex, filteredWhiskies.length)} arası gösteriliyor)
+                        ({startIndex + 1}-{Math.min(endIndex, filteredWhiskies.length)} {t('adminPage.whiskyManagement.filters.between')} {t('adminPage.whiskyManagement.filters.showing')})
                       </span>
                     )}
                   </div>
@@ -2097,7 +2285,7 @@ export function AdminPage() {
                 
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-slate-600 dark:text-slate-400">Sayfa başı:</span>
+                    <span className="text-sm text-slate-600 dark:text-slate-400">{t('adminPage.whiskyManagement.filters.perPage')}</span>
                     <select
                       value={itemsPerPage}
                       onChange={(e) => {
@@ -2120,7 +2308,7 @@ export function AdminPage() {
                         onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                         disabled={currentPage === 1}
                         className="p-2 text-slate-600 dark:text-slate-400 hover:bg-white/10 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        title="Önceki sayfa"
+                        title={t('adminPage.whiskyManagement.previousPage')}
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -2182,18 +2370,18 @@ export function AdminPage() {
                 <div className="flex-1">
                   <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">CSV Format Bilgisi</h4>
                   <div className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
-                    <p><strong>Gerekli sütunlar:</strong> name, type, country, alcohol_percentage</p>
-                    <p><strong>Opsiyonel sütunlar:</strong> region, color, aroma, taste, finish, description, image_url</p>
-                    <p><strong>Örnek:</strong> "Macallan 18","Single Malt","İskoçya","Speyside",43.0,"Altın","Vanilya","Bal","Uzun","Premium viski","https://..."
+                    <p><strong>{t('adminPage.whiskyManagement.importSection.requiredColumns')}</strong> name, type, country, alcohol_percentage</p>
+                    <p><strong>{t('adminPage.whiskyManagement.importSection.optionalColumns')}</strong> region, color, aroma, taste, finish, description, image_url</p>
+                    <p><strong>Example:</strong> {t('admin.csvExampleNote')}","https://..."
                     </p>
-                    <p className="text-blue-600 dark:text-blue-400"><strong>İpuca:</strong> Mevcut veri formatını görmek için önce "CSV Export" butonunu kullanın.</p>
+                    <p className="text-blue-600 dark:text-blue-400"><strong>{t('admin.tip')}:</strong> Mevcut veri formatını görmek için önce "CSV Export" butonunu kullanın.</p>
                     <div className="mt-3">
                       <button
                         onClick={downloadCSVTemplate}
                         className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-100 dark:bg-blue-800/50 hover:bg-blue-200 dark:hover:bg-blue-800/70 text-blue-700 dark:text-blue-300 rounded-md text-sm transition-colors"
                       >
                         <Download className="w-4 h-4" />
-                        Örnek CSV Template İndir
+                        {t('adminPage.whiskyManagement.importSection.downloadTemplate')}
                       </button>
                     </div>
                   </div>
@@ -2207,12 +2395,12 @@ export function AdminPage() {
                 <table className="w-full">
                   <thead className="bg-white/10">
                     <tr>
-                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-600 dark:text-slate-400">Viski</th>
-                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-600 dark:text-slate-400">Tip</th>
-                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-600 dark:text-slate-400">Ülke</th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-600 dark:text-slate-400">{t('adminPage.whiskyManagement.tableHeaders.name')}</th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-600 dark:text-slate-400">{t('adminPage.whiskyManagement.tableHeaders.type')}</th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-600 dark:text-slate-400">{t('adminPage.whiskyManagement.tableHeaders.country')}</th>
                       <th className="px-6 py-4 text-left text-sm font-medium text-slate-600 dark:text-slate-400">Alkol %</th>
-                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-600 dark:text-slate-400">Oluşturma</th>
-                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-600 dark:text-slate-400">İşlemler</th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-600 dark:text-slate-400">{t('adminPage.whiskyManagement.tableHeaders.creation')}</th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-600 dark:text-slate-400">{t('adminPage.whiskyManagement.tableHeaders.actions')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/10">
@@ -2223,7 +2411,7 @@ export function AdminPage() {
                             <button
                               onClick={() => handleViewWhisky(whisky)}
                               className="flex items-center gap-3 hover:bg-white/5 rounded-lg p-1 transition-colors group"
-                              title="Detayları görüntüle"
+                              title={t('adminPage.whiskyManagement.viewDetails')}
                             >
                               {whisky.image_url ? (
                                 <img
@@ -2272,7 +2460,7 @@ export function AdminPage() {
                             <button
                               onClick={() => handleViewWhisky(whisky)}
                               className="p-2 text-green-500 hover:bg-green-500/10 rounded-lg transition-colors"
-                              title="Detayları Görüntüle"
+                              title={t('adminPage.whiskyManagement.viewDetails')}
                             >
                               <Eye className="w-4 h-4" />
                             </button>
@@ -2280,7 +2468,7 @@ export function AdminPage() {
                             <button
                               onClick={() => handleEditWhisky(whisky)}
                               className="p-2 text-blue-500 hover:bg-blue-500/10 rounded-lg transition-colors"
-                              title="Düzenle"
+                              title={t('admin.edit')}
                             >
                               <Edit2 className="w-4 h-4" />
                             </button>
@@ -2305,8 +2493,8 @@ export function AdminPage() {
                   <Wine className="w-12 h-12 mx-auto text-slate-400 mb-4" />
                   <p className="text-slate-500 dark:text-slate-400">
                     {searchTerm || selectedCountry || selectedType || selectedLetter
-                      ? 'Arama kriterlerinize uygun viski bulunamadı.'
-                      : 'Henüz viski eklenmemiş.'}
+                      ? t('adminPage.whiskyManagement.emptyStates.noMatchingWhiskies')
+                      : t('adminPage.whiskyManagement.emptyStates.noWhiskiesYet')}
                   </p>
                 </div>
               )}
@@ -2315,7 +2503,7 @@ export function AdminPage() {
                 <div className="text-center py-8">
                   <Wine className="w-12 h-12 mx-auto text-slate-400 mb-4" />
                   <p className="text-slate-500 dark:text-slate-400">
-                    Bu sayfada gösterilecek viski bulunamadı. Farklı bir sayfa seçin veya sayfa başına gösterilecek öğe sayısını artırın.
+                    {t('adminPage.whiskyManagement.emptyStates.noWhiskiesOnPage')}
                   </p>
                 </div>
               )}
@@ -2333,7 +2521,7 @@ export function AdminPage() {
                 exit={{ opacity: 0, scale: 0.95 }}
                 className="bg-white/90 dark:bg-slate-800/95 backdrop-blur-md border border-white/20 dark:border-slate-700 rounded-2xl p-6 w-full max-w-md shadow-2xl"
               >
-                <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-white">Kullanıcı Düzenle</h3>
+                <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-white">{t('adminPage.userManagement.titles.editUser')}</h3>
                 
                 <div className="space-y-4">
                   <div>
@@ -2357,8 +2545,8 @@ export function AdminPage() {
                       onChange={(e) => setEditForm(prev => ({ ...prev, role: e.target.value as any }))}
                       className="w-full px-4 py-3 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-slate-900 dark:text-white"
                     >
-                      <option value="user" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">Üye</option>
-                      <option value="vip" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">VIP Üye</option>
+                      <option value="user" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">{t('adminPage.userManagement.options.user')}</option>
+                      <option value="vip" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">{t('adminPage.userManagement.options.vipUser')}</option>
                       <option value="admin" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">Admin</option>
                     </select>
                   </div>
@@ -2372,7 +2560,7 @@ export function AdminPage() {
                       onChange={(e) => setEditForm(prev => ({ ...prev, language: e.target.value as any }))}
                       className="w-full px-4 py-3 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-slate-900 dark:text-white"
                     >
-                      <option value="tr" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">Türkçe</option>
+                      <option value="tr" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">{t('adminPage.userManagement.options.turkish')}</option>
                       <option value="en" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">English</option>
                     </select>
                   </div>
@@ -2384,7 +2572,7 @@ export function AdminPage() {
                     onClick={() => setEditingUser(null)}
                     className="flex-1 px-4 py-2 bg-slate-500/20 hover:bg-slate-500/30 text-slate-600 dark:text-slate-400 rounded-lg transition-colors"
                   >
-                    İptal
+                    {t('adminPage.whiskyForm.buttons.cancel')}
                   </button>
                   <button
                     onClick={handleSaveUser}
@@ -2409,7 +2597,7 @@ export function AdminPage() {
                 exit={{ opacity: 0, scale: 0.95 }}
                 className="bg-white/90 dark:bg-slate-800/95 backdrop-blur-md border border-white/20 dark:border-slate-700 rounded-2xl p-6 w-full max-w-md shadow-2xl"
               >
-                <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-white">Admin Kullanıcı Ekle</h3>
+                <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-white">{t('adminPage.userManagement.titles.addAdmin')}</h3>
                 
                 <div className="space-y-4">
                   <div>
@@ -2434,13 +2622,13 @@ export function AdminPage() {
                       value={adminForm.full_name}
                       onChange={(e) => setAdminForm(prev => ({ ...prev, full_name: e.target.value }))}
                       className="w-full px-4 py-3 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-slate-900 dark:text-white"
-                      placeholder="Admin Kullanıcı"
+                      placeholder={t('adminPage.userManagement.placeholders.adminUser')}
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                      Şifre (Opsiyonel)
+                      {t('adminPage.userManagement.labels.passwordOptional')}
                     </label>
                     <div className="relative">
                       <input
@@ -2448,7 +2636,7 @@ export function AdminPage() {
                         value={adminForm.password}
                         onChange={(e) => setAdminForm(prev => ({ ...prev, password: e.target.value }))}
                         className="w-full px-4 py-3 pr-12 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-slate-900 dark:text-white"
-                        placeholder="Boş bırakılırsa varsayılan: Admin123!"
+                        placeholder={t('adminPage.userManagement.placeholders.defaultPassword')}
                       />
                       <button
                         type="button"
@@ -2469,14 +2657,14 @@ export function AdminPage() {
                     }}
                     className="flex-1 px-4 py-2 bg-slate-500/20 hover:bg-slate-500/30 text-slate-600 dark:text-slate-400 rounded-lg transition-colors"
                   >
-                    İptal
+                    {t('adminPage.whiskyForm.buttons.cancel')}
                   </button>
                   <button
                     onClick={handleCreateAdmin}
                     disabled={isLoading}
                     className="flex-1 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg transition-all duration-200 disabled:opacity-50"
                   >
-                    {isLoading ? 'Oluşturuluyor...' : 'Oluştur'}
+                    {isLoading ? t('adminPage.whiskyForm.buttons.creating') : t('adminPage.whiskyForm.buttons.create')}
                   </button>
                 </div>
               </motion.div>
@@ -2492,7 +2680,7 @@ export function AdminPage() {
                 exit={{ opacity: 0, scale: 0.95 }}
                 className="bg-white/90 dark:bg-slate-800/95 backdrop-blur-md border border-white/20 dark:border-slate-700 rounded-2xl p-6 w-full max-w-md shadow-2xl"
               >
-                <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-white">Yeni Kullanıcı Ekle</h3>
+                <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-white">{t('adminPage.userManagement.titles.addUser')}</h3>
                 
                 <div className="space-y-4">
                   <div>
@@ -2517,7 +2705,7 @@ export function AdminPage() {
                       value={userForm.full_name}
                       onChange={(e) => setUserForm(prev => ({ ...prev, full_name: e.target.value }))}
                       className="w-full px-4 py-3 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900 dark:text-white"
-                      placeholder="Kullanıcı Adı"
+                      placeholder={t('adminPage.userManagement.placeholders.userName')}
                     />
                   </div>
 
@@ -2530,7 +2718,7 @@ export function AdminPage() {
                       onChange={(e) => setUserForm(prev => ({ ...prev, role: e.target.value as any }))}
                       className="w-full px-4 py-3 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900 dark:text-white"
                     >
-                      <option value="user">Kullanıcı</option>
+                      <option value="user">{t('adminPage.userManagement.options.user')}</option>
                       <option value="vip">VIP</option>
                       <option value="admin">Admin</option>
                     </select>
@@ -2545,14 +2733,14 @@ export function AdminPage() {
                       onChange={(e) => setUserForm(prev => ({ ...prev, language: e.target.value as any }))}
                       className="w-full px-4 py-3 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900 dark:text-white"
                     >
-                      <option value="tr">Türkçe</option>
+                      <option value="tr">{t('adminPage.userManagement.options.turkish')}</option>
                       <option value="en">English</option>
                     </select>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                      Şifre
+                      {t('adminPage.userManagement.labels.password')}
                     </label>
                     <div className="relative">
                       <input
@@ -2574,7 +2762,7 @@ export function AdminPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                      Şifreyi Onayla
+                      {t('adminPage.userManagement.labels.confirmPassword')}
                     </label>
                     <div className="relative">
                       <input
@@ -2582,7 +2770,7 @@ export function AdminPage() {
                         value={userForm.confirmPassword}
                         onChange={(e) => setUserForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
                         className="w-full px-4 py-3 pr-12 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900 dark:text-white"
-                        placeholder="Şifreyi tekrar girin"
+                        placeholder={t('adminPage.userManagement.placeholders.confirmPassword')}
                       />
                       <button
                         type="button"
@@ -2610,14 +2798,14 @@ export function AdminPage() {
                     }}
                     className="flex-1 px-4 py-2 bg-slate-500/20 hover:bg-slate-500/30 text-slate-600 dark:text-slate-400 rounded-lg transition-colors"
                   >
-                    İptal
+                    {t('adminPage.whiskyForm.buttons.cancel')}
                   </button>
                   <button
                     onClick={handleCreateUser}
                     disabled={isLoading}
                     className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white rounded-lg transition-all duration-200 disabled:opacity-50"
                   >
-                    {isLoading ? 'Oluşturuluyor...' : 'Oluştur'}
+                    {isLoading ? t('adminPage.whiskyForm.buttons.creating') : t('adminPage.whiskyForm.buttons.create')}
                   </button>
                 </div>
               </motion.div>
@@ -2643,14 +2831,14 @@ export function AdminPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                      Viski Adı *
+                      {t('adminPage.whiskyForm.labels.whiskyName')} *
                     </label>
                     <input
                       type="text"
                       value={whiskyForm.name}
                       onChange={(e) => setWhiskyForm(prev => ({ ...prev, name: e.target.value }))}
                       className="w-full px-4 py-3 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
-                      placeholder="Örn. Macallan 18"
+                      placeholder={t('adminPage.whiskyForm.placeholders.whiskyName')}
                     />
                   </div>
 
@@ -2663,53 +2851,40 @@ export function AdminPage() {
                       value={whiskyForm.type}
                       onChange={(e) => setWhiskyForm(prev => ({ ...prev, type: e.target.value }))}
                       className="w-full px-4 py-3 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
-                      placeholder="Örn. Single Malt, Bourbon, Rye"
+                      placeholder={t('adminPage.whiskyForm.placeholders.type')}
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                      Ülke *
+                      {t('adminPage.whiskyForm.labels.country')} *
                     </label>
                     <input
                       type="text"
                       value={whiskyForm.country}
                       onChange={(e) => setWhiskyForm(prev => ({ ...prev, country: e.target.value }))}
                       className="w-full px-4 py-3 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
-                      placeholder="Örn. İskoçya, ABD, Japonya"
+                      placeholder={t('admin.scotlandPlaceholder')}
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                      Bölge
+                      {t('adminPage.whiskyForm.labels.region')}
                     </label>
                     <input
                       type="text"
                       value={whiskyForm.region}
                       onChange={(e) => setWhiskyForm(prev => ({ ...prev, region: e.target.value }))}
                       className="w-full px-4 py-3 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
-                      placeholder="Örn. Speyside, Highland, Kentucky"
+                      placeholder={t('adminPage.whiskyForm.placeholders.region')}
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                      Dil / Language *
-                    </label>
-                    <select
-                      value={whiskyForm.language_code}
-                      onChange={(e) => setWhiskyForm(prev => ({ ...prev, language_code: e.target.value as 'tr' | 'en' }))}
-                      className="w-full px-4 py-3 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-slate-900 dark:text-white"
-                    >
-                      <option value="tr">🇹🇷 Türkçe</option>
-                      <option value="en">🇺🇸 English</option>
-                    </select>
-                  </div>
 
                   <div>
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                      Alkol Oranı % *
+                      {t('adminPage.whiskyForm.labels.alcoholPercentage')} *
                     </label>
                     <input
                       type="number"
@@ -2734,13 +2909,13 @@ export function AdminPage() {
                       value={whiskyForm.rating || ''}
                       onChange={(e) => setWhiskyForm(prev => ({ ...prev, rating: e.target.value ? parseFloat(e.target.value) : null }))}
                       className="w-full px-4 py-3 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-slate-900 dark:text-white"
-                      placeholder="Örn. 85.5"
+                      placeholder={t('adminPage.whiskyForm.placeholders.score')}
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                      Yaş (Yıl)
+                      {t('adminPage.whiskyForm.labels.age')}
                     </label>
                     <input
                       type="number"
@@ -2749,78 +2924,78 @@ export function AdminPage() {
                       value={whiskyForm.age_years || ''}
                       onChange={(e) => setWhiskyForm(prev => ({ ...prev, age_years: e.target.value ? parseInt(e.target.value) : null }))}
                       className="w-full px-4 py-3 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-slate-900 dark:text-white"
-                      placeholder="Örn. 18 (NAS için boş bırakın)"
+                      placeholder={t('adminPage.whiskyForm.placeholders.age')}
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                      Renk
+                      {t('adminPage.whiskyForm.labels.color')}
                     </label>
                     <input
                       type="text"
                       value={whiskyForm.color}
                       onChange={(e) => setWhiskyForm(prev => ({ ...prev, color: e.target.value }))}
                       className="w-full px-4 py-3 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
-                      placeholder="Örn. Altın, Kehribar, Koyu Bakır"
+                      placeholder={t('adminPage.whiskyForm.placeholders.color')}
                     />
                   </div>
 
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                      Koku
+                      {t('adminPage.whiskyForm.labels.aroma')}
                     </label>
                     <textarea
                       value={whiskyForm.aroma}
                       onChange={(e) => setWhiskyForm(prev => ({ ...prev, aroma: e.target.value }))}
                       className="w-full px-4 py-3 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
                       rows={2}
-                      placeholder="Koku notlarını açıklayın..."
+                      placeholder={t('adminPage.whiskyForm.placeholders.aroma')}
                     />
                   </div>
 
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                      Damak Tadı
+                      {t('adminPage.whiskyForm.labels.taste')}
                     </label>
                     <textarea
                       value={whiskyForm.taste}
                       onChange={(e) => setWhiskyForm(prev => ({ ...prev, taste: e.target.value }))}
                       className="w-full px-4 py-3 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
                       rows={2}
-                      placeholder="Damak tadı notlarını açıklayın..."
+                      placeholder={t('adminPage.whiskyForm.placeholders.taste')}
                     />
                   </div>
 
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                      Bitiş
+                      {t('adminPage.whiskyForm.labels.finish')}
                     </label>
                     <textarea
                       value={whiskyForm.finish}
                       onChange={(e) => setWhiskyForm(prev => ({ ...prev, finish: e.target.value }))}
                       className="w-full px-4 py-3 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
                       rows={2}
-                      placeholder="Bitiş notlarını açıklayın..."
+                      placeholder={t('adminPage.whiskyForm.placeholders.finish')}
                     />
                   </div>
 
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                      Açıklama
+                      {t('adminPage.whiskyForm.labels.description')}
                     </label>
                     <textarea
                       value={whiskyForm.description}
                       onChange={(e) => setWhiskyForm(prev => ({ ...prev, description: e.target.value }))}
                       className="w-full px-4 py-3 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
                       rows={3}
-                      placeholder="Genel açıklama..."
+                      placeholder={t('adminPage.whiskyForm.placeholders.description')}
                     />
                   </div>
 
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                      Resim Yükleme
+                      {t('adminPage.whiskyForm.labels.imageUpload')}
                     </label>
                     <div className="space-y-3">
                       {/* Current image preview */}
@@ -2833,7 +3008,7 @@ export function AdminPage() {
                               </div>
                               <div className="flex-1">
                                 <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                  Seçilen dosya: {whiskyForm.selectedImageFile.name}
+                                  {t('adminPage.whiskyForm.labels.selectedFile')}: {whiskyForm.selectedImageFile.name}
                                 </p>
                                 <p className="text-xs text-slate-500 dark:text-slate-400">
                                   {(whiskyForm.selectedImageFile.size / 1024 / 1024).toFixed(2)} MB
@@ -2856,7 +3031,7 @@ export function AdminPage() {
                               />
                               <div className="flex-1">
                                 <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                  Mevcut resim URL
+                                 {t('adminPage.whiskyForm.labels.currentImage')}: {whiskyForm.name}
                                 </p>
                                 <p className="text-xs text-slate-500 dark:text-slate-400 break-all">
                                   {whiskyForm.image_url.substring(0, 50)}...
@@ -2885,11 +3060,11 @@ export function AdminPage() {
                           ) : (
                             <Upload className="w-4 h-4" />
                           )}
-                          {isUploading || uploadingImage ? 'Yükleniyor...' : 'Dosya Seç'}
+                          {isUploading || uploadingImage ? t('adminPage.whiskyForm.buttons.uploading') : t('adminPage.whiskyForm.buttons.selectFile')}
                         </button>
                         
                         <div className="text-center text-sm text-slate-500 dark:text-slate-400 py-3">
-                          veya
+                          {t('adminPage.whiskyForm.labels.or')}
                         </div>
                       </div>
                       
@@ -2911,7 +3086,7 @@ export function AdminPage() {
 
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                      Veya Resim URL
+                      {t('adminPage.whiskyForm.labels.imageUrl')}
                     </label>
                     <input
                       type="url"
@@ -2941,19 +3116,19 @@ export function AdminPage() {
                         finish: '',
                         description: '',
                         image_url: '',
-                        selectedImageFile: null
-                      })
+                        selectedImageFile: null,
+                                      })
                     }}
                     className="flex-1 px-4 py-2 bg-slate-500/20 hover:bg-slate-500/30 text-slate-600 dark:text-slate-400 rounded-lg transition-colors"
                   >
-                    İptal
+                    {t('adminPage.whiskyForm.buttons.cancel')}
                   </button>
                   <button
                     onClick={handleCreateWhisky}
-                    disabled={isLoading}
+                    disabled={isWhiskyLoading}
                     className="flex-1 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-lg transition-all duration-200 disabled:opacity-50"
                   >
-                    {isLoading ? 'Ekleniyor...' : 'Viski Ekle'}
+                    {isWhiskyLoading ? 'Ekleniyor...' : 'Viski Ekle'}
                   </button>
                 </div>
               </motion.div>
@@ -2973,79 +3148,66 @@ export function AdminPage() {
               >
                 <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-slate-900 dark:text-white">
                   <Edit2 className="w-5 h-5 text-blue-500" />
-                  Viski Düzenle
+                  {t('admin.editWhisky')}
                 </h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                      Viski Adı *
+                      {t('adminPage.whiskyForm.labels.whiskyName')} *
                     </label>
                     <input
                       type="text"
                       value={whiskyForm.name}
                       onChange={(e) => setWhiskyForm(prev => ({ ...prev, name: e.target.value }))}
                       className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                      placeholder="Örn. Macallan 18"
+                      placeholder={t('adminPage.whiskyForm.placeholders.whiskyName')}
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                      Tip *
+                      {t('adminPage.whiskyForm.labels.type')} *
                     </label>
                     <input
                       type="text"
                       value={whiskyForm.type}
                       onChange={(e) => setWhiskyForm(prev => ({ ...prev, type: e.target.value }))}
                       className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                      placeholder="Örn. Single Malt, Bourbon, Rye"
+                      placeholder={t('adminPage.whiskyForm.placeholders.type')}
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                      Ülke *
+                      {t('adminPage.whiskyForm.labels.country')} *
                     </label>
                     <input
                       type="text"
                       value={whiskyForm.country}
                       onChange={(e) => setWhiskyForm(prev => ({ ...prev, country: e.target.value }))}
                       className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                      placeholder="Örn. İskoçya, ABD, Japonya"
+                      placeholder={t('admin.scotlandPlaceholder')}
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                      Bölge
+                      {t('adminPage.whiskyForm.labels.region')}
                     </label>
                     <input
                       type="text"
                       value={whiskyForm.region}
                       onChange={(e) => setWhiskyForm(prev => ({ ...prev, region: e.target.value }))}
                       className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                      placeholder="Örn. Speyside, Highland, Kentucky"
+                      placeholder={t('adminPage.whiskyForm.placeholders.region')}
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                      Dil / Language *
-                    </label>
-                    <select
-                      value={whiskyForm.language_code}
-                      onChange={(e) => setWhiskyForm(prev => ({ ...prev, language_code: e.target.value as 'tr' | 'en' }))}
-                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                    >
-                      <option value="tr">🇹🇷 Türkçe</option>
-                      <option value="en">🇺🇸 English</option>
-                    </select>
-                  </div>
 
                   <div>
                     <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                      Alkol Oranı % *
+                      {t('adminPage.whiskyForm.labels.alcoholPercentage')} *
                     </label>
                     <input
                       type="number"
@@ -3060,7 +3222,7 @@ export function AdminPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                      Puanlama (1-100)
+                     {t('adminPage.whiskyForm.labels.score')}
                     </label>
                     <input
                       type="number"
@@ -3070,13 +3232,13 @@ export function AdminPage() {
                       value={whiskyForm.rating || ''}
                       onChange={(e) => setWhiskyForm(prev => ({ ...prev, rating: e.target.value ? parseFloat(e.target.value) : null }))}
                       className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                      placeholder="Örn. 85.5"
+                      placeholder={t('adminPage.whiskyForm.placeholders.score')}
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                      Yaş (Yıl)
+                      {t('adminPage.whiskyForm.labels.age')}
                     </label>
                     <input
                       type="number"
@@ -3085,78 +3247,78 @@ export function AdminPage() {
                       value={whiskyForm.age_years || ''}
                       onChange={(e) => setWhiskyForm(prev => ({ ...prev, age_years: e.target.value ? parseInt(e.target.value) : null }))}
                       className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                      placeholder="Örn. 18 (NAS için boş bırakın)"
+                      placeholder={t('adminPage.whiskyForm.placeholders.age')}
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                      Renk
+                     {t('adminPage.whiskyForm.labels.color')}
                     </label>
                     <input
                       type="text"
                       value={whiskyForm.color}
                       onChange={(e) => setWhiskyForm(prev => ({ ...prev, color: e.target.value }))}
                       className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                      placeholder="Örn. Altın, Kehribar, Koyu Bakır"
+                      placeholder={t('adminPage.whiskyForm.placeholders.color')}
                     />
                   </div>
 
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                      Koku
+                     {t('adminPage.whiskyForm.labels.aroma')}
                     </label>
                     <textarea
                       value={whiskyForm.aroma}
                       onChange={(e) => setWhiskyForm(prev => ({ ...prev, aroma: e.target.value }))}
                       className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                       rows={2}
-                      placeholder="Koku notlarını açıklayın..."
+                      placeholder={t('adminPage.whiskyForm.placeholders.aroma')}
                     />
                   </div>
 
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                      Damak Tadı
+                      {t('adminPage.whiskyForm.labels.taste')}
                     </label>
                     <textarea
                       value={whiskyForm.taste}
                       onChange={(e) => setWhiskyForm(prev => ({ ...prev, taste: e.target.value }))}
                       className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                       rows={2}
-                      placeholder="Damak tadı notlarını açıklayın..."
+                      placeholder={t('adminPage.whiskyForm.placeholders.taste')}
                     />
                   </div>
 
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                      Bitiş
+                      {t('adminPage.whiskyForm.labels.finish')}
                     </label>
                     <textarea
                       value={whiskyForm.finish}
                       onChange={(e) => setWhiskyForm(prev => ({ ...prev, finish: e.target.value }))}
                       className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                       rows={2}
-                      placeholder="Bitiş notlarını açıklayın..."
+                      placeholder={t('adminPage.whiskyForm.placeholders.finish')}
                     />
                   </div>
 
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                      Açıklama
+                      {t('adminPage.whiskyForm.labels.description')}
                     </label>
                     <textarea
                       value={whiskyForm.description}
                       onChange={(e) => setWhiskyForm(prev => ({ ...prev, description: e.target.value }))}
                       className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                       rows={3}
-                      placeholder="Genel açıklama..."
+                      placeholder={t('adminPage.whiskyForm.placeholders.description')}
                     />
                   </div>
 
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                      Resim Yükleme
+                      {t('adminPage.whiskyForm.labels.imageUpload')}
                     </label>
                     <div className="space-y-3">
                       {/* Current image preview */}
@@ -3169,7 +3331,7 @@ export function AdminPage() {
                               </div>
                               <div className="flex-1">
                                 <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                  Seçilen dosya: {whiskyForm.selectedImageFile.name}
+                                  {t('adminPage.whiskyForm.labels.selectedFile')}: {whiskyForm.selectedImageFile.name}
                                 </p>
                                 <p className="text-xs text-slate-500 dark:text-slate-400">
                                   {(whiskyForm.selectedImageFile.size / 1024 / 1024).toFixed(2)} MB
@@ -3192,7 +3354,7 @@ export function AdminPage() {
                               />
                               <div className="flex-1">
                                 <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                  Mevcut resim
+                                 {t('adminPage.whiskyForm.labels.currentImage')}: {whiskyForm.name}
                                 </p>
                                 <p className="text-xs text-slate-500 dark:text-slate-400 break-all">
                                   {whiskyForm.image_url.length > 50 ? whiskyForm.image_url.substring(0, 50) + '...' : whiskyForm.image_url}
@@ -3221,11 +3383,11 @@ export function AdminPage() {
                           ) : (
                             <Upload className="w-4 h-4" />
                           )}
-                          {isUploading || uploadingImage ? 'Yükleniyor...' : 'Yeni Dosya Seç'}
+                          {isUploading || uploadingImage ? t('adminPage.whiskyForm.buttons.uploading') : t('adminPage.whiskyForm.buttons.selectNewFile')}
                         </button>
                         
                         <div className="text-center text-sm text-slate-500 dark:text-slate-400 py-3">
-                          veya
+                          { t('adminPage.whiskyForm.labels.or')}
                         </div>
                       </div>
                       
@@ -3247,7 +3409,7 @@ export function AdminPage() {
 
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                      Veya Resim URL
+                      {t('adminPage.whiskyForm.labels.imageUrl')}
                     </label>
                     <input
                       type="url"
@@ -3264,14 +3426,14 @@ export function AdminPage() {
                     onClick={() => setEditingWhisky(null)}
                     className="flex-1 px-4 py-2 bg-slate-500/20 hover:bg-slate-500/30 text-slate-600 dark:text-slate-400 rounded-lg transition-colors"
                   >
-                    İptal
+                    {t('adminPage.whiskyForm.buttons.cancel')}
                   </button>
                   <button
                     onClick={handleUpdateWhisky}
-                    disabled={isLoading}
+                    disabled={isWhiskyLoading}
                     className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white rounded-lg transition-all duration-200 disabled:opacity-50"
                   >
-                    {isLoading ? 'Güncelleniyor...' : 'Güncelle'}
+                    {isWhiskyLoading ? t('adminPage.whiskyForm.buttons.updating') : t('adminPage.whiskyForm.buttons.update')}
                   </button>
                 </div>
               </motion.div>
@@ -3290,9 +3452,7 @@ export function AdminPage() {
                 className="bg-white/90 dark:bg-slate-800/95 backdrop-blur-md border border-white/20 dark:border-slate-700 rounded-2xl p-6 w-full max-w-4xl shadow-2xl max-h-[90vh] overflow-y-auto"
               >
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-2xl font-bold bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
-                    Viski Detayları
-                  </h3>
+                  <h3 className="text-2xl font-bold text-slate-800 dark:text-white">{t('adminPage.whiskyDetails.title')}</h3>
                   <button
                     onClick={() => setViewingWhisky(null)}
                     className="p-2 text-slate-500 hover:bg-slate-500/10 rounded-lg transition-colors"
@@ -3339,13 +3499,13 @@ export function AdminPage() {
                         </div>
                         
                         <div>
-                          <label className="text-sm font-medium text-slate-600 dark:text-slate-400">Ülke</label>
+                          <label className="text-sm font-medium text-slate-600 dark:text-slate-400">{t('adminPage.whiskyDetails.labels.country')}</label>
                           <p className="mt-1 text-slate-800 dark:text-white font-medium">{viewingWhisky.country}</p>
                         </div>
                         
                         {viewingWhisky.region && (
                           <div className="col-span-2">
-                            <label className="text-sm font-medium text-slate-600 dark:text-slate-400">Bölge</label>
+                            <label className="text-sm font-medium text-slate-600 dark:text-slate-400">{t('adminPage.whiskyDetails.labels.region')}</label>
                             <p className="mt-1 text-slate-800 dark:text-white font-medium flex items-center gap-2">
                               <MapPin className="w-4 h-4 text-amber-500" />
                               {viewingWhisky.region}
@@ -3379,7 +3539,7 @@ export function AdminPage() {
 
                     {/* Tasting Notes */}
                     <div className="space-y-4">
-                      <h4 className="text-lg font-semibold text-slate-800 dark:text-white">Tadim Notları</h4>
+                      <h4 className="text-lg font-semibold text-slate-800 dark:text-white">{t('adminPage.whiskyDetails.labels.tastingNotes')}</h4>
                       
                       {viewingWhisky.aroma && (
                         <div className="bg-white/50 dark:bg-slate-700/50 rounded-xl p-4">
@@ -3399,7 +3559,7 @@ export function AdminPage() {
                             <div className="w-8 h-8 bg-gradient-to-r from-amber-400 to-orange-500 rounded-full flex items-center justify-center">
                               <span className="text-white text-sm font-medium">T</span>
                             </div>
-                            <h5 className="font-medium text-slate-800 dark:text-white">Damak Tadı</h5>
+                            <h5 className="font-medium text-slate-800 dark:text-white">{t('adminPage.whiskyDetails.labels.taste')}</h5>
                           </div>
                           <p className="text-slate-600 dark:text-slate-400 ml-10">{viewingWhisky.taste}</p>
                         </div>
@@ -3411,7 +3571,7 @@ export function AdminPage() {
                             <div className="w-8 h-8 bg-gradient-to-r from-purple-400 to-pink-500 rounded-full flex items-center justify-center">
                               <span className="text-white text-sm font-medium">F</span>
                             </div>
-                            <h5 className="font-medium text-slate-800 dark:text-white">Bitiş</h5>
+                            <h5 className="font-medium text-slate-800 dark:text-white">{t('adminPage.whiskyDetails.labels.finish')}</h5>
                           </div>
                           <p className="text-slate-600 dark:text-slate-400 ml-10">{viewingWhisky.finish}</p>
                         </div>
@@ -3420,17 +3580,17 @@ export function AdminPage() {
                       {!viewingWhisky.aroma && !viewingWhisky.taste && !viewingWhisky.finish && (
                         <div className="text-center py-8">
                           <Wine className="w-12 h-12 mx-auto text-slate-400 mb-4" />
-                          <p className="text-slate-500 dark:text-slate-400">Henüz tadim notu eklenmemiş</p>
+                          <p className="text-slate-500 dark:text-slate-400">{t('adminPage.whiskyDetails.labels.noTastingNotes')}</p>
                         </div>
                       )}
                     </div>
 
                     {/* Metadata */}
                     <div className="bg-white/50 dark:bg-slate-700/50 rounded-xl p-4">
-                      <h4 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">Sistem Bilgileri</h4>
+                      <h4 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">{t('adminPage.whiskyDetails.labels.metadata')}</h4>
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
-                          <span className="text-slate-600 dark:text-slate-400">Oluşturma Tarihi:</span>
+                          <span className="text-slate-600 dark:text-slate-400">{t('adminPage.whiskyDetails.labels.createdDate')}:</span>
                           <span className="text-slate-800 dark:text-white">
                             {new Date(viewingWhisky.created_at).toLocaleDateString('tr-TR', {
                               year: 'numeric',
@@ -3442,7 +3602,7 @@ export function AdminPage() {
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-slate-600 dark:text-slate-400">Son Güncelleme:</span>
+                          <span className="text-slate-600 dark:text-slate-400">{t('adminPage.whiskyDetails.labels.lastUpdated')}:</span>
                           <span className="text-slate-800 dark:text-white">
                             {new Date(viewingWhisky.updated_at).toLocaleDateString('tr-TR', {
                               year: 'numeric',
@@ -3472,14 +3632,14 @@ export function AdminPage() {
                     className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white rounded-lg transition-all duration-200"
                   >
                     <Edit2 className="w-4 h-4" />
-                    Düzenle
+                    {t('adminPage.whiskyDetails.buttons.edit')}
                   </button>
                   
                   <button
                     onClick={() => setViewingWhisky(null)}
                     className="flex-1 px-4 py-2 bg-slate-500/20 hover:bg-slate-500/30 text-slate-600 dark:text-slate-400 rounded-lg transition-colors"
                   >
-                    Kapat
+                    {t('adminPage.whiskyDetails.buttons.close')}
                   </button>
                 </div>
               </motion.div>
@@ -3497,8 +3657,8 @@ export function AdminPage() {
             {/* Groups Header */}
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Grup Yönetimi</h2>
-                <p className="text-slate-600 dark:text-slate-400">Topluluk gruplarını yönetin ({groups.length} grup yüklü)</p>
+                <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">{t('adminPage.groupManagement.title')}</h2>
+                <p className="text-slate-600 dark:text-slate-400">{t('adminPage.groupManagement.description', {count: groups.length})}</p>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -3507,17 +3667,17 @@ export function AdminPage() {
                     loadGroups()
                   }}
                   className="flex items-center gap-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all duration-200"
-                  title="Grupları Yenile"
+                  title={t('admin.refreshGroups')}
                 >
                   <Search className="w-4 h-4" />
-                  Yenile
+                  {t('admin.refresh')}
                 </button>
                 <button
                   onClick={() => setIsCreatingGroup(true)}
                   className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-lg transition-all duration-200"
                 >
                   <Plus className="w-4 h-4" />
-                  Yeni Grup
+                  {t('adminPage.groupManagement.buttons.createGroup')}
                 </button>
               </div>
             </div>
@@ -3531,13 +3691,13 @@ export function AdminPage() {
                     <div className="h-4 bg-slate-300 dark:bg-slate-600 rounded w-32 mx-auto mb-2"></div>
                     <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-48 mx-auto"></div>
                   </div>
-                  <p className="text-slate-500 mt-4">Gruplar yüklenmeyor...</p>
+                  <p className="text-slate-500 mt-4">{t('adminPage.groupManagement.loading')}</p>
                 </div>
               ) : groups.length === 0 ? (
                 <div className="text-center py-8">
                   <Users2 className="w-16 h-16 mx-auto mb-4 text-slate-400" />
-                  <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400 mb-2">Henüz grup yok</h3>
-                  <p className="text-slate-500">İlk grubu oluşturmak için "Yeni Grup" butonuna tıklayın</p>
+                  <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400 mb-2">{t('adminPage.groupManagement.noGroups')}</h3>
+                  <p className="text-slate-500">{t('adminPage.groupManagement.firstGroupMessage')}</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -3552,29 +3712,32 @@ export function AdminPage() {
                               group.privacy === 'private' ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400' :
                               'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
                             }`}>
-                              {group.privacy === 'public' ? 'Herkese Açık' :
-                               group.privacy === 'private' ? 'Özel' : 'Sadece Üyeler'}
+                              {group.privacy === 'public' ? t('adminPage.groupManagement.privacy.public') :
+                               group.privacy === 'private' ? t('adminPage.groupManagement.privacy.private') : t('adminPage.groupManagement.privacy.membersOnly')}
                             </span>
                           </div>
                           <p className="text-slate-600 dark:text-slate-400 mb-2">{group.description}</p>
                           <div className="flex items-center gap-4 text-sm text-slate-500">
-                            <span>📊 {group.member_count} üye</span>
+                            <span>📊 {group.member_count} {t('adminPage.groupManagement.members')}</span>
                             <span>📋 {group.category || 'Kategori yok'}</span>
                             <span>👥 Max: {group.max_members}</span>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => handleEditGroup(group)}
+                            onClick={() => {
+                              console.log('🖱️ Group edit button clicked!', group.id, group.name)
+                              handleEditGroup(group)
+                            }}
                             className="p-2 text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                            title="Grubu Düzenle"
+                            title={t('admin.editGroup')}
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => handleDeleteGroup(group.id, group.name)}
+                            onClick={() => handleDeleteGroup(String(group.id), group.name)}
                             className="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                            title="Grubu Sil"
+                            title="{t('admin.deleteGroup')}"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -3597,7 +3760,7 @@ export function AdminPage() {
                     className="glass-strong rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
                   >
                     <div className="flex items-center justify-between mb-6">
-                      <h3 className="text-xl font-bold text-slate-800 dark:text-white">Yeni Grup Oluştur</h3>
+                      <h3 className="text-xl font-bold text-slate-800 dark:text-white">{t('adminPage.groupManagement.titles.createGroup')}</h3>
                       <button
                         onClick={() => {
                           setIsCreatingGroup(false)
@@ -3625,7 +3788,7 @@ export function AdminPage() {
                           value={groupForm.name}
                           onChange={(e) => setGroupForm(prev => ({ ...prev, name: e.target.value }))}
                           className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                          placeholder="Grup adını girin"
+                          placeholder={t('admin.enterGroupName')}
                         />
                       </div>
 
@@ -3636,7 +3799,7 @@ export function AdminPage() {
                           onChange={(e) => setGroupForm(prev => ({ ...prev, description: e.target.value }))}
                           className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
                           rows={3}
-                          placeholder="Grup hakkında kısa bir açıklama"
+                          placeholder={t('adminPage.groupManagement.placeholders.description')}
                         />
                       </div>
 
@@ -3648,12 +3811,12 @@ export function AdminPage() {
                             onChange={(e) => setGroupForm(prev => ({ ...prev, category: e.target.value }))}
                             className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
                           >
-                            <option value="">Kategori seçin</option>
-                            <option value="whisky_tasting">Viski Tadımı</option>
-                            <option value="social">Sosyal</option>
-                            <option value="educational">Eğitim</option>
-                            <option value="competition">Yarışma</option>
-                            <option value="networking">Networking</option>
+                            <option value="">{t('adminPage.groupManagement.options.selectCategory')}</option>
+                            <option value="whisky_tasting">{t('adminPage.groupManagement.options.whiskyTasting')}</option>
+                            <option value="social">{t('adminPage.groupManagement.options.social')}</option>
+                            <option value="educational">{t('adminPage.groupManagement.options.educational')}</option>
+                            <option value="competition">{t('adminPage.groupManagement.options.competition')}</option>
+                            <option value="networking">{t('adminPage.groupManagement.options.networking')}</option>
                           </select>
                         </div>
 
@@ -3664,15 +3827,15 @@ export function AdminPage() {
                             onChange={(e) => setGroupForm(prev => ({ ...prev, privacy: e.target.value as 'public' | 'private' | 'members_only' }))}
                             className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
                           >
-                            <option value="public">Herkese Açık</option>
-                            <option value="members_only">Sadece Üyeler</option>
-                            <option value="private">Özel</option>
+                            <option value="public">{t('adminPage.groupManagement.options.public')}</option>
+                            <option value="members_only">{t('adminPage.groupManagement.options.membersOnly')}</option>
+                            <option value="private">{t('adminPage.groupManagement.options.private')}</option>
                           </select>
                         </div>
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Maksimum Üye Sayısı</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('adminPage.groupManagement.labels.maxMembers')}</label>
                         <input
                           type="number"
                           min="1"
@@ -3688,7 +3851,7 @@ export function AdminPage() {
                           onClick={handleCreateGroup}
                           className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white py-2 px-4 rounded-lg transition-all duration-200"
                         >
-                          Grup Oluştur
+                          {t('adminPage.groupManagement.buttons.createGroup')}
                         </button>
                         <button
                           onClick={() => {
@@ -3705,7 +3868,7 @@ export function AdminPage() {
                           }}
                           className="px-4 py-2 bg-slate-500/20 hover:bg-slate-500/30 text-slate-600 dark:text-slate-400 rounded-lg transition-colors"
                         >
-                          İptal
+                          {t('adminPage.whiskyForm.buttons.cancel')}
                         </button>
                       </div>
                     </div>
@@ -3717,7 +3880,11 @@ export function AdminPage() {
             {/* Edit Group Modal */}
             <AnimatePresence>
               {editingGroup && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                <div>
+                  {console.log('🎭 Rendering group edit modal:', editingGroup?.name)}
+                </div>) &&
+              (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -3725,7 +3892,7 @@ export function AdminPage() {
                     className="glass-strong rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
                   >
                     <div className="flex items-center justify-between mb-6">
-                      <h3 className="text-xl font-bold text-slate-800 dark:text-white">Grubu Düzenle</h3>
+                      <h3 className="text-xl font-bold text-slate-800 dark:text-white">{t('admin.editGroup')}</h3>
                       <button
                         onClick={() => setEditingGroup(null)}
                         className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-500 hover:text-red-500 rounded-lg transition-colors"
@@ -3763,12 +3930,12 @@ export function AdminPage() {
                             onChange={(e) => setGroupForm(prev => ({ ...prev, category: e.target.value }))}
                             className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
                           >
-                            <option value="">Kategori seçin</option>
-                            <option value="whisky_tasting">Viski Tadımı</option>
-                            <option value="social">Sosyal</option>
-                            <option value="educational">Eğitim</option>
-                            <option value="competition">Yarışma</option>
-                            <option value="networking">Networking</option>
+                            <option value="">{t('adminPage.groupManagement.options.selectCategory')}</option>
+                            <option value="whisky_tasting">{t('adminPage.groupManagement.options.whiskyTasting')}</option>
+                            <option value="social">{t('adminPage.groupManagement.options.social')}</option>
+                            <option value="educational">{t('adminPage.groupManagement.options.educational')}</option>
+                            <option value="competition">{t('adminPage.groupManagement.options.competition')}</option>
+                            <option value="networking">{t('adminPage.groupManagement.options.networking')}</option>
                           </select>
                         </div>
 
@@ -3779,15 +3946,15 @@ export function AdminPage() {
                             onChange={(e) => setGroupForm(prev => ({ ...prev, privacy: e.target.value as 'public' | 'private' | 'members_only' }))}
                             className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
                           >
-                            <option value="public">Herkese Açık</option>
-                            <option value="members_only">Sadece Üyeler</option>
-                            <option value="private">Özel</option>
+                            <option value="public">{t('adminPage.groupManagement.options.public')}</option>
+                            <option value="members_only">{t('adminPage.groupManagement.options.membersOnly')}</option>
+                            <option value="private">{t('adminPage.groupManagement.options.private')}</option>
                           </select>
                         </div>
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Maksimum Üye Sayısı</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('adminPage.groupManagement.labels.maxMembers')}</label>
                         <input
                           type="number"
                           min="1"
@@ -3803,13 +3970,13 @@ export function AdminPage() {
                           onClick={handleSaveGroup}
                           className="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white py-2 px-4 rounded-lg transition-all duration-200"
                         >
-                          Kaydet
+                          {t('admin.saveChanges')}
                         </button>
                         <button
                           onClick={() => setEditingGroup(null)}
                           className="px-4 py-2 bg-slate-500/20 hover:bg-slate-500/30 text-slate-600 dark:text-slate-400 rounded-lg transition-colors"
                         >
-                          İptal
+                          {t('adminPage.whiskyForm.buttons.cancel')}
                         </button>
                       </div>
                     </div>
@@ -3830,8 +3997,8 @@ export function AdminPage() {
             {/* Events Header */}
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Etkinlik Yönetimi</h2>
-                <p className="text-slate-600 dark:text-slate-400">Topluluk etkinliklerini yönetin ({events.length} etkinlik yüklü)</p>
+                <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">{t('adminPage.eventManagement.title')}</h2>
+                <p className="text-slate-600 dark:text-slate-400">{t('adminPage.eventManagement.description', {count: events.length})}</p>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -3840,17 +4007,17 @@ export function AdminPage() {
                     loadEvents()
                   }}
                   className="flex items-center gap-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all duration-200"
-                  title="Etkinlikleri Yenile"
+                  title={t('admin.refreshEvents')}
                 >
                   <Search className="w-4 h-4" />
-                  Yenile
+                  {t('admin.refresh')}
                 </button>
                 <button
                   onClick={() => setIsCreatingEvent(true)}
                   className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white rounded-lg transition-all duration-200"
                 >
                   <Plus className="w-4 h-4" />
-                  Yeni Etkinlik
+                  {t('adminPage.eventManagement.buttons.createEvent')}
                 </button>
               </div>
             </div>
@@ -3864,13 +4031,13 @@ export function AdminPage() {
                     <div className="h-4 bg-slate-300 dark:bg-slate-600 rounded w-32 mx-auto mb-2"></div>
                     <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-48 mx-auto"></div>
                   </div>
-                  <p className="text-slate-500 mt-4">Etkinlikler yüklenmeyor...</p>
+                  <p className="text-slate-500 mt-4">{t('admin.loadingEvents')}</p>
                 </div>
               ) : events.length === 0 ? (
                 <div className="text-center py-8">
                   <CalendarDays className="w-16 h-16 mx-auto mb-4 text-slate-400" />
-                  <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400 mb-2">Henüz etkinlik yok</h3>
-                  <p className="text-slate-500">İlk etkinliği oluşturmak için "Yeni Etkinlik" butonuna tıklayın</p>
+                  <h3 className="text-lg font-medium text-slate-600 dark:text-slate-400 mb-2">{t('adminPage.eventManagement.noEvents')}</h3>
+                  <p className="text-slate-500">{t('adminPage.eventManagement.noEventsDescription')}</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -3886,16 +4053,16 @@ export function AdminPage() {
                               event.status === 'completed' ? 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400' :
                               'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
                             }`}>
-                              {event.status === 'upcoming' ? 'Yaklaşan' :
-                               event.status === 'ongoing' ? 'Devam Ediyor' :
-                               event.status === 'completed' ? 'Tamamlandı' : 'İptal'}
+                              {event.status === 'upcoming' ? t("adminPage.eventManagement.status.upcoming") :
+                               event.status === 'ongoing' ? t("adminPage.eventManagement.status.ongoing") :
+                               event.status === 'completed' ? t("adminPage.eventManagement.status.completed") : t("adminPage.eventManagement.status.cancelled")}
                             </span>
                           </div>
                           <p className="text-slate-600 dark:text-slate-400 mb-2">{event.description}</p>
                           <div className="flex items-center gap-4 text-sm text-slate-500">
                             <span>📅 {new Date(event.start_date).toLocaleDateString('tr-TR')}</span>
-                            <span>📊 {event.participant_count} katılımcı</span>
-                            <span>💰 Ücretsiz</span>
+                            <span>📊 {event.participant_count} {t('adminPage.eventManagement.participants')}</span>
+                            <span>💰 {t('adminPage.eventManagement.free')}</span>
                             {event.group_name && <span>👥 {event.group_name}</span>}
                           </div>
                         </div>
@@ -3903,12 +4070,12 @@ export function AdminPage() {
                           <button
                             onClick={() => handleEditEvent(event)}
                             className="p-2 text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                            title="Etkinliği Düzenle"
+                            title={t('admin.editEvent')}
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => handleDeleteEvent(event.id, event.title)}
+                            onClick={() => handleDeleteEvent(String(event.id), event.title)}
                             className="p-2 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                             title="Etkinliği Sil"
                           >
@@ -3933,7 +4100,7 @@ export function AdminPage() {
                     className="glass-strong rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
                   >
                     <div className="flex items-center justify-between mb-6">
-                      <h3 className="text-xl font-bold text-slate-800 dark:text-white">Yeni Etkinlik Oluştur</h3>
+                      <h3 className="text-xl font-bold text-slate-800 dark:text-white">{t('adminPage.eventManagement.createEvent')}</h3>
                       <button
                         onClick={() => {
                           setIsCreatingEvent(false)
@@ -3961,52 +4128,52 @@ export function AdminPage() {
 
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Etkinlik Başlığı *</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('adminPage.eventManagement.labels.eventTitle')} *</label>
                         <input
                           type="text"
                           value={eventForm.title}
                           onChange={(e) => setEventForm(prev => ({ ...prev, title: e.target.value }))}
                           className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                          placeholder="Etkinlik başlığını girin"
+                          placeholder={t('adminPage.eventManagement.placeholders.eventTitle')}
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Açıklama</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('adminPage.eventManagement.labels.description')}</label>
                         <textarea
                           value={eventForm.description}
                           onChange={(e) => setEventForm(prev => ({ ...prev, description: e.target.value }))}
                           className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
                           rows={3}
-                          placeholder="Etkinlik hakkında kısa bir açıklama"
+                          placeholder={t('adminPage.eventManagement.placeholders.description')}
                         />
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Etkinlik Türü</label>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('adminPage.eventManagement.labels.eventType')}</label>
                           <select
                             value={eventForm.event_type}
                             onChange={(e) => setEventForm(prev => ({ ...prev, event_type: e.target.value }))}
                             className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
                           >
-                            <option value="">Tür seçin</option>
-                            <option value="tasting">Tadım</option>
-                            <option value="workshop">Workshop</option>
-                            <option value="meetup">Buluşma</option>
-                            <option value="competition">Yarışma</option>
-                            <option value="seminar">Seminer</option>
+                            <option value="">{t('adminPage.eventManagement.placeholders.eventType')}</option>
+                            <option value="tasting">{t('adminPage.eventManagement.options.tasting')}</option>
+                            <option value="workshop">{t('adminPage.eventManagement.options.workshop')}</option>
+                            <option value="meetup">{t('adminPage.eventManagement.options.meetup')}</option>
+                            <option value="competition">{t('adminPage.groupManagement.options.competition')}</option>
+                            <option value="seminar">{t('adminPage.eventManagement.options.seminar')}</option>
                           </select>
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Bağlı Grup</label>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('adminPage.eventManagement.labels.group')}</label>
                           <select
                             value={eventForm.group_id}
                             onChange={(e) => setEventForm(prev => ({ ...prev, group_id: e.target.value }))}
                             className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
                           >
-                            <option value="">Grup seçin (opsiyonel)</option>
+                            <option value="">{t('adminPage.eventManagement.placeholders.group')}</option>
                             {groups.map(group => (
                               <option key={group.id} value={group.id}>{group.name}</option>
                             ))}
@@ -4016,7 +4183,7 @@ export function AdminPage() {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Başlangıç Tarihi *</label>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('adminPage.eventManagement.labels.startDate')} *</label>
                           <input
                             type="datetime-local"
                             value={eventForm.start_date}
@@ -4026,7 +4193,7 @@ export function AdminPage() {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Bitiş Tarihi</label>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('adminPage.eventManagement.labels.endDate')}</label>
                           <input
                             type="datetime-local"
                             value={eventForm.end_date}
@@ -4038,7 +4205,7 @@ export function AdminPage() {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Konum</label>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('adminPage.eventManagement.labels.location')}</label>
                           <input
                             type="text"
                             value={eventForm.location}
@@ -4049,7 +4216,7 @@ export function AdminPage() {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Online Link</label>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('adminPage.eventManagement.labels.virtualLink')}</label>
                           <input
                             type="url"
                             value={eventForm.virtual_link}
@@ -4062,7 +4229,7 @@ export function AdminPage() {
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Max Katılımcı</label>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('adminPage.eventManagement.labels.maxParticipants')}</label>
                           <input
                             type="number"
                             min="1"
@@ -4081,7 +4248,7 @@ export function AdminPage() {
                           onClick={handleCreateEvent}
                           className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white py-2 px-4 rounded-lg transition-all duration-200"
                         >
-                          Etkinlik Oluştur
+                          {t('adminPage.eventManagement.buttons.createEvent')}
                         </button>
                         <button
                           onClick={() => {
@@ -4104,7 +4271,7 @@ export function AdminPage() {
                           }}
                           className="px-4 py-2 bg-slate-500/20 hover:bg-slate-500/30 text-slate-600 dark:text-slate-400 rounded-lg transition-colors"
                         >
-                          İptal
+                          {t('adminPage.whiskyForm.buttons.cancel')}
                         </button>
                       </div>
                     </div>
@@ -4135,7 +4302,7 @@ export function AdminPage() {
 
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Etkinlik Başlığı *</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('adminPage.eventManagement.labels.title')} *</label>
                         <input
                           type="text"
                           value={eventForm.title}
@@ -4145,7 +4312,7 @@ export function AdminPage() {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Açıklama</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('adminPage.eventManagement.labels.description')}</label>
                         <textarea
                           value={eventForm.description}
                           onChange={(e) => setEventForm(prev => ({ ...prev, description: e.target.value }))}
@@ -4156,29 +4323,29 @@ export function AdminPage() {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Etkinlik Türü</label>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('adminPage.eventManagement.labels.eventType')}</label>
                           <select
                             value={eventForm.event_type}
                             onChange={(e) => setEventForm(prev => ({ ...prev, event_type: e.target.value }))}
                             className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
                           >
-                            <option value="">Tür seçin</option>
-                            <option value="tasting">Tadım</option>
-                            <option value="workshop">Workshop</option>
-                            <option value="meetup">Buluşma</option>
-                            <option value="competition">Yarışma</option>
-                            <option value="seminar">Seminer</option>
+                            <option value="">{t('adminPage.eventManagement.placeholders.eventType')}</option>
+                            <option value="tasting">{t('adminPage.eventManagement.options.tasting')}</option>
+                            <option value="workshop">{t('adminPage.eventManagement.options.workshop')}</option>
+                            <option value="meetup">{t('adminPage.eventManagement.options.meetup')}</option>
+                            <option value="competition">{t('adminPage.groupManagement.options.competition')}</option>
+                            <option value="seminar">{t('adminPage.eventManagement.options.seminar')}</option>
                           </select>
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Bağlı Grup</label>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('adminPage.eventManagement.labels.group')}</label>
                           <select
                             value={eventForm.group_id}
                             onChange={(e) => setEventForm(prev => ({ ...prev, group_id: e.target.value }))}
                             className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white/50 dark:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-primary-500"
                           >
-                            <option value="">Grup seçin (opsiyonel)</option>
+                            <option value="">{t('adminPage.eventManagement.placeholders.group')}</option>
                             {groups.map(group => (
                               <option key={group.id} value={group.id}>{group.name}</option>
                             ))}
@@ -4188,7 +4355,7 @@ export function AdminPage() {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Başlangıç Tarihi *</label>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('adminPage.eventManagement.labels.startDate')} *</label>
                           <input
                             type="datetime-local"
                             value={eventForm.start_date}
@@ -4198,7 +4365,7 @@ export function AdminPage() {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Bitiş Tarihi</label>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('adminPage.eventManagement.labels.endDate')}</label>
                           <input
                             type="datetime-local"
                             value={eventForm.end_date}
@@ -4220,7 +4387,7 @@ export function AdminPage() {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Online Link</label>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('adminPage.eventManagement.labels.virtualLink')}</label>
                           <input
                             type="url"
                             value={eventForm.virtual_link}
@@ -4232,7 +4399,7 @@ export function AdminPage() {
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Max Katılımcı</label>
+                          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('adminPage.eventManagement.labels.maxParticipants')}</label>
                           <input
                             type="number"
                             min="1"
@@ -4251,13 +4418,13 @@ export function AdminPage() {
                           onClick={handleSaveEvent}
                           className="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white py-2 px-4 rounded-lg transition-all duration-200"
                         >
-                          Kaydet
+                          {t('admin.saveChanges')}
                         </button>
                         <button
                           onClick={() => setEditingEvent(null)}
                           className="px-4 py-2 bg-slate-500/20 hover:bg-slate-500/30 text-slate-600 dark:text-slate-400 rounded-lg transition-colors"
                         >
-                          İptal
+                          {t('adminPage.whiskyForm.buttons.cancel')}
                         </button>
                       </div>
                     </div>
@@ -4267,6 +4434,29 @@ export function AdminPage() {
             </AnimatePresence>
           </motion.div>
         )}
+
+        {/* Background Management Tab */}
+        {activeTab === 'background' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            <BackgroundManager />
+          </motion.div>
+        )}
+
+        {/* Translations Management Tab */}
+        {activeTab === 'translations' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            <TranslationManagement />
+          </motion.div>
+        )}
+
       </div>
     </div>
   )

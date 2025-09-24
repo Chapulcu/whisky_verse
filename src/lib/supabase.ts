@@ -19,7 +19,47 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: false, // Disable in production for Docker
+    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+    storageKey: 'whiskyverse-supabase-auth',
+    flowType: 'pkce'
+  },
+  global: {
+    headers: {
+      'X-Client-Info': 'whiskyverse-web'
+    },
+    fetch: (url, options = {}) => {
+      // Add AbortController for timeout
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+
+      const enhancedOptions = {
+        ...options,
+        signal: controller.signal
+      }
+
+      console.log(`🌐 Supabase fetch: ${url}`)
+
+      return fetch(url, enhancedOptions)
+        .then(response => {
+          clearTimeout(timeoutId)
+          console.log(`✅ Supabase response: ${response.status}`)
+          return response
+        })
+        .catch(error => {
+          clearTimeout(timeoutId)
+          console.log(`❌ Supabase error: ${error.message}`)
+          throw error
+        })
+    }
+  },
+  db: {
+    schema: 'public'
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 2
+    }
   }
 })
 
