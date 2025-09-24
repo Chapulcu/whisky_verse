@@ -584,6 +584,12 @@
       "taste": "Taste",
       "finish": "Finish"
     },
+    "removeModal": {
+      "title": "Remove from Collection",
+      "message": "are you sure you want to remove this whisky from your collection?",
+      "cancel": "Cancel",
+      "confirm": "Remove"
+    },
     "toasts": {
       "ratingUpdated": "Rating updated",
       "ratingUpdateError": "Could not update rating",

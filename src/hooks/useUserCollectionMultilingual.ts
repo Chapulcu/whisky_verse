@@ -41,7 +41,13 @@ export interface MultilingualUserWhiskyDB {
 }
 
 function pickBestTranslation(row: MultilingualWhiskyRow, lang: AppLanguage): { t: any; langUsed: AppLanguage } | null {
-  const pref = [lang, 'en', 'tr'] as AppLanguage[]
+  // For Turkish, always prefer original whiskies table data (base Turkish data)
+  if (lang === 'tr') {
+    return null // Force fallback to original Turkish data from whiskies table
+  }
+
+  // For other languages, prioritize: requested language, then fallback order
+  const pref = [lang, 'tr', 'en'] as AppLanguage[]
   const translations = row.whisky_translations || []
   for (const code of pref) {
     const t = translations.find(x => x.language_code === code)

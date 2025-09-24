@@ -584,6 +584,12 @@
       "taste": "Tat",
       "finish": "Final"
     },
+    "removeModal": {
+      "title": "Koleksiyondan Kaldır",
+      "message": "isimli whisky'yi koleksiyonunuzdan kaldırmak istediğinizden emin misiniz?",
+      "cancel": "İptal",
+      "confirm": "Kaldır"
+    },
     "toasts": {
       "ratingUpdated": "Değerlendirme güncellendi",
       "ratingUpdateError": "Değerlendirme güncellenemedi",

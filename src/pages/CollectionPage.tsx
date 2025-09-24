@@ -52,6 +52,11 @@ export function CollectionPage() {
   const [notesValue, setNotesValue] = useState('')
   const [selectedWhisky, setSelectedWhisky] = useState<MultilingualUserWhiskyDB['whisky'] | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [removeConfirmModal, setRemoveConfirmModal] = useState<{ isOpen: boolean, itemId: number | null, whiskyName: string }>({
+    isOpen: false,
+    itemId: null,
+    whiskyName: ''
+  })
   const [filterType, setFilterType] = useState<'all' | 'tasted' | 'untasted'>('all')
   const [sortBy, setSortBy] = useState<'name' | 'rating' | 'added_date' | 'country' | 'type'>('added_date')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
@@ -150,16 +155,27 @@ export function CollectionPage() {
   }
 
   const handleRemove = async (itemId: number, whiskyName: string) => {
-    if (!confirm(`"${whiskyName}" ${t('collectionPage.whiskyCard.confirmRemove')}`)) {
-      return
-    }
-    
+    setRemoveConfirmModal({
+      isOpen: true,
+      itemId,
+      whiskyName
+    })
+  }
+
+  const confirmRemove = async () => {
+    if (!removeConfirmModal.itemId) return
+
     try {
-      await removeFromCollection(itemId)
+      await removeFromCollection(removeConfirmModal.itemId)
       toast.success(t('collectionPage.toasts.whiskyRemoved'))
+      setRemoveConfirmModal({ isOpen: false, itemId: null, whiskyName: '' })
     } catch (error) {
       toast.error(t('collectionPage.toasts.whiskyRemoveError'))
     }
+  }
+
+  const cancelRemove = () => {
+    setRemoveConfirmModal({ isOpen: false, itemId: null, whiskyName: '' })
   }
 
   const handleNotesEdit = (itemId: number, currentNotes: string) => {
@@ -971,6 +987,54 @@ export function CollectionPage() {
                         </p>
                       </div>
                     )}
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Remove Confirmation Modal */}
+        <AnimatePresence>
+          {removeConfirmModal.isOpen && (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[10000] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="glass-card max-w-md w-full p-6"
+              >
+                <div className="text-center">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-red-500 to-pink-600 rounded-2xl flex items-center justify-center">
+                    <Trash2 className="w-8 h-8 text-white" />
+                  </div>
+
+                  <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">
+                    {t('collectionPage.removeModal.title')}
+                  </h3>
+
+                  <p className="text-slate-600 dark:text-slate-400 mb-6">
+                    <span className="font-medium text-slate-800 dark:text-white">
+                      "{removeConfirmModal.whiskyName}"
+                    </span>{' '}
+                    {t('collectionPage.removeModal.message')}
+                  </p>
+
+                  <div className="flex gap-3 justify-center">
+                    <button
+                      onClick={cancelRemove}
+                      className="glass-button-secondary px-6 py-3 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 flex items-center gap-2"
+                    >
+                      <X className="w-4 h-4" />
+                      {t('collectionPage.removeModal.cancel')}
+                    </button>
+                    <button
+                      onClick={confirmRemove}
+                      className="glass-button-danger px-6 py-3 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 flex items-center gap-2"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      {t('collectionPage.removeModal.confirm')}
+                    </button>
                   </div>
                 </div>
               </motion.div>
