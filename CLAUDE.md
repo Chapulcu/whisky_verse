@@ -95,6 +95,21 @@ VITE_SUPABASE_URL=your_supabase_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
+### 🚨 KRİTİK BİLGİ KURTARMA
+```bash
+# .env dosyası kaybolursa kritik bilgileri geri yükle:
+cp .env.backup .env
+
+# API bağlantısını test et:
+node tests/test_connection.js
+
+# Supabase bilgileri doğrula:
+cat .env.backup
+
+# Test dosyalarındaki çalışan değerler:
+grep -r "supabase.co" tests/ | head -3
+```
+
 ## 🚀 Deployment
 
 ### Docker ile Production
