@@ -2,7 +2,7 @@
 
 ## Overview
 
-WhiskyVerse follows a modern React architecture with TypeScript, focusing on reusability, maintainability, and performance. This document outlines the component structure, data flow, and architectural decisions.
+WhiskyVerse follows a modern React 18.3.1 architecture with TypeScript 5.6.2, emphasizing component reusability, type safety, and optimal performance. This document details the component structure, data flow patterns, and key architectural decisions including the recent glassmorphism UI updates and enhanced multilingual support.
 
 ## 📊 Architecture Diagram
 

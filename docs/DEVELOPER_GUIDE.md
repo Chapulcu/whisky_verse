@@ -49,23 +49,48 @@ Welcome to WhiskyVerse! This comprehensive guide will help you get started as a 
 ### Technology Stack
 
 **Frontend:**
-- **React 18.3.1** - UI framework
-- **TypeScript 5.6.2** - Type safety
-- **Vite 6.0.1** - Build tool & dev server
-- **Tailwind CSS 3.4.16** - Styling
-- **Framer Motion 12.23.12** - Animations
+- **React 18.3.1** - Modern React with concurrent features and hooks
+- **TypeScript 5.6.2** - Type-safe development with latest TS features
+- **Vite 6.0.1** - Lightning-fast build tool and dev server
+- **Tailwind CSS 3.4.16** - Utility-first CSS framework
+- **Framer Motion 12.23.12** - Smooth animations and micro-interactions
 
-**Backend:**
-- **Supabase** - Backend-as-a-Service
-- **PostgreSQL** - Primary database
-- **Supabase Storage** - File storage
-- **Row Level Security** - Data security
+**Backend & Database:**
+- **Supabase** - Backend-as-a-Service with PostgreSQL database
+- **Row Level Security (RLS)** - Database-level security policies
+- **Real-time subscriptions** - Live data updates and notifications
 
-**Additional Tools:**
-- **React Router** - Client-side routing
-- **i18next** - Internationalization (TR/EN)
-- **React Hot Toast** - Notifications
-- **Lucide React** - Icons
+**Key Libraries:**
+- **React Router DOM 6.28.0** - Client-side routing and navigation
+- **React Hot Toast 2.6.0** - Beautiful toast notifications
+- **i18next 25.3.6** - Internationalization (TR/EN/RU support)
+- **Lucide React 0.462.0** - Beautiful icon library
+- **Recharts 3.2.1** - Data visualization and charts
+
+### Key Features & Recent Updates
+
+**🎨 UI & Design:**
+- **Glassmorphism Design** - Modern glass-effect UI components
+- **Light/Dark Theme** - Seamless theme switching with system preference detection
+- **Responsive Design** - Mobile-first approach with Tailwind CSS
+- **Smooth Animations** - Framer Motion for micro-interactions
+
+**🌍 Multilingual Support:**
+- **Three Languages** - Turkish (primary), English, Russian
+- **Smart Language Priority** - Turkish content prioritized when available
+- **Translation Workflow** - N8N automation for content translation
+- **Real-time Language Switching** - Instant UI language changes
+
+**📱 Collections Management:**
+- **Advanced Filtering** - Multiple filter options with real-time search
+- **Modal-based Interactions** - Glassmorphism confirmation modals
+- **Rating System** - 5-star rating with personal notes
+- **Alphabetical Indexing** - Quick navigation through whisky names
+
+**🏠 Homepage Features:**
+- **Featured Whiskies** - Horizontal scrollable showcase with click-to-detail
+- **Upcoming Events** - Dynamic event listings with join functionality
+- **Dynamic Backgrounds** - Video background management system
 
 ### Project Structure Explained
 

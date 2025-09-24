@@ -2,7 +2,16 @@
 
 ## 🎯 Proje Özeti
 
-WhiskyVerse, Supabase backend'i ile React 18.3.1 kullanılarak geliştirilen modern bir viski topluluğu platformudur. Bu rapor, projenin mevcut durumunu, yeni eklenen özellikleri ve gelecekteki geliştirmeler için önerileri içermektedir.
+WhiskyVerse, React 18.3.1, TypeScript 5.6.2, Vite 6.0.1 ve Supabase kullanılarak geliştirilen, glassmorphism tasarımlı modern viski topluluğu platformudur. 2025 güncellemeleri ile çoklu dil desteği, gelişmiş koleksiyon yönetimi ve kullanıcı dostu modal sistemleri eklenmiştir. Bu rapor projenin güncel durumunu, son eklenen özellikleri ve teknik detayları içermektedir.
+
+## 🆕 Son Güncellemeler (2025)
+
+### ✨ Yeni Özellikler
+- **🎨 Glassmorphism UI Redesign** - Modern cam efektli tasarım sistemi
+- **🌍 Gelişmiş Çoklu Dil Sistemi** - Türkçe öncelikli dil seçimi
+- **📱 Collections Modal İyileştirmeleri** - Onay modalları ve light mode uyumluluğu
+- **🏠 Homepage Zenginleştirmesi** - Öne çıkan viskiler ve etkinlik bölümleri
+- **🔧 Admin Panel Optimizasyonu** - Streamlined admin kontrolleri
 
 ---
 
