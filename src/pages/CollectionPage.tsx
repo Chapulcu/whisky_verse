@@ -904,7 +904,7 @@ export function CollectionPage() {
         {/* Whisky Detail Modal */}
         <AnimatePresence>
           {isModalOpen && selectedWhisky && (
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[10000] flex items-center justify-center p-4">
+            <div className="fixed inset-0 bg-black/10 backdrop-blur-sm z-[10000] flex items-center justify-center p-4">
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -943,19 +943,19 @@ export function CollectionPage() {
                   <div className="space-y-4">
                     <div>
                       <h3 className="font-semibold text-slate-800 dark:text-white mb-2">{t('collectionPage.modal.details')}</h3>
-                      <div className="space-y-2 text-sm">
-                        <div><strong>{t('collectionPage.modal.type')}:</strong> {selectedWhisky.type}</div>
-                        <div><strong>{t('collectionPage.modal.country')}:</strong> {selectedWhisky.country}</div>
-                        {selectedWhisky.region && <div><strong>{t('collectionPage.modal.region')}:</strong> {selectedWhisky.region}</div>}
-                        {selectedWhisky.alcohol_percentage && <div><strong>ABV:</strong> {selectedWhisky.alcohol_percentage}%</div>}
-                        {selectedWhisky.age_years && <div><strong>{t('collectionPage.modal.age')}:</strong> {selectedWhisky.age_years} {t('collectionPage.modal.years')}</div>}
+                      <div className="space-y-2 text-sm text-slate-800 dark:text-slate-300">
+                        <div><strong className="text-slate-900 dark:text-white">{t('collectionPage.modal.type')}:</strong> <span className="text-slate-800 dark:text-slate-300">{selectedWhisky.type}</span></div>
+                        <div><strong className="text-slate-900 dark:text-white">{t('collectionPage.modal.country')}:</strong> <span className="text-slate-800 dark:text-slate-300">{selectedWhisky.country}</span></div>
+                        {selectedWhisky.region && <div><strong className="text-slate-900 dark:text-white">{t('collectionPage.modal.region')}:</strong> <span className="text-slate-800 dark:text-slate-300">{selectedWhisky.region}</span></div>}
+                        {selectedWhisky.alcohol_percentage && <div><strong className="text-slate-900 dark:text-white">ABV:</strong> <span className="text-slate-800 dark:text-slate-300">{selectedWhisky.alcohol_percentage}%</span></div>}
+                        {selectedWhisky.age_years && <div><strong className="text-slate-900 dark:text-white">{t('collectionPage.modal.age')}:</strong> <span className="text-slate-800 dark:text-slate-300">{selectedWhisky.age_years} {t('collectionPage.modal.years')}</span></div>}
                       </div>
                     </div>
                     
                     {selectedWhisky.description && (
                       <div>
                         <h3 className="font-semibold text-slate-800 dark:text-white mb-2">{t('collectionPage.modal.description')}</h3>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
+                        <p className="text-sm text-slate-800 dark:text-slate-300 leading-relaxed">
                           {selectedWhisky.description}
                         </p>
                       </div>
@@ -964,7 +964,7 @@ export function CollectionPage() {
                     {selectedWhisky.aroma && (
                       <div>
                         <h3 className="font-semibold text-slate-800 dark:text-white mb-2">{t('collectionPage.modal.aroma')}</h3>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
+                        <p className="text-sm text-slate-800 dark:text-slate-300 leading-relaxed">
                           {selectedWhisky.aroma}
                         </p>
                       </div>
@@ -973,7 +973,7 @@ export function CollectionPage() {
                     {selectedWhisky.taste && (
                       <div>
                         <h3 className="font-semibold text-slate-800 dark:text-white mb-2">{t('collectionPage.modal.taste')}</h3>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
+                        <p className="text-sm text-slate-800 dark:text-slate-300 leading-relaxed">
                           {selectedWhisky.taste}
                         </p>
                       </div>
@@ -981,8 +981,8 @@ export function CollectionPage() {
                     
                     {selectedWhisky.finish && (
                       <div>
-                        <h3 className="font-semibold text-slate-800 dark:text-white mb-2">{t('collectionPage.modal.finish')}</h3>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
+                        <h3 className="font-semibold text-slate-900 dark:text-white mb-2">{t('collectionPage.modal.finish')}</h3>
+                        <p className="text-sm text-slate-800 dark:text-slate-300 leading-relaxed">
                           {selectedWhisky.finish}
                         </p>
                       </div>
