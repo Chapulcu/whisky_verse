@@ -248,10 +248,11 @@ export function AdminPage() {
     try {
       console.log('AdminPage: Starting to load whiskies with chunked approach...')
       
-      // First, get the total count
+      // First, get the total count (bypass cache)
       const { count, error: countError } = await supabase
         .from('whiskies')
         .select('*', { count: 'exact', head: true })
+        .gte('created_at', '2020-01-01') // Force cache bypass
 
       if (countError) {
         console.error('AdminPage: Error getting count:', countError)
@@ -280,6 +281,7 @@ export function AdminPage() {
         const { data, error } = await supabase
           .from('whiskies')
           .select('*')
+          .gte('created_at', '2020-01-01') // Force cache bypass
           .range(start, end)
           .order('name')
 
@@ -772,21 +774,28 @@ export function AdminPage() {
   }
 
   const handleEditWhisky = (whisky: Whisky) => {
-    setEditingWhisky(whisky)
+    // Find the latest version of this whisky from state
+    const currentWhisky = whiskies.find(w => w.id === whisky.id) || whisky
+    console.log('🔧 Opening edit modal for whisky:', currentWhisky.id, currentWhisky.name)
+    console.log('📊 Using latest data:', currentWhisky.updated_at)
+
+    // Reset loading state when opening modal
+    setIsWhiskyLoading(false)
+    setEditingWhisky(currentWhisky)
     setWhiskyForm({
-      name: whisky.name,
-      type: whisky.type,
-      country: whisky.country,
-      region: whisky.region || '',
-      alcohol_percentage: whisky.alcohol_percentage,
-      rating: whisky.rating,
-      age_years: whisky.age_years || null, 
-      color: whisky.color || '',
-      aroma: whisky.aroma || '',
-      taste: whisky.taste || '',
-      finish: whisky.finish || '',
-      description: whisky.description || '',
-      image_url: whisky.image_url || '',
+      name: currentWhisky.name,
+      type: currentWhisky.type,
+      country: currentWhisky.country,
+      region: currentWhisky.region || '',
+      alcohol_percentage: currentWhisky.alcohol_percentage,
+      rating: currentWhisky.rating,
+      age_years: currentWhisky.age_years || null,
+      color: currentWhisky.color || '',
+      aroma: currentWhisky.aroma || '',
+      taste: currentWhisky.taste || '',
+      finish: currentWhisky.finish || '',
+      description: currentWhisky.description || '',
+      image_url: currentWhisky.image_url || '',
       selectedImageFile: null
     })
   }
@@ -838,6 +847,16 @@ export function AdminPage() {
 
       console.log('✅ Whisky updated successfully:', result)
 
+      // Update the whisky in current state immediately
+      if (result.whisky) {
+        setWhiskies(prevWhiskies =>
+          prevWhiskies.map(w =>
+            w.id === editingWhisky.id ? { ...w, ...result.whisky } : w
+          )
+        )
+        console.log('🔄 Updated whisky in state:', result.whisky.id)
+      }
+
       // Reset editing state and form
       setEditingWhisky(null)
       setWhiskyForm({
@@ -857,7 +876,7 @@ export function AdminPage() {
         selectedImageFile: null
       })
 
-      // Reload whiskies list
+      // Also reload whiskies list as backup
       await loadWhiskies()
 
     } catch (error: any) {
