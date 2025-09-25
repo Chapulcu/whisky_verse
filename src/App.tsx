@@ -18,6 +18,7 @@ import { AdminPage } from '@/pages/AdminPage'
 import { GroupsPage } from '@/pages/GroupsPage'
 import { EventsPage } from '@/pages/EventsPage'
 import { UpgradePage } from '@/pages/UpgradePage'
+import { CameraPage } from '@/pages/CameraPage'
 import '@/lib/i18n'
 import './index.css'
 
@@ -98,6 +99,11 @@ function App() {
               <Route path="profile" element={
                 <SafePage>
                   <ProfilePage />
+                </SafePage>
+              } />
+              <Route path="camera" element={
+                <SafePage>
+                  <CameraPage />
                 </SafePage>
               } />
               <Route path="admin" element={

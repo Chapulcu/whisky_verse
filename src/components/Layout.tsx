@@ -3,6 +3,8 @@ import { Outlet } from 'react-router-dom'
 import { Navigation } from './Navigation'
 import { ScrollToTop } from './ScrollToTop'
 import { useBackgroundManagement } from '@/hooks/useBackgroundManagement'
+import { MobileNavigation } from './mobile/MobileNavigation'
+import { PWAInstallPrompt } from './mobile/PWAInstallPrompt'
 import { Toaster } from 'react-hot-toast'
 
 export function Layout() {
@@ -81,7 +83,7 @@ export function Layout() {
         <Navigation />
         
         {/* Main Content */}
-        <main className="pt-20 md:pt-24 pb-8">
+        <main className="pt-20 md:pt-24 pb-20 md:pb-8">
           <div className="container mx-auto mobile-padding">
             <Outlet />
           </div>
@@ -131,6 +133,12 @@ export function Layout() {
           },
         }}
       />
+
+      {/* Mobile Navigation */}
+      <MobileNavigation />
+
+      {/* PWA Install Prompt */}
+      <PWAInstallPrompt />
     </div>
   )
 }

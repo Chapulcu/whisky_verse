@@ -46,6 +46,62 @@
     min-height: 100vh;
   }
 
+  /* Mobile optimizations */
+  .mobile-padding {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .h-safe-area-inset-bottom {
+    height: env(safe-area-inset-bottom);
+  }
+
+  /* Touch targets */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Prevent zoom on form inputs on mobile */
+  @media (max-width: 768px) {
+    input, select, textarea {
+      font-size: 16px;
+    }
+  }
+
+  /* Smooth scrolling for mobile */
+  html {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Prevent horizontal scroll */
+  body {
+    overflow-x: hidden;
+  }
+
+  /* Mobile-friendly hover states */
+  @media (hover: hover) {
+    .hover-scale:hover {
+      transform: scale(1.05);
+    }
+  }
+
+  /* Touch device optimizations */
+  @media (pointer: coarse) {
+    .glass-card {
+      @apply p-6;
+    }
+
+    button, .btn {
+      min-height: 48px;
+      min-width: 48px;
+    }
+  }
+
   /* Cyber Grid Background */
   .cyber-bg {
     background-image: 
