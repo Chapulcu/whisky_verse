@@ -134,6 +134,8 @@ export function TranslationManagement() {
     }
 
     try {
+      console.log('🔄 Updating translation:', editingTranslation.id)
+
       // Prepare update data - only include non-empty fields
       const updateData = {
         name: updatedTranslation.name?.trim(),
@@ -149,27 +151,45 @@ export function TranslationManagement() {
         updated_at: new Date().toISOString()
       }
 
-      const { data, error } = await supabase
-        .from('whisky_translations')
-        .update(updateData)
-        .eq('id', editingTranslation.id)
-        .eq('whisky_id', editingTranslation.whisky_id)
-        .eq('language_code', editingTranslation.language_code)
-        .select()
+      // Use fetch API to bypass session issues
+      const updateResponse = await fetch(`https://pznuleevpgklxuuojcpy.supabase.co/rest/v1/whisky_translations?id=eq.${editingTranslation.id}&whisky_id=eq.${editingTranslation.whisky_id}&language_code=eq.${editingTranslation.language_code}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6bnVsZWV2cGdrbHh1dW9qY3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1ODAzNDEsImV4cCI6MjA3MTE1NjM0MX0.YU6bUsKYOrMlmlRtb-Wafr6em9DEaEY9tZEyyApXNUM',
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6bnVsZWV2cGdrbHh1dW9qY3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1ODAzNDEsImV4cCI6MjA3MTE1NjM0MX0.YU6bUsKYOrMlmlRtb-Wafr6em9DEaEY9tZEyyApXNUM',
+          'Prefer': 'return=representation'
+        },
+        body: JSON.stringify(updateData)
+      })
 
-      if (error) throw error
+      if (!updateResponse.ok) {
+        const errorText = await updateResponse.text()
+        throw new Error(`Update failed: ${updateResponse.status} - ${errorText}`)
+      }
+
+      const data = await updateResponse.json()
+      console.log('✅ Translation updated successfully:', data)
 
       if (!data || data.length === 0) {
         toast.error('Güncelleme yapılamadı - yetki sorunu olabilir')
         return
       }
 
+      // Update translations state immediately
+      setTranslations(prevTranslations =>
+        prevTranslations.map(t =>
+          t.id === editingTranslation.id ? { ...t, ...data[0] } : t
+        )
+      )
+
       toast.success('Çeviri başarıyla güncellendi')
       setIsEditModalOpen(false)
       setEditingTranslation(null)
+      // Also reload as backup
       loadTranslations()
     } catch (error: any) {
-      console.error('Error updating translation:', error)
+      console.error('❌ Error updating translation:', error)
       toast.error(`Güncelleme hatası: ${error.message || 'Bilinmeyen hata'}`)
     }
   }

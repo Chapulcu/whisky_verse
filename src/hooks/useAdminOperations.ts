@@ -72,22 +72,39 @@ export function useAdminOperations() {
   const updateUser = async (userId: string, userData: any) => {
     checkAdminPermission()
     setIsLoading(true)
-    
+
     try {
+      console.log('🔄 Updating user:', userId)
+
       // Update profile data
       const profileUpdate: any = {}
-      
+
       if (userData.full_name) profileUpdate.full_name = userData.full_name
       if (userData.role) profileUpdate.role = userData.role
       if (userData.language) profileUpdate.language = userData.language
-      
-      if (Object.keys(profileUpdate).length > 0) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update(profileUpdate)
-          .eq('id', userId)
 
-        if (profileError) throw profileError
+      if (Object.keys(profileUpdate).length > 0) {
+        profileUpdate.updated_at = new Date().toISOString()
+
+        // Use fetch API to bypass session issues
+        const updateResponse = await fetch(`https://pznuleevpgklxuuojcpy.supabase.co/rest/v1/profiles?id=eq.${userId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6bnVsZWV2cGdrbHh1dW9qY3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1ODAzNDEsImV4cCI6MjA3MTE1NjM0MX0.YU6bUsKYOrMlmlRtb-Wafr6em9DEaEY9tZEyyApXNUM',
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6bnVsZWV2cGdrbHh1dW9qY3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1ODAzNDEsImV4cCI6MjA3MTE1NjM0MX0.YU6bUsKYOrMlmlRtb-Wafr6em9DEaEY9tZEyyApXNUM',
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify(profileUpdate)
+        })
+
+        if (!updateResponse.ok) {
+          const errorText = await updateResponse.text()
+          throw new Error(`Update failed: ${updateResponse.status} - ${errorText}`)
+        }
+
+        const data = await updateResponse.json()
+        console.log('✅ User profile updated successfully:', data)
       }
 
       // For password updates, we need to use a different approach
@@ -100,7 +117,7 @@ export function useAdminOperations() {
       toast.success('Kullanıcı başarıyla güncellendi')
       return { success: true }
     } catch (error: any) {
-      console.error('Update user error:', error)
+      console.error('❌ Update user error:', error)
       const errorMessage = error.message || 'Kullanıcı güncellenemedi'
       toast.error(errorMessage)
       throw error

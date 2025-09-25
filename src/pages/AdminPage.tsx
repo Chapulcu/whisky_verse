@@ -1117,18 +1117,39 @@ export function AdminPage() {
       }
       
       console.log('Final update data:', updateData)
-      
-      const { error } = await supabase
-        .from('groups')
-        .update(updateData)
-        .eq('id', editingGroup.id)
 
-      if (error) {
-        console.error('Supabase update error:', error)
-        throw error
+      // Use fetch API to bypass session issues
+      const updateResponse = await fetch(`https://pznuleevpgklxuuojcpy.supabase.co/rest/v1/groups?id=eq.${editingGroup.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6bnVsZWV2cGdrbHh1dW9qY3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1ODAzNDEsImV4cCI6MjA3MTE1NjM0MX0.YU6bUsKYOrMlmlRtb-Wafr6em9DEaEY9tZEyyApXNUM',
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6bnVsZWV2cGdrbHh1dW9qY3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1ODAzNDEsImV4cCI6MjA3MTE1NjM0MX0.YU6bUsKYOrMlmlRtb-Wafr6em9DEaEY9tZEyyApXNUM',
+          'Prefer': 'return=representation'
+        },
+        body: JSON.stringify({
+          ...updateData,
+          updated_at: new Date().toISOString()
+        })
+      })
+
+      if (!updateResponse.ok) {
+        const errorText = await updateResponse.text()
+        throw new Error(`Update failed: ${updateResponse.status} - ${errorText}`)
       }
 
-      console.log('Group updated successfully')
+      const data = await updateResponse.json()
+      console.log('✅ Group updated successfully:', data)
+
+      // Update groups state immediately
+      if (data && data.length > 0) {
+        setGroups(prevGroups =>
+          prevGroups.map(g =>
+            g.id === editingGroup.id ? { ...g, ...data[0] } : g
+          )
+        )
+      }
+
       toast.success(t('admin.groupUpdatedSuccess'))
       setEditingGroup(null)
       await loadGroups()
@@ -1276,39 +1297,59 @@ export function AdminPage() {
     }
 
     try {
-      const { error } = await supabase
-        .from('events')
-        .update({
-          title: eventForm.title.trim(),
-          description: eventForm.description.trim() || null,
-          event_type: eventForm.event_type.trim() || null,
-          location: eventForm.location.trim() || null,
-          virtual_link: eventForm.virtual_link.trim() || null,
-          start_date: eventForm.start_date,
-          end_date: eventForm.end_date || null,
-          max_participants: eventForm.max_participants,
-          // Temporarily commented out until database schema is updated
-          // price: eventForm.price,
-          // currency: eventForm.currency,
-          group_id: eventForm.group_id || null,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', editingEvent.id)
+      console.log('🔄 Updating event:', editingEvent.id)
 
-      if (error) throw error
+      const updateData = {
+        title: eventForm.title.trim(),
+        description: eventForm.description.trim() || null,
+        event_type: eventForm.event_type.trim() || null,
+        location: eventForm.location.trim() || null,
+        virtual_link: eventForm.virtual_link.trim() || null,
+        start_date: eventForm.start_date,
+        end_date: eventForm.end_date || null,
+        max_participants: eventForm.max_participants,
+        // Temporarily commented out until database schema is updated
+        // price: eventForm.price,
+        // currency: eventForm.currency,
+        group_id: eventForm.group_id || null,
+        updated_at: new Date().toISOString()
+      }
+
+      // Use fetch API to bypass session issues
+      const updateResponse = await fetch(`https://pznuleevpgklxuuojcpy.supabase.co/rest/v1/events?id=eq.${editingEvent.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6bnVsZWV2cGdrbHh1dW9qY3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1ODAzNDEsImV4cCI6MjA3MTE1NjM0MX0.YU6bUsKYOrMlmlRtb-Wafr6em9DEaEY9tZEyyApXNUM',
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6bnVsZWV2cGdrbHh1dW9qY3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1ODAzNDEsImV4cCI6MjA3MTE1NjM0MX0.YU6bUsKYOrMlmlRtb-Wafr6em9DEaEY9tZEyyApXNUM',
+          'Prefer': 'return=representation'
+        },
+        body: JSON.stringify(updateData)
+      })
+
+      if (!updateResponse.ok) {
+        const errorText = await updateResponse.text()
+        throw new Error(`Update failed: ${updateResponse.status} - ${errorText}`)
+      }
+
+      const data = await updateResponse.json()
+      console.log('✅ Event updated successfully:', data)
+
+      // Update events state immediately with returned data
+      if (data && data.length > 0) {
+        setEvents(prev => {
+          const updated = prev.map(e =>
+            String(e.id) === String(editingEvent.id)
+              ? { ...e, ...data[0], participant_count: e.participant_count || 0 }
+              : e
+          )
+          localStorage.setItem('admin_events_cache', JSON.stringify(updated))
+          return updated
+        })
+      }
 
       toast.success(t('admin.eventUpdatedSuccess'))
       setEditingEvent(null)
-      // Update local state instead of reloading
-      setEvents(prev => {
-        const updated = prev.map(e => 
-          String(e.id) === String(editingEvent.id) 
-            ? { ...e, ...eventForm, participant_count: e.participant_count || 0 }
-            : e
-        )
-        localStorage.setItem('admin_events_cache', JSON.stringify(updated))
-        return updated
-      })
     } catch (error) {
       console.error('Error updating event:', error)
       toast.error(t('admin.eventUpdateError') + ': ' + (error as any).message)

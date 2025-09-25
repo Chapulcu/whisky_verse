@@ -1,0 +1,611 @@
+{
+  "name": "Wkisky-Translate",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes"
+            }
+          ]
+        }
+      },
+      "id": "22ae2ff6-b747-4a1c-b068-a0adf450c4fd",
+      "name": "Daily Translation Job",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -2416,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "whiskies",
+        "returnAll": true
+      },
+      "id": "cc1a6c17-4d88-4604-81e4-e3ac280abcfc",
+      "name": "Get All Whiskies",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -2192,
+        240
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "oHRJ7c06suffEIQU",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "whisky_translations",
+        "returnAll": true
+      },
+      "id": "b95acb0e-e5d5-4e2f-ab92-a85b16512cb6",
+      "name": "Get Translated IDs",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -2192,
+        480
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "oHRJ7c06suffEIQU",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const allWhiskies = $('Get All Whiskies').all().map(i => i.json);\nconst translatedRows = $('Get Translated IDs').all().map(i => i.json);\n\n// Çevrilmiş whisky ID'lerini topla\nconst translatedWhiskyIds = new Set();\ntranslatedRows.forEach(row => {\n  if (row.language_code === 'en' || row.language_code === 'ru') {\n    translatedWhiskyIds.add(row.whisky_id);\n  }\n});\n\n// Tam çevrilmemiş whisky'leri bul (hem EN hem RU eksik olanlar)\nconst langsById = new Map();\ntranslatedRows.forEach(row => {\n  const id = row.whisky_id;\n  if (!langsById.has(id)) langsById.set(id, new Set());\n  langsById.get(id).add(row.language_code);\n});\n\nconst needsWork = allWhiskies.filter(w => {\n  const langs = langsById.get(w.id) || new Set();\n  return !(langs.has('en') && langs.has('ru')); // Hem EN hem RU yoksa\n});\n\n// ID'ye göre sırala (en küçük ID'den başla)\nneedsWork.sort((a, b) => a.id - b.id);\n\nconsole.log(`Total whiskies: ${allWhiskies.length}`);\nconsole.log(`Fully translated: ${allWhiskies.length - needsWork.length}`);\nconsole.log(`Remaining: ${needsWork.length}`);\n\nif (needsWork.length === 0) {\n  console.log('All whiskies are translated!');\n  return [];\n}\n\n// Sıradaki whisky'yi al (sadece 1 tane)\nconst nextWhisky = needsWork[0];\nconsole.log(`Processing whisky ID: ${nextWhisky.id} - ${nextWhisky.name}`);\n\nreturn [{ json: nextWhisky }];"
+      },
+      "id": "c765436e-daa3-4812-8070-1b798cd3662c",
+      "name": "Filter Untranslated Whiskies",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1664,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "seconds"
+      },
+      "id": "ae544aca-d76b-43a5-b843-414d1475f8b3",
+      "name": "Rate Limit Delay",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -1248,
+        384
+      ],
+      "webhookId": "e6adcf2f-6460-492a-9bc2-95e5a6259f38"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nlet outputString = item.output;\n\nif (!outputString) {\n  console.log('No output found');\n  return [];\n}\n\ntry {\n  // JSON markdown block'larını temizle\n  let cleanedOutput = outputString;\n  \n  // ```json ile başlayıp ``` ile bitenleri temizle\n  cleanedOutput = cleanedOutput.replace(/```json\\n?/g, '').replace(/\\n?```/g, '').trim();\n  \n  console.log('Cleaned output first 100 chars:', cleanedOutput.substring(0, 100));\n  \n  // JSON'a parse et\n  const parsedData = JSON.parse(cleanedOutput);\n  console.log('Successfully parsed JSON');\n  \n  const translations = [];\n  \n  // EN translation\n  if (parsedData.en) {\n    translations.push({\n      json: {\n        whisky_id: parsedData.en.id,\n        language_code: 'en',\n        source_language_code: 'tr',\n        name: parsedData.en.name,\n        description: parsedData.en.description,\n        aroma: parsedData.en.aroma,\n        taste: parsedData.en.taste,\n        finish: parsedData.en.finish,\n        color: parsedData.en.color,\n        region: parsedData.en.region,\n        country:parsedData.en.country,\n        type: parsedData.en.type,\n        translation_status: 'machine'\n      }\n    });\n    console.log(`Added EN translation for whisky_id: ${parsedData.en.id}`);\n  }\n  \n  // RU translation\n  if (parsedData.ru) {\n    translations.push({\n      json: {\n        whisky_id: parsedData.ru.id,\n        language_code: 'ru',\n        source_language_code: 'tr',\n        name: parsedData.ru.name,\n        description: parsedData.ru.description,\n        aroma: parsedData.ru.aroma,\n        taste: parsedData.ru.taste,\n        finish: parsedData.ru.finish,\n        color: parsedData.ru.color,\n        region: parsedData.ru.region,\n        country:parsedData.ru.country,\n        type: parsedData.ru.type,\n        translation_status: 'machine'\n      }\n    });\n    console.log(`Added RU translation for whisky_id: ${parsedData.ru.id}`);\n  }\n  \n  console.log(`Total translations created: ${translations.length}`);\n  return translations;\n  \n} catch (e) {\n  console.log('Parse error:', e.message);\n  console.log('Raw output:', outputString);\n  return [];\n}"
+      },
+      "id": "36332d29-dce3-4d48-ba17-c3d4ea5bc2f5",
+      "name": "Parse AI Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -32,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "condition1",
+              "leftValue": "={{ $json.error }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "70e9c57b-06a1-4e5b-b179-3a951662c01f",
+      "name": "Check No Error",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        448,
+        256
+      ]
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -1456,
+        -16
+      ],
+      "id": "a6ccd50c-d490-4536-9bd2-c5884d276155",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Translate this Turkish whisky record to English and Russian.\n\nInput data:\nID: {{ $json.id }}\nName: {{ $json.name }}\nDescription: {{ $json.description }}\nAroma: {{ $json.aroma }}\nTaste: {{ $json.taste }}\nFinish: {{ $json.finish }}\nColor: {{ $json.color }}\nCountry: {{ $json.country }}\nRegion: {{ $json.region }}\nType: {{ $json.type }}\n\nReturn ONLY this exact JSON format with no extra text or formatting:\n\n{\n  \"en\": {\n    \"id\": {{ $json.id }},\n    \"name\": \"ENGLISH_TRANSLATION\",\n    \"description\": \"ENGLISH_DESCRIPTION\",\n    \"aroma\": \"ENGLISH_AROMA\",\n    \"taste\": \"ENGLISH_TASTE\",\n    \"finish\": \"ENGLISH_FINISH\",\n    \"color\": \"ENGLISH_COLOR\",\n    \"country\": \"ENGLISH_COUNTRY\",\n    \"region\": \"ENGLISH_REGION\",\n    \"type\": \"ENGLISH_TYPE\"\n  },\n  \"ru\": {\n    \"id\": {{ $json.id }},\n    \"name\": \"RUSSIAN_TRANSLATION\",\n    \"description\": \"RUSSIAN_DESCRIPTION\", \n    \"aroma\": \"RUSSIAN_AROMA\",\n    \"taste\": \"RUSSIAN_TASTE\",\n    \"finish\": \"RUSSIAN_FINISH\",\n    \"color\": \"RUSSIAN_COLOR\",\n    \"country\": \"RUSSIAN_COUNTRY\",\n    \"region\": \"RUSSIAN_REGION\",\n    \"type\": \"RUSSIAN_TYPE\"\n  }\n}\n\nİmportnt ONLY this exact JSON format with no extra text or formatting",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -624,
+        -16
+      ],
+      "id": "25b83df8-eef5-488b-82b3-26f377a3e19e",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        224,
+        400
+      ],
+      "id": "2cb0f576-889b-4de8-bd41-44bd976b34c0",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "name": "Replace Me",
+      "typeVersion": 1,
+      "position": [
+        448,
+        448
+      ],
+      "id": "77b5a665-30b5-422d-8888-f3bd354c6a8f"
+    },
+    {
+      "parameters": {
+        "tableId": "whisky_translations",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "whisky_id",
+              "fieldValue": "={{ $json.whisky_id }}"
+            },
+            {
+              "fieldId": "language_code",
+              "fieldValue": "={{ $json.language_code }}"
+            },
+            {
+              "fieldId": "name",
+              "fieldValue": "={{ $json.name }}"
+            },
+            {
+              "fieldId": "type",
+              "fieldValue": "={{ $json.type }}"
+            },
+            {
+              "fieldId": "description",
+              "fieldValue": "={{ $json.description }}"
+            },
+            {
+              "fieldId": "aroma",
+              "fieldValue": "={{ $json.aroma }}"
+            },
+            {
+              "fieldId": "taste",
+              "fieldValue": "={{ $json.taste }}"
+            },
+            {
+              "fieldId": "finish",
+              "fieldValue": "={{ $json.finish }}"
+            },
+            {
+              "fieldId": "color",
+              "fieldValue": "={{ $json.color }}"
+            },
+            {
+              "fieldId": "region",
+              "fieldValue": "={{ $json.region }}"
+            },
+            {
+              "fieldId": "source_language_code",
+              "fieldValue": "={{ $json.source_language_code }}"
+            },
+            {
+              "fieldId": "translation_status",
+              "fieldValue": "={{ $json.translation_status }}"
+            },
+            {
+              "fieldId": "country",
+              "fieldValue": "={{ $json.country }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        784,
+        240
+      ],
+      "id": "6fc5e5e4-94ca-4f90-b6fd-9b864c971200",
+      "name": "Create a row",
+      "retryOnFail": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "oHRJ7c06suffEIQU",
+          "name": "Supabase account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -1008,
+        -32
+      ],
+      "id": "ae0205c0-8896-45fd-a623-86777b3e9f6e",
+      "name": "Loop Over Items1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "name": "Replace Me1",
+      "typeVersion": 1,
+      "position": [
+        -960,
+        304
+      ],
+      "id": "5a5070dc-640d-424c-8797-83a95bfb8f4b"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -224,
+        16
+      ],
+      "id": "a89ca420-4e75-4f7a-846a-d5340251cbb9",
+      "name": "Wait",
+      "webhookId": "cd0efc35-2765-4921-8018-297799594e2f"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "bc6a91e4-d06a-4b74-8322-f9928c31b606",
+              "leftValue": "={{ $input.all().length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        176,
+        16
+      ],
+      "id": "65b5f9be-6f0b-42f5-9800-92ba1bf6b950",
+      "name": "If"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -1952,
+        352
+      ],
+      "id": "5008c10d-204f-42ea-a058-b94dca190507",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "model": "gpt-oss:20b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        -288,
+        608
+      ],
+      "id": "c0855e5b-eaa4-43b2-a1d2-1624947de83a",
+      "name": "Ollama Chat Model",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -624,
+        208
+      ],
+      "id": "7effcccb-607f-492e-921a-ccc53266d285",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "XCbC8mWKETztTLP3",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Daily Translation Job": {
+      "main": [
+        [
+          {
+            "node": "Get All Whiskies",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Translated IDs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Whiskies": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Untranslated Whiskies": {
+      "main": [
+        [
+          {
+            "node": "Rate Limit Delay",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rate Limit Delay": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI Response": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check No Error": {
+      "main": [
+        [
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Rate Limit Delay",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Check No Error",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Replace Me",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Replace Me": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Replace Me1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Replace Me1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Translated IDs": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Filter Untranslated Whiskies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "454d2942-45db-4fc8-a053-fd931fbace91",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8c93b8fedec78a60d4fb569015e39bc2a4ad8d98e8a31fe491b98986bde0178e"
+  },
+  "id": "MXQ3PXGoauZtudiJ",
+  "tags": []
+}
