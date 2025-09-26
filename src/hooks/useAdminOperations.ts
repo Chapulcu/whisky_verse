@@ -27,8 +27,8 @@ export function useAdminOperations() {
       throw new Error('Bu işlem için giriş yapmanız gereklidir')
     }
 
-    // Admin check: either email is admin@whiskyverse.com OR profile role is admin
-    const isEmailAdmin = user.email === 'admin@whiskyverse.com'
+    // Admin check: either email is example@whiskyverse.com OR profile role is admin
+    const isEmailAdmin = user.email === 'example@whiskyverse.com'
     const isProfileAdmin = profile && profile.role === 'admin'
     
     console.log('🔐 Admin permission check:', {
@@ -87,12 +87,12 @@ export function useAdminOperations() {
         profileUpdate.updated_at = new Date().toISOString()
 
         // Use fetch API to bypass session issues
-        const updateResponse = await fetch(`https://pznuleevpgklxuuojcpy.supabase.co/rest/v1/profiles?id=eq.${userId}`, {
+        const updateResponse = await fetch(`https://example.supabase.co/rest/v1/profiles?id=eq.${userId}`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6bnVsZWV2cGdrbHh1dW9qY3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1ODAzNDEsImV4cCI6MjA3MTE1NjM0MX0.YU6bUsKYOrMlmlRtb-Wafr6em9DEaEY9tZEyyApXNUM',
-            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6bnVsZWV2cGdrbHh1dW9qY3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1ODAzNDEsImV4cCI6MjA3MTE1NjM0MX0.YU6bUsKYOrMlmlRtb-Wafr6em9DEaEY9tZEyyApXNUM',
+            'Authorization': '' 
+            'apikey': ''   
             'Prefer': 'return=representation'
           },
           body: JSON.stringify(profileUpdate)
