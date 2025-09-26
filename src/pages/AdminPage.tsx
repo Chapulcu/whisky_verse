@@ -1118,10 +1118,23 @@ export function AdminPage() {
       
       console.log('Final update data:', updateData)
 
+<<<<<<< HEAD
       // Use secure Supabase client with user session
       const { data: result, error } = await supabase
         .from('groups')
         .update({
+=======
+      // Use fetch API to bypass session issues
+      const updateResponse = await fetch(`https://örnek.supabase.co/rest/v1/groups?id=eq.${editingGroup.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': ''
+          'apikey': ''      
+          'Prefer': 'return=representation'
+        },
+        body: JSON.stringify({
+>>>>>>> 8f1943bbb6cc9d099f9098ebca4193ba08ee5f55
           ...updateData,
           updated_at: new Date().toISOString()
         })
@@ -1315,6 +1328,7 @@ export function AdminPage() {
         updated_at: new Date().toISOString()
       }
 
+<<<<<<< HEAD
       // Use secure Supabase client with user session
       const { data, error } = await supabase
         .from('events')
@@ -1322,6 +1336,19 @@ export function AdminPage() {
         .eq('id', editingEvent.id)
         .select()
         .single()
+=======
+      // Use fetch API to bypass session issues
+      const updateResponse = await fetch(`https://örnek.supabase.co/rest/v1/groups?id=eq.${editingEvent.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': ''
+          'apikey': ''
+          'Prefer': 'return=representation'
+        },
+        body: JSON.stringify(updateData)
+      })
+>>>>>>> 8f1943bbb6cc9d099f9098ebca4193ba08ee5f55
 
       if (error) {
         throw error

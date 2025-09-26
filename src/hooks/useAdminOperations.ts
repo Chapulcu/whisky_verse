@@ -37,8 +37,8 @@ export function useAdminOperations() {
       throw new Error('Bu işlem için giriş yapmanız gereklidir')
     }
 
-    // Admin check: either email is admin@whiskyverse.com OR profile role is admin
-    const isEmailAdmin = user.email === 'admin@whiskyverse.com'
+    // Admin check: either email is example@whiskyverse.com OR profile role is admin
+    const isEmailAdmin = user.email === 'example@whiskyverse.com'
     const isProfileAdmin = profile && profile.role === 'admin'
     
     console.log('🔐 Admin permission check:', {
@@ -96,6 +96,7 @@ export function useAdminOperations() {
       if (Object.keys(profileUpdate).length > 0) {
         profileUpdate.updated_at = new Date().toISOString()
 
+<<<<<<< HEAD
         // Use regular Supabase client with user session for security
         const { data, error } = await supabase
           .from('profiles')
@@ -103,6 +104,19 @@ export function useAdminOperations() {
           .eq('id', userId)
           .select()
           .single()
+=======
+        // Use fetch API to bypass session issues
+        const updateResponse = await fetch(`https://example.supabase.co/rest/v1/profiles?id=eq.${userId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': '' 
+            'apikey': ''   
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify(profileUpdate)
+        })
+>>>>>>> 8f1943bbb6cc9d099f9098ebca4193ba08ee5f55
 
         if (error) {
           throw error
