@@ -1119,12 +1119,12 @@ export function AdminPage() {
       console.log('Final update data:', updateData)
 
       // Use fetch API to bypass session issues
-      const updateResponse = await fetch(`https://pznuleevpgklxuuojcpy.supabase.co/rest/v1/groups?id=eq.${editingGroup.id}`, {
+      const updateResponse = await fetch(`https://örnek.supabase.co/rest/v1/groups?id=eq.${editingGroup.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6bnVsZWV2cGdrbHh1dW9qY3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1ODAzNDEsImV4cCI6MjA3MTE1NjM0MX0.YU6bUsKYOrMlmlRtb-Wafr6em9DEaEY9tZEyyApXNUM',
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6bnVsZWV2cGdrbHh1dW9qY3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1ODAzNDEsImV4cCI6MjA3MTE1NjM0MX0.YU6bUsKYOrMlmlRtb-Wafr6em9DEaEY9tZEyyApXNUM',
+          'Authorization': ''
+          'apikey': ''      
           'Prefer': 'return=representation'
         },
         body: JSON.stringify({
@@ -1316,12 +1316,12 @@ export function AdminPage() {
       }
 
       // Use fetch API to bypass session issues
-      const updateResponse = await fetch(`https://pznuleevpgklxuuojcpy.supabase.co/rest/v1/events?id=eq.${editingEvent.id}`, {
+      const updateResponse = await fetch(`https://örnek.supabase.co/rest/v1/groups?id=eq.${editingEvent.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6bnVsZWV2cGdrbHh1dW9qY3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1ODAzNDEsImV4cCI6MjA3MTE1NjM0MX0.YU6bUsKYOrMlmlRtb-Wafr6em9DEaEY9tZEyyApXNUM',
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6bnVsZWV2cGdrbHh1dW9qY3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1ODAzNDEsImV4cCI6MjA3MTE1NjM0MX0.YU6bUsKYOrMlmlRtb-Wafr6em9DEaEY9tZEyyApXNUM',
+          'Authorization': ''
+          'apikey': ''
           'Prefer': 'return=representation'
         },
         body: JSON.stringify(updateData)
