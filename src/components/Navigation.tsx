@@ -180,8 +180,8 @@ export function Navigation() {
 
       {/* Mobile Navigation */}
       <nav className="md:hidden">
-        {/* Mobile Header - Optimized for landscape */}
-        <div className="glass-nav fixed top-0 left-0 right-0 z-50 px-3 py-2 landscape:py-1">
+        {/* Mobile Header - Optimized for landscape with iOS safe area */}
+        <div className="glass-nav fixed top-0 left-0 right-0 z-[9999] px-3 py-2 landscape:py-1 pt-safe-top">
           <div className="flex items-center justify-between h-12 landscape:h-10">
             <Link to="/" className="flex items-center gap-2 flex-shrink-0" onClick={closeMobileMenu}>
               <div className="w-7 h-7 landscape:w-6 landscape:h-6 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-lg flex items-center justify-center">
@@ -209,7 +209,7 @@ export function Navigation() {
               
               <button
                 onClick={toggleMobileMenu}
-                className="btn-glass p-2 landscape:p-1.5 rounded-lg ml-1 mobile-touch-target"
+                className="btn-glass p-3 landscape:p-2 rounded-lg ml-1 mobile-touch-target min-w-[44px] min-h-[44px] flex items-center justify-center"
                 aria-label="Toggle menu"
               >
                 {isMobileMenuOpen ? <X className="w-5 h-5 landscape:w-4 landscape:h-4" /> : <Menu className="w-5 h-5 landscape:w-4 landscape:h-4" />}
@@ -225,7 +225,7 @@ export function Navigation() {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="fixed top-14 landscape:top-12 left-0 right-0 z-40 glass-panel mx-3 landscape:mx-2 p-4 landscape:p-3 max-h-[calc(100vh-4rem)] landscape:max-h-[calc(100vh-3rem)] overflow-y-auto"
+              className="fixed top-14 landscape:top-12 left-0 right-0 z-[9998] glass-panel mx-3 landscape:mx-2 p-4 landscape:p-3 max-h-[calc(100vh-4rem)] landscape:max-h-[calc(100vh-3rem)] overflow-y-auto"
             >
               {/* Landscape: Horizontal layout for navigation items */}
               <div className="landscape:hidden space-y-2">

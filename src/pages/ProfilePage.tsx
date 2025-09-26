@@ -2,35 +2,43 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAvatarUpload } from '@/hooks/useAvatarUpload'
-import { 
-  User, 
-  Mail, 
-  Calendar, 
-  Crown, 
-  Settings, 
-  Camera, 
-  Upload, 
-  X, 
-  Edit3, 
-  Save, 
-  MapPin, 
-  Phone, 
-  Globe, 
+import {
+  User,
+  Mail,
+  Calendar,
+  Crown,
+  Settings,
+  Camera,
+  Upload,
+  X,
+  Edit3,
+  Save,
+  MapPin,
+  Phone,
+  Globe,
   Info,
   Bell,
   Lock,
-  Palette
+  Palette,
+  Trophy,
+  Award
 } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { useAchievements } from '@/hooks/useAchievements'
+import { AchievementsPanel } from '@/components/mobile/AchievementsPanel'
+import { QRCodeModal, QRCodeData } from '@/components/mobile/QRCodeModal'
 import toast from 'react-hot-toast'
 
 export function ProfilePage() {
   const { t } = useTranslation()
   const { user, profile, updateProfile, loading } = useAuth()
   const { uploadAvatar, isUploading } = useAvatarUpload()
+  const { unlockedAchievements, totalPoints, level, recordLogin } = useAchievements()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [showAchievements, setShowAchievements] = useState(false)
+  const [showQRCode, setShowQRCode] = useState(false)
   const [formData, setFormData] = useState({
     full_name: '',
     language: 'tr' as 'tr' | 'en',
@@ -270,13 +278,44 @@ export function ProfilePage() {
                   </div>
                   <div className="flex flex-col sm:items-end gap-2">
                     {getRoleBadge()}
-                    <button
-                      onClick={() => setIsEditing(!isEditing)}
-                      className="flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors text-sm font-medium"
-                    >
-                      <Edit3 className="w-4 h-4" />
-                      {isEditing ? t('profilePage.closeEditButton') : t('profilePage.editButton')}
-                    </button>
+
+                    {/* Achievement Stats */}
+                    <div className="flex gap-2 text-sm">
+                      <div className="flex items-center gap-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-3 py-1 rounded-full">
+                        <Trophy className="w-4 h-4" />
+                        <span>Seviye {level}</span>
+                      </div>
+                      <div className="flex items-center gap-1 bg-gradient-to-r from-blue-500 to-purple-500 text-white px-3 py-1 rounded-full">
+                        <Award className="w-4 h-4" />
+                        <span>{unlockedAchievements.length} Rozet</span>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2 flex-wrap">
+                      <button
+                        onClick={() => setShowQRCode(true)}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-sm font-medium"
+                      >
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M3 11h8V3H3v8zm2-6h4v4H5V5zM3 21h8v-8H3v8zm2-6h4v4H5v-4zM13 3v8h8V3h-8zm6 6h-4V5h4v4zM13 13h2v2h-2v-2zM15 15h2v2h-2v-2zM13 17h2v2h-2v-2zM15 19h2v2h-2v-2zM17 13h2v2h-2v-2zM19 15h2v2h-2v-2zM17 17h2v2h-2v-2zM19 19h2v2h-2v-2z"/>
+                        </svg>
+                        QR Kod
+                      </button>
+                      <button
+                        onClick={() => setShowAchievements(true)}
+                        className="flex items-center gap-2 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition-colors text-sm font-medium"
+                      >
+                        <Trophy className="w-4 h-4" />
+                        Başarımlar
+                      </button>
+                      <button
+                        onClick={() => setIsEditing(!isEditing)}
+                        className="flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors text-sm font-medium"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                        {isEditing ? t('profilePage.closeEditButton') : t('profilePage.editButton')}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -508,6 +547,27 @@ export function ProfilePage() {
           )}
         </motion.div>
       </div>
+
+      {/* Achievements Panel */}
+      <AchievementsPanel
+        isOpen={showAchievements}
+        onClose={() => setShowAchievements(false)}
+      />
+
+      {/* QR Code Modal */}
+      <QRCodeModal
+        isOpen={showQRCode}
+        onClose={() => setShowQRCode(false)}
+        qrData={{
+          type: 'profile',
+          title: profile?.full_name || 'Profil',
+          subtitle: `${profile?.full_name || 'Kullanıcı'}'nın WhiskyVerse profili`,
+          data: {
+            userId: user.id,
+            username: profile?.full_name || 'user'
+          }
+        }}
+      />
     </div>
   )
 }

@@ -1,0 +1,55 @@
+{
+  "url": "https://whiskyverse.netlify.app",
+  "name": "WhiskyVerse",
+  "shortName": "WhiskyVerse",
+  "description": "Viski severler için nihai topluluk platformu",
+  "startUrl": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "themeColor": "#f58a3a",
+  "backgroundColor": "#020617",
+  "categories": [
+    "social",
+    "lifestyle",
+    "food"
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Viski Koleksiyonum",
+      "shortName": "Koleksiyon",
+      "description": "Kişisel viski koleksiyonunu görüntüle",
+      "url": "/collection",
+      "icons": [
+        {
+          "src": "/icons/collection-icon.svg",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Viski Keşfet",
+      "shortName": "Keşfet",
+      "description": "Yeni viskiler keşfet",
+      "url": "/whiskies",
+      "icons": [
+        {
+          "src": "/icons/discover-icon.svg",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Kamera",
+      "shortName": "Fotoğraf",
+      "description": "Viski fotoğrafı çek",
+      "url": "/camera",
+      "icons": [
+        {
+          "src": "/icons/camera-icon.svg",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ]
+}

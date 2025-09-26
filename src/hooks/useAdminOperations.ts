@@ -21,6 +21,16 @@ export function useAdminOperations() {
   const { user, profile } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
 
+  // Generate secure random password
+  const generateSecurePassword = () => {
+    const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*'
+    let password = ''
+    for (let i = 0; i < 16; i++) {
+      password += charset.charAt(Math.floor(Math.random() * charset.length))
+    }
+    return password
+  }
+
   const checkAdminPermission = () => {
     // First check if user exists
     if (!user) {
@@ -86,24 +96,18 @@ export function useAdminOperations() {
       if (Object.keys(profileUpdate).length > 0) {
         profileUpdate.updated_at = new Date().toISOString()
 
-        // Use fetch API to bypass session issues
-        const updateResponse = await fetch(`https://pznuleevpgklxuuojcpy.supabase.co/rest/v1/profiles?id=eq.${userId}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6bnVsZWV2cGdrbHh1dW9qY3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1ODAzNDEsImV4cCI6MjA3MTE1NjM0MX0.YU6bUsKYOrMlmlRtb-Wafr6em9DEaEY9tZEyyApXNUM',
-            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6bnVsZWV2cGdrbHh1dW9qY3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1ODAzNDEsImV4cCI6MjA3MTE1NjM0MX0.YU6bUsKYOrMlmlRtb-Wafr6em9DEaEY9tZEyyApXNUM',
-            'Prefer': 'return=representation'
-          },
-          body: JSON.stringify(profileUpdate)
-        })
+        // Use regular Supabase client with user session for security
+        const { data, error } = await supabase
+          .from('profiles')
+          .update(profileUpdate)
+          .eq('id', userId)
+          .select()
+          .single()
 
-        if (!updateResponse.ok) {
-          const errorText = await updateResponse.text()
-          throw new Error(`Update failed: ${updateResponse.status} - ${errorText}`)
+        if (error) {
+          throw error
         }
 
-        const data = await updateResponse.json()
         console.log('✅ User profile updated successfully:', data)
       }
 
@@ -157,10 +161,13 @@ export function useAdminOperations() {
     setIsLoading(true)
     
     try {
+      // Generate secure password if not provided
+      const securePassword = adminData.password || generateSecurePassword()
+
       // Use Supabase auth signup
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: adminData.email,
-        password: adminData.password || 'Admin123!',
+        password: securePassword,
         options: {
           data: {
             full_name: adminData.full_name || adminData.email
@@ -187,7 +194,16 @@ export function useAdminOperations() {
         // Profile will be created automatically by trigger, so this might be expected
       }
 
-      toast.success('Admin kullanıcı başarıyla oluşturuldu')
+      // Show generated password to admin if none was provided
+      if (!adminData.password) {
+        toast.success(`Admin kullanıcı oluşturuldu. Geçici şifre: ${securePassword}`, {
+          duration: 10000,
+          position: 'top-center'
+        })
+        console.warn('⚠️ Generated password for admin:', adminData.email, securePassword)
+      } else {
+        toast.success('Admin kullanıcı başarıyla oluşturuldu')
+      }
       return authData
     } catch (error: any) {
       console.error('Create admin error:', error)
@@ -204,10 +220,13 @@ export function useAdminOperations() {
     setIsLoading(true)
     
     try {
+      // Generate secure password if not provided
+      const securePassword = userData.password || generateSecurePassword()
+
       // Use Supabase auth signup
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userData.email,
-        password: userData.password || 'DefaultPassword123!',
+        password: securePassword,
         options: {
           data: {
             full_name: userData.full_name || userData.email
@@ -235,7 +254,17 @@ export function useAdminOperations() {
       }
 
       const roleText = userData.role === 'admin' ? 'Admin' : userData.role === 'vip' ? 'VIP' : 'Kullanıcı'
-      toast.success(`${roleText} başarıyla oluşturuldu`)
+
+      // Show generated password to admin if none was provided
+      if (!userData.password) {
+        toast.success(`${roleText} oluşturuldu. Geçici şifre: ${securePassword}`, {
+          duration: 10000,
+          position: 'top-center'
+        })
+        console.warn('⚠️ Generated password for user:', userData.email, securePassword)
+      } else {
+        toast.success(`${roleText} başarıyla oluşturuldu`)
+      }
       return authData
     } catch (error: any) {
       console.error('Create user error:', error)

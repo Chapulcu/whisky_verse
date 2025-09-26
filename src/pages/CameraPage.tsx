@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Camera, Image, Upload, Sparkles, Eye, Star } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
+import { useAchievements } from '@/hooks/useAchievements'
 import { CameraCapture } from '@/components/mobile/CameraCapture'
 import { Navigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
@@ -10,6 +11,7 @@ import toast from 'react-hot-toast'
 export function CameraPage() {
   const { t } = useTranslation()
   const { user } = useAuth()
+  const { takePhoto } = useAchievements()
   const [showCamera, setShowCamera] = useState(false)
   const [capturedFile, setCapturedFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
@@ -25,6 +27,10 @@ export function CameraPage() {
     const url = URL.createObjectURL(file)
     setPreviewUrl(url)
     setShowCamera(false)
+
+    // Track achievement
+    takePhoto()
+
     toast.success('Fotoğraf başarıyla çekildi!')
   }
 

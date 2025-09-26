@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhiskyVerse - Whisky Lovers Community</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #020617 0%, #1e293b 50%, #334155 100%);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image:
+                radial-gradient(circle at 25% 25%, rgba(245, 158, 11, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(217, 119, 6, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .app-icon {
+            width: 120px;
+            height: 120px;
+            margin-bottom: 2rem;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .title {
+            font-size: 4rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f59e0b, #d97706, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+            opacity: 0.9;
+        }
+
+        .tagline {
+            font-size: 1.2rem;
+            font-weight: 400;
+            opacity: 0.8;
+            margin-bottom: 3rem;
+            max-width: 600px;
+            line-height: 1.6;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 4rem 0;
+        }
+
+        .feature {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: left;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .feature:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(245, 158, 11, 0.1);
+        }
+
+        .feature-text {
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        .download-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 3rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .download-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(245, 158, 11, 0.2);
+            border: 1px solid #f59e0b;
+            color: white;
+            text-decoration: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .download-btn:hover {
+            background: #f59e0b;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(245, 158, 11, 0.3);
+        }
+
+        .screenshots {
+            margin-top: 6rem;
+            text-align: center;
+        }
+
+        .screenshots h2 {
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: #f59e0b;
+        }
+
+        .screenshot-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .screenshot {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .screenshot-placeholder {
+            width: 100%;
+            height: 300px;
+            background: linear-gradient(135deg, #1e293b, #334155);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .screenshot-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            opacity: 0.9;
+        }
+
+        @media (max-width: 768px) {
+            .title { font-size: 2.5rem; }
+            .hero { padding: 1rem; }
+            .features { grid-template-columns: 1fr; }
+            .download-buttons { flex-direction: column; align-items: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <svg class="app-icon" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="icon-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#f59e0b;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#d97706;stop-opacity:1" />
+                </linearGradient>
+            </defs>
+            <rect width="120" height="120" rx="24" fill="url(#icon-gradient)"/>
+            <text x="60" y="75" font-size="48" text-anchor="middle" dominant-baseline="middle" font-family="Apple Color Emoji, Segoe UI Emoji, sans-serif">🥃</text>
+        </svg>
+
+        <h1 class="title">WhiskyVerse</h1>
+        <h2 class="subtitle">Whisky Lovers Community</h2>
+        <p class="tagline">Discover whiskies, build your collection, connect with community</p>
+
+        <div class="features">
+            
+                <div class="feature">
+                    <div class="feature-text">📚 Build your personal whisky collection</div>
+                </div>
+            
+                <div class="feature">
+                    <div class="feature-text">🔍 Discover thousands of whisky varieties</div>
+                </div>
+            
+                <div class="feature">
+                    <div class="feature-text">📷 Capture photos to save your whiskies</div>
+                </div>
+            
+                <div class="feature">
+                    <div class="feature-text">🏆 Earn achievements and collect badges</div>
+                </div>
+            
+                <div class="feature">
+                    <div class="feature-text">📱 Share your collection with QR codes</div>
+                </div>
+            
+                <div class="feature">
+                    <div class="feature-text">🌍 Find nearby whisky locations</div>
+                </div>
+            
+        </div>
+
+        <div class="download-buttons">
+            <a href="#" class="download-btn">
+                <span>📱</span> PWA Install
+            </a>
+            <a href="#" class="download-btn">
+                <span>🔗</span> Open in Browser
+            </a>
+        </div>
+
+        <div class="screenshots">
+            <h2>Screenshots</h2>
+            <div class="screenshot-grid">
+                
+                    <div class="screenshot">
+                        <div class="screenshot-placeholder">📱</div>
+                        <div class="screenshot-title">Home - Start discovering whiskies</div>
+                    </div>
+                
+                    <div class="screenshot">
+                        <div class="screenshot-placeholder">📱</div>
+                        <div class="screenshot-title">Collection - Your personal whisky archive</div>
+                    </div>
+                
+                    <div class="screenshot">
+                        <div class="screenshot-placeholder">📱</div>
+                        <div class="screenshot-title">Camera - Capture and save with photos</div>
+                    </div>
+                
+                    <div class="screenshot">
+                        <div class="screenshot-placeholder">📱</div>
+                        <div class="screenshot-title">Discover - Find new whiskies</div>
+                    </div>
+                
+                    <div class="screenshot">
+                        <div class="screenshot-placeholder">📱</div>
+                        <div class="screenshot-title">Profile - View your achievements</div>
+                    </div>
+                
+            </div>
+        </div>
+    </div>
+</body>
+</html>

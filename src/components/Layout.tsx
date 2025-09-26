@@ -83,7 +83,7 @@ export function Layout() {
         <Navigation />
         
         {/* Main Content */}
-        <main className="pt-20 md:pt-24 pb-20 md:pb-8">
+        <main className="pt-20 md:pt-24 pb-20 md:pb-8 ios-safe-content">
           <div className="container mx-auto mobile-padding">
             <Outlet />
           </div>

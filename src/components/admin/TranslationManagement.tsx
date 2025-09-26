@@ -151,27 +151,23 @@ export function TranslationManagement() {
         updated_at: new Date().toISOString()
       }
 
-      // Use fetch API to bypass session issues
-      const updateResponse = await fetch(`https://pznuleevpgklxuuojcpy.supabase.co/rest/v1/whisky_translations?id=eq.${editingTranslation.id}&whisky_id=eq.${editingTranslation.whisky_id}&language_code=eq.${editingTranslation.language_code}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6bnVsZWV2cGdrbHh1dW9qY3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1ODAzNDEsImV4cCI6MjA3MTE1NjM0MX0.YU6bUsKYOrMlmlRtb-Wafr6em9DEaEY9tZEyyApXNUM',
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6bnVsZWV2cGdrbHh1dW9qY3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1ODAzNDEsImV4cCI6MjA3MTE1NjM0MX0.YU6bUsKYOrMlmlRtb-Wafr6em9DEaEY9tZEyyApXNUM',
-          'Prefer': 'return=representation'
-        },
-        body: JSON.stringify(updateData)
-      })
+      // Use secure Supabase client with user session
+      const { data: updatedData, error } = await supabase
+        .from('whisky_translations')
+        .update(updateData)
+        .eq('id', editingTranslation.id)
+        .eq('whisky_id', editingTranslation.whisky_id)
+        .eq('language_code', editingTranslation.language_code)
+        .select()
+        .single()
 
-      if (!updateResponse.ok) {
-        const errorText = await updateResponse.text()
-        throw new Error(`Update failed: ${updateResponse.status} - ${errorText}`)
+      if (error) {
+        throw error
       }
 
-      const data = await updateResponse.json()
-      console.log('✅ Translation updated successfully:', data)
+      console.log('✅ Translation updated successfully:', updatedData)
 
-      if (!data || data.length === 0) {
+      if (!updatedData) {
         toast.error('Güncelleme yapılamadı - yetki sorunu olabilir')
         return
       }

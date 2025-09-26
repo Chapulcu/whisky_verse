@@ -28,10 +28,12 @@ import {
   ChevronRight,
   Grid3X3,
   List,
+  Share2,
   SlidersHorizontal,
   Check
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { ShareButton } from '@/components/mobile/ShareButton'
 
 export function CollectionPage() {
   const { t, i18n } = useTranslation()
@@ -289,6 +291,28 @@ export function CollectionPage() {
           <p className="text-slate-600 dark:text-slate-400 text-lg">
             {collection.length} {t('collectionPage.subtitle')}
           </p>
+
+          {/* Enhanced App Sharing for User Acquisition */}
+          <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl border border-blue-200 dark:border-blue-800">
+            <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-2 text-center">
+              🎯 WhiskyVerse'i Keşfet ve Paylaş
+            </h3>
+            <p className="text-xs text-blue-700 dark:text-blue-300 text-center mb-3">
+              Koleksiyonunu arkadaşlarınla paylaş ve WhiskyVerse topluluğunu büyüt!
+            </p>
+            <div className="flex justify-center gap-3">
+              <ShareButton
+                data={{
+                  title: "🥃 WhiskyVerse - Viski Severler Topluluğu",
+                  text: `${user?.email?.split('@')[0] || 'Bir kullanıcı'}'nın ${collection.length} viski içeren harika koleksiyonunu görün! 🌟 Siz de WhiskyVerse'e katılın ve viski tutkusunu paylaşın!`,
+                  url: window.location.origin
+                }}
+                variant="pill"
+                size="lg"
+                className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-6 py-3 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+              />
+            </div>
+          </div>
         </motion.div>
 
         {/* Stats Cards */}
@@ -1041,6 +1065,7 @@ export function CollectionPage() {
             </div>
           )}
         </AnimatePresence>
+
       </div>
     </div>
   )

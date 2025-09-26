@@ -48,6 +48,8 @@
     "cancel": "Cancel",
     "delete": "Delete",
     "edit": "Edit",
+    "refresh": "Refresh whisky list",
+    "refreshing": "Refreshing...",
     "loading": "Loading...",
     "saving": "Saving...",
     "completed": "Completed"
@@ -491,16 +493,26 @@
       "adding": "Adding...",
       "addWhisky": "Add Whisky"
     },
-    "toasts": {
-      "addedToCollection": "Added to collection!",
-      "statusUpdated": "Status updated!",
-      "statusUpdateError": "An error occurred while updating status",
-      "loginRequiredAdd": "You must be logged in to add a whisky",
-      "nameRequired": "Whisky name is required",
-      "imageRequired": "Please select an image",
-      "validImageFile": "Please select a valid image file",
-      "maxFileSize": "File size must be less than 10MB"
-    }
+    "refreshSuccess": "Whisky list refreshed!",
+    "refreshError": "Refresh failed"
+  },
+  "qr": {
+    "scanQR": "Scan QR Code",
+    "generateQR": "Generate QR Code",
+    "cameraNotFound": "No camera found on this device",
+    "cameraPermissionDenied": "Camera access denied. Please enable camera permission in browser settings.",
+    "cameraAccessError": "Camera access error occurred",
+    "scanningFailed": "QR code scanning failed",
+    "generationFailed": "QR code generation failed",
+    "invalidQRCode": "Invalid QR code",
+    "scanTimeoutError": "QR code scanning timed out",
+    "shareProfile": "Share Profile",
+    "shareWhisky": "Share Whisky",
+    "shareCollection": "Share Collection",
+    "downloadQR": "Download QR Code",
+    "scanFromFile": "Scan from File",
+    "openCamera": "Open Camera",
+    "closeCamera": "Close Camera"
   },
   "collectionPage": {
     "title": "My Whisky Collection",

@@ -1,8 +1,9 @@
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Home, Search, Camera, User, Heart, BarChart3 } from 'lucide-react'
+import { Home, Search, Camera, User, Heart, MapPin } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
+import { useHapticFeedback } from '@/hooks/useHapticFeedback'
 
 interface MobileNavItem {
   icon: React.ReactNode
@@ -23,15 +24,15 @@ const navItems: MobileNavItem[] = [
     path: '/whiskies'
   },
   {
+    icon: <MapPin className="w-5 h-5" />,
+    label: 'Yakınımda',
+    path: '/nearby',
+    requiresAuth: false
+  },
+  {
     icon: <Camera className="w-5 h-5" />,
     label: 'Kamera',
     path: '/camera',
-    requiresAuth: true
-  },
-  {
-    icon: <Heart className="w-5 h-5" />,
-    label: 'Koleksiyon',
-    path: '/collection',
     requiresAuth: true
   },
   {
@@ -45,6 +46,7 @@ const navItems: MobileNavItem[] = [
 export function MobileNavigation() {
   const location = useLocation()
   const { user } = useAuth()
+  const { hapticTap } = useHapticFeedback()
 
   // Don't show on desktop or specific pages
   const hiddenPaths = ['/admin', '/login', '/register', '/onboarding']
@@ -70,6 +72,7 @@ export function MobileNavigation() {
             <Link
               key={item.path}
               to={item.path}
+              onClick={hapticTap}
               className="relative flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all duration-200 min-w-0 flex-1"
             >
               {/* Active background */}

@@ -48,6 +48,8 @@
     "cancel": "İptal",
     "delete": "Sil",
     "edit": "Düzenle",
+    "refresh": "Viski listesini yenile",
+    "refreshing": "Yenileniyor...",
     "loading": "Yükleniyor...",
     "saving": "Kaydediliyor...",
     "completed": "Tamamlandı"
@@ -491,16 +493,26 @@
       "adding": "Ekleniyor...",
       "addWhisky": "Viski Ekle"
     },
-    "toasts": {
-      "addedToCollection": "Koleksiyona eklendi!",
-      "statusUpdated": "Durum güncellendi!",
-      "statusUpdateError": "Durum güncellenirken hata oluştu",
-      "loginRequiredAdd": "Viski eklemek için giriş yapmalısınız",
-      "nameRequired": "Viski adı gereklidir",
-      "imageRequired": "Lütfen bir resim seçin",
-      "validImageFile": "Lütfen geçerli bir resim dosyası seçin",
-      "maxFileSize": "Dosya boyutu 10MB'den küçük olmalıdır"
-    }
+    "refreshSuccess": "Viski listesi yenilendi!",
+    "refreshError": "Yenileme başarısız"
+  },
+  "qr": {
+    "scanQR": "QR Kod Tarama",
+    "generateQR": "QR Kod Oluştur",
+    "cameraNotFound": "Bu cihazda kamera bulunamadı",
+    "cameraPermissionDenied": "Kamera erişim izni reddedildi. Lütfen tarayıcı ayarlarından kamera iznini etkinleştirin.",
+    "cameraAccessError": "Kamera erişiminde sorun oluştu",
+    "scanningFailed": "QR kod tarama başarısız",
+    "generationFailed": "QR kod oluşturulamadı",
+    "invalidQRCode": "Geçersiz QR kod",
+    "scanTimeoutError": "QR kod tarama zaman aşımına uğradı",
+    "shareProfile": "Profili Paylaş",
+    "shareWhisky": "Viski Paylaş",
+    "shareCollection": "Koleksiyon Paylaş",
+    "downloadQR": "QR Kodu İndir",
+    "scanFromFile": "Dosyadan Tara",
+    "openCamera": "Kamera Aç",
+    "closeCamera": "Kamera Kapat"
   },
   "collectionPage": {
     "title": "Viski Koleksiyonum",

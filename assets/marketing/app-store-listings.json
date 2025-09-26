@@ -1,0 +1,18 @@
+{
+  "tr": {
+    "name": "WhiskyVerse - Viski Severler Topluluğu",
+    "subtitle": "Viski Keşif ve Koleksiyon Platformu",
+    "description": "WhiskyVerse, viski severler için tasarlanmış kapsamlı bir platform. Viskiler keşfedin, kişisel koleksiyonunuzu oluşturun ve küresel toplulukla bağlantı kurun.\n\n🥃 TEMEL ÖZELLİKLER:\n• Kişisel viski koleksiyonunuzu dijital olarak kaydedin\n• Binlerce viski çeşidini keşfedin ve inceleyin\n• Fotoğraf çekerek viskilerinizi görsel olarak arşivleyin\n• Başarımları kazanın ve özel rozetler toplayın\n• QR kod teknolojisi ile koleksiyonunuzu paylaşın\n• Yakınınızdaki viski barları ve mağazaları bulun\n\n📱 MOBİL DENEYIM:\n• PWA (Progressive Web App) teknolojisi\n• Offline çalışabilme özelliği\n• Kamera entegrasyonu\n• Push bildirimleri\n• Touch-friendly arayüz\n\n🏆 GAMİFİKASYON:\n• Koleksiyon başarımları\n• Sosyal etkileşim rozetleri\n• Fotoğraf çekme ödülleri\n• Keşif milestone'ları\n\nWhiskyVerse ile viski dünyasına adım atın ve global topluluğun bir parçası olun!",
+    "keywords": "viski, whisky, koleksiyon, topluluk, fotoğraf, keşfet, başarım, QR kod, PWA",
+    "category": "Yaşam Tarzı",
+    "whatsNew": "🎉 Yeni Sürüm Özellikleri:\n• Gelişmiş kamera deneyimi\n• QR kod paylaşım sistemi\n• Başarım sistemi\n• Pull-to-refresh desteği\n• Haptic feedback\n• Push bildirimler\n• Konum tabanlı mekan bulma"
+  },
+  "en": {
+    "name": "WhiskyVerse - Whisky Community",
+    "subtitle": "Whisky Discovery & Collection Platform",
+    "description": "WhiskyVerse is a comprehensive platform designed for whisky enthusiasts. Discover whiskies, build your personal collection, and connect with a global community.\n\n🥃 KEY FEATURES:\n• Digitally record your personal whisky collection\n• Discover and explore thousands of whisky varieties\n• Visually archive your whiskies with photos\n• Earn achievements and collect special badges\n• Share your collection using QR code technology\n• Find nearby whisky bars and stores\n\n📱 MOBILE EXPERIENCE:\n• PWA (Progressive Web App) technology\n• Offline functionality\n• Camera integration\n• Push notifications\n• Touch-friendly interface\n\n🏆 GAMIFICATION:\n• Collection achievements\n• Social interaction badges\n• Photography rewards\n• Discovery milestones\n\nStep into the whisky world with WhiskyVerse and become part of a global community!",
+    "keywords": "whisky, whiskey, collection, community, photography, discover, achievement, QR code, PWA",
+    "category": "Lifestyle",
+    "whatsNew": "🎉 New Version Features:\n• Enhanced camera experience\n• QR code sharing system\n• Achievement system\n• Pull-to-refresh support\n• Haptic feedback\n• Push notifications\n• Location-based venue finding"
+  }
+}

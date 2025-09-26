@@ -3,12 +3,12 @@ import { useTranslation } from 'react-i18next'
 import { Link, useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { motion } from 'framer-motion'
-import { 
-  Wine, 
-  Search, 
-  Filter, 
-  MapPin, 
-  Percent, 
+import {
+  Wine,
+  Search,
+  Filter,
+  MapPin,
+  Percent,
   Star,
   Heart,
   Plus,
@@ -20,13 +20,17 @@ import {
   Grid3X3,
   List,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  RefreshCw
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuth } from '@/contexts/AuthContext'
 import { useWhiskyUpload } from '@/hooks/useWhiskyUpload'
 import { useWhiskiesMultilingual, MultilingualWhisky } from '@/hooks/useWhiskiesMultilingual'
 import { useUserCollection } from '@/hooks/useUserCollection'
+import { useSwipeGestures, usePullToRefresh } from '@/hooks/useSwipeGestures'
+import { useHapticFeedback } from '@/hooks/useHapticFeedback'
+import { PullToRefreshIndicator } from '@/components/mobile/PullToRefreshIndicator'
 import { WhiskyErrorBoundary } from '@/components/WhiskyErrorBoundary'
 import { WhiskySkeleton, WhiskySkeletonMini } from '@/components/WhiskySkeleton'
 
@@ -42,12 +46,14 @@ function WhiskiesPageContent() {
   const { t, i18n } = useTranslation()
   const { user, profile } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
-  
+
   const { uploadWhiskyImage, isUploading } = useWhiskyUpload()
+  const { hapticSuccess, hapticButton } = useHapticFeedback()
   const { whiskies, totalCount, loading: whiskyLoading, isRefetching: whiskyRefetching, loadWhiskies } = useWhiskiesMultilingual()
   const { collection: userCollection, loading: userCollectionLoading, addToCollection: addToCollectionHook, updateCollectionItem } = useUserCollection()
 
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   // Convert collection to legacy format for compatibility
   const userWhiskies = userCollection.map(item => ({
@@ -93,6 +99,37 @@ function WhiskiesPageContent() {
   })
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string>('')
+
+  // Pull-to-refresh functionality
+  const handleRefresh = async () => {
+    hapticButton()
+    try {
+      await loadWhiskies({
+        search: debouncedSearchTerm,
+        country: selectedCountry,
+        type: selectedType,
+        letter: selectedLetter,
+        page: 1,
+        limit: itemsPerPage
+      })
+      hapticSuccess()
+      toast.success(t('whiskiesPage.refreshSuccess') || 'Viski listesi yenilendi!')
+    } catch (error) {
+      console.error('Refresh failed:', error)
+      toast.error(t('whiskiesPage.refreshError') || 'Yenileme başarısız')
+    }
+  }
+
+  const { isRefreshing, isPulling, pullDistance, progress } = usePullToRefresh(
+    containerRef,
+    handleRefresh,
+    {
+      threshold: 80,
+      maxPullDistance: 150,
+      enableHaptic: true,
+      disabled: loading || whiskyRefetching
+    }
+  )
 
 
   // loadUserCollection is now handled by useUserCollection hook
@@ -645,12 +682,39 @@ function WhiskiesPageContent() {
   }
 
   return (
-    <div className="space-y-8">
+    <div ref={containerRef} className="space-y-8 relative overflow-hidden">
+      {/* Pull to Refresh Indicator */}
+      <PullToRefreshIndicator
+        isVisible={isPulling || isRefreshing}
+        isRefreshing={isRefreshing}
+        progress={progress}
+        pullDistance={pullDistance}
+        threshold={80}
+      />
       {/* Header */}
       <div className="text-center mobile-card-spacing">
-        <h1 className="mobile-heading font-cyber font-bold text-gradient mb-4">
-          {t('whiskiesPage.title')}
-        </h1>
+        <div className="flex items-center justify-center gap-3 mb-4 flex-wrap">
+          <h1 className="mobile-heading font-cyber font-bold text-gradient">
+            {t('whiskiesPage.title')}
+          </h1>
+          <motion.button
+            onClick={handleRefresh}
+            disabled={isRefreshing || whiskyRefetching || loading}
+            className={`p-3 rounded-full transition-all duration-300 touch-friendly mobile-touch-target ${
+              isRefreshing || whiskyRefetching || loading
+                ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                : 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/50 hover:text-amber-700 dark:hover:text-amber-300 shadow-lg hover:shadow-xl hover:shadow-amber-500/25'
+            }`}
+            whileTap={{ scale: 0.95 }}
+            animate={{ rotate: (isRefreshing || whiskyRefetching) ? 360 : 0 }}
+            transition={{
+              rotate: { duration: 1, ease: "linear", repeat: (isRefreshing || whiskyRefetching) ? Infinity : 0 }
+            }}
+            title={isRefreshing || whiskyRefetching ? t('actions.refreshing') || "Yenileniyor..." : t('actions.refresh') || "Viski listesini yenile"}
+          >
+            <RefreshCw className={`w-5 h-5 ${(isRefreshing || whiskyRefetching) ? 'animate-spin' : ''}`} />
+          </motion.button>
+        </div>
         <p className="mobile-text-size text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
           {t('whiskiesPage.subtitle')}
         </p>

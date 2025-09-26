@@ -134,31 +134,24 @@ export function useDirectWhiskyUpload() {
 
       console.log('📊 Inserting whisky data:', insertData)
 
-      // Simple fetch with hardcoded admin auth (temporary fix)
-      console.log('⏳ Starting database insert with direct auth...')
+      // Use secure Supabase client with user session
+      console.log('⏳ Starting database insert with user session...')
 
-      const response = await fetch('https://pznuleevpgklxuuojcpy.supabase.co/rest/v1/whiskies', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6bnVsZWV2cGdrbHh1dW9qY3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1ODAzNDEsImV4cCI6MjA3MTE1NjM0MX0.YU6bUsKYOrMlmlRtb-Wafr6em9DEaEY9tZEyyApXNUM',
-          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6bnVsZWV2cGdrbHh1dW9qY3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1ODAzNDEsImV4cCI6MjA3MTE1NjM0MX0.YU6bUsKYOrMlmlRtb-Wafr6em9DEaEY9tZEyyApXNUM',
-          'Prefer': 'return=representation'
-        },
-        body: JSON.stringify({
+      const { data, error: insertError } = await supabase
+        .from('whiskies')
+        .insert({
           ...insertData,
-          created_by: 'c29b22cf-f7bd-46d8-bef3-3e42265017f9' // Admin user ID
+          created_by: user?.id // Use current user's ID
         })
-      })
+        .select()
+        .single()
 
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error('❌ Fetch error:', response.status, errorText)
-        throw new Error(`Database insert failed: ${response.status} - ${errorText}`)
+      if (insertError) {
+        console.error('❌ Insert error:', insertError)
+        throw insertError
       }
 
-      const data = await response.json()
-      console.log('✅ Fetch successful:', data)
+      console.log('✅ Insert successful:', data)
       const error = null
 
       console.log('🔍 Insert response:', { data, error })
@@ -244,33 +237,23 @@ export function useDirectWhiskyUpload() {
       console.log('📊 Update target ID:', id)
       console.log('👤 User ID:', user.id)
 
-      // Use fetch API for update with hardcoded admin auth (bypass session issues)
-      console.log('🚀 Starting database update via fetch API...')
-      console.log('⚠️ Using direct admin auth (bypassing session check)')
+      // Use secure Supabase client with user session
+      console.log('🚀 Starting database update with user session...')
 
-      const updateResponse = await fetch(`https://pznuleevpgklxuuojcpy.supabase.co/rest/v1/whiskies?id=eq.${id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6bnVsZWV2cGdrbHh1dW9qY3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1ODAzNDEsImV4cCI6MjA3MTE1NjM0MX0.YU6bUsKYOrMlmlRtb-Wafr6em9DEaEY9tZEyyApXNUM',
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6bnVsZWV2cGdrbHh1dW9qY3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1ODAzNDEsImV4cCI6MjA3MTE1NjM0MX0.YU6bUsKYOrMlmlRtb-Wafr6em9DEaEY9tZEyyApXNUM',
-          'Prefer': 'return=representation'
-        },
-        body: JSON.stringify(updateData)
-      })
+      const { data: fetchedData, error: updateError } = await supabase
+        .from('whiskies')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single()
 
-      if (!updateResponse.ok) {
-        const errorText = await updateResponse.text()
-        throw new Error(`Update failed: ${updateResponse.status} - ${errorText}`)
+      if (updateError) {
+        console.error('❌ Update error:', updateError)
+        throw updateError
       }
 
-      const fetchedData = await updateResponse.json()
-      console.log('✅ Update successful via fetch:', fetchedData)
-
-      // Check if we got data back
-      if (!fetchedData || (Array.isArray(fetchedData) && fetchedData.length === 0)) {
-        console.error('⚠️ No data returned from update - might indicate permission issue')
-        throw new Error('Update completed but no data returned - check permissions')
+      if (!fetchedData) {
+        throw new Error('Update completed but no data returned')
       }
 
       console.log('✅ Whisky updated successfully:', fetchedData)

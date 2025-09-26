@@ -1118,20 +1118,20 @@ export function AdminPage() {
       
       console.log('Final update data:', updateData)
 
-      // Use fetch API to bypass session issues
-      const updateResponse = await fetch(`https://pznuleevpgklxuuojcpy.supabase.co/rest/v1/groups?id=eq.${editingGroup.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6bnVsZWV2cGdrbHh1dW9qY3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1ODAzNDEsImV4cCI6MjA3MTE1NjM0MX0.YU6bUsKYOrMlmlRtb-Wafr6em9DEaEY9tZEyyApXNUM',
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6bnVsZWV2cGdrbHh1dW9qY3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1ODAzNDEsImV4cCI6MjA3MTE1NjM0MX0.YU6bUsKYOrMlmlRtb-Wafr6em9DEaEY9tZEyyApXNUM',
-          'Prefer': 'return=representation'
-        },
-        body: JSON.stringify({
+      // Use secure Supabase client with user session
+      const { data: result, error } = await supabase
+        .from('groups')
+        .update({
           ...updateData,
           updated_at: new Date().toISOString()
         })
-      })
+        .eq('id', editingGroup.id)
+        .select()
+        .single()
+
+      if (error) {
+        throw error
+      }
 
       if (!updateResponse.ok) {
         const errorText = await updateResponse.text()
@@ -1315,24 +1315,18 @@ export function AdminPage() {
         updated_at: new Date().toISOString()
       }
 
-      // Use fetch API to bypass session issues
-      const updateResponse = await fetch(`https://pznuleevpgklxuuojcpy.supabase.co/rest/v1/events?id=eq.${editingEvent.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6bnVsZWV2cGdrbHh1dW9qY3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1ODAzNDEsImV4cCI6MjA3MTE1NjM0MX0.YU6bUsKYOrMlmlRtb-Wafr6em9DEaEY9tZEyyApXNUM',
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6bnVsZWV2cGdrbHh1dW9qY3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1ODAzNDEsImV4cCI6MjA3MTE1NjM0MX0.YU6bUsKYOrMlmlRtb-Wafr6em9DEaEY9tZEyyApXNUM',
-          'Prefer': 'return=representation'
-        },
-        body: JSON.stringify(updateData)
-      })
+      // Use secure Supabase client with user session
+      const { data, error } = await supabase
+        .from('events')
+        .update(updateData)
+        .eq('id', editingEvent.id)
+        .select()
+        .single()
 
-      if (!updateResponse.ok) {
-        const errorText = await updateResponse.text()
-        throw new Error(`Update failed: ${updateResponse.status} - ${errorText}`)
+      if (error) {
+        throw error
       }
 
-      const data = await updateResponse.json()
       console.log('✅ Event updated successfully:', data)
 
       // Update events state immediately with returned data

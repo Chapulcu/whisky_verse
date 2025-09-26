@@ -67,7 +67,16 @@
       "Read(//var/folders/xp/g7ybln5j49v5254kxypbsm3h0000gn/T/TemporaryItems/NSIRD_screencaptureui_dAxWO4/**)",
       "Read(//var/folders/xp/g7ybln5j49v5254kxypbsm3h0000gn/T/TemporaryItems/NSIRD_screencaptureui_s01F74/**)",
       "Read(//Users/takhan/Desktop/**)",
-      "Read(//var/folders/xp/g7ybln5j49v5254kxypbsm3h0000gn/T/TemporaryItems/NSIRD_screencaptureui_kT4auO/**)"
+      "Read(//var/folders/xp/g7ybln5j49v5254kxypbsm3h0000gn/T/TemporaryItems/NSIRD_screencaptureui_kT4auO/**)",
+      "WebFetch(domain:localhost)",
+      "Bash(grep:*)",
+      "Read(//Users/takhan/Downloads/**)",
+      "Bash(HTTPS=true npm run dev)",
+      "Bash(openssl req:*)",
+      "Bash(sudo:*)",
+      "Bash(ngrok:*)",
+      "Bash(npx serve:*)",
+      "Bash(echo:*)"
     ],
     "deny": [],
     "ask": []

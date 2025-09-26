@@ -46,7 +46,7 @@ Browser console'da şu kodu çalıştırın:
 // Supabase bağlantı testi
 fetch('https://pznuleevpgklxuuojcpy.supabase.co/rest/v1/', {
   headers: {
-    'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6bnVsZWV2cGdrbHh1dW9qY3B5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU1ODAzNDEsImV4cCI6MjA3MTE1NjM0MX0.YU6bUsKYOrMlmlRtb-Wafr6em9DEaEY9tZEyyApXNUM'
+    'apikey': '**REDACTED_TOKEN**
   }
 }).then(r => r.json()).then(console.log)
 ```

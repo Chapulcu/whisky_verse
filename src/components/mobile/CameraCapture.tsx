@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react'
 import { Camera, X, FlipHorizontal, Zap, ZapOff, RotateCcw } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useHapticFeedback } from '@/hooks/useHapticFeedback'
 import toast from 'react-hot-toast'
 
 interface CameraCaptureProps {
@@ -20,6 +21,7 @@ export function CameraCapture({ isOpen, onClose, onCapture, title = "FotoÄŸraf Ã
   const [flashEnabled, setFlashEnabled] = useState(false)
   const [hasFlash, setHasFlash] = useState(false)
   const [capturedImage, setCapturedImage] = useState<string | null>(null)
+  const { hapticButton, hapticPhotoCapture, hapticSuccess } = useHapticFeedback()
 
   // Check if device has camera flash
   useEffect(() => {

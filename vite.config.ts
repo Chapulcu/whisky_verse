@@ -1,4 +1,5 @@
 import path from "path"
+import fs from "fs"
 import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
 import sourceIdentifierPlugin from 'vite-plugin-source-info'
@@ -69,6 +70,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,webp}'],
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB limit instead of default 2MB
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/api\.*/i,
@@ -78,9 +80,6 @@ export default defineConfig({
               expiration: {
                 maxEntries: 10,
                 maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
-              },
-              cacheKeyWillBeUsed: async ({ request }) => {
-                return `${request.url}?version=1`
               }
             }
           },
@@ -107,5 +106,31 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: {
+    host: true, // Enable host mode for network access
+    port: 5173,
+    open: false,
+    https: process.env.HTTPS === 'true' ? {
+      key: fs.existsSync('.ssl/key.pem') ? fs.readFileSync('.ssl/key.pem') : undefined,
+      cert: fs.existsSync('.ssl/cert.pem') ? fs.readFileSync('.ssl/cert.pem') : undefined,
+    } : false
+  },
+  build: {
+    chunkSizeWarningLimit: 1000, // Increase warning limit to 1MB
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Split vendor libraries into separate chunks
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          supabase: ['@supabase/supabase-js'],
+          ui: ['framer-motion', 'lucide-react'],
+          qr: ['qrcode', 'qr-scanner'],
+        }
+      }
+    },
+    target: 'es2018', // Better compatibility and smaller bundles
+    minify: 'esbuild', // Faster and more efficient minification
+    sourcemap: false // Disable sourcemaps in production for smaller build
+  }
 })
 

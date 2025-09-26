@@ -1,0 +1,207 @@
+{
+  "google_play_store": {
+    "tr": {
+      "title": "WhiskyVerse - Viski Severler Topluluğu",
+      "short_description": "Viski keşfedin, koleksiyonunuzu oluşturun, toplulukla bağlantı kurun",
+      "full_description": "WhiskyVerse, viski tutkunları için özel olarak tasarlanmış kapsamlı bir topluluk platformudur. Viskiler keşfedin, kişisel koleksiyonunuzu dijital olarak oluşturun ve küresel viski severlerin topluluğuyla bağlantı kurun.\n\n🥃 TEMEL ÖZELLİKLER:\n• Kişisel viski koleksiyonunuzu dijital olarak kaydedin ve yönetin\n• Binlerce viski çeşidini keşfedin, inceleyin ve değerlendirin\n• Yüksek kaliteli fotoğraflar çekerek viskilerinizi görsel olarak arşivleyin\n• Gelişmiş arama ve filtreleme ile istediğiniz viskiyi kolayca bulun\n• Detaylı viski bilgileri, tatma notları ve kullanıcı değerlendirmeleri\n\n📱 MOBİL DENEYIM:\n• PWA (Progressive Web App) teknolojisi ile native app deneyimi\n• Offline çalışabilme özelliği - internet olmadan da kullanın\n• Gelişmiş kamera entegrasyonu ile profesyonel fotoğraflar\n• Push bildirimleri ile yeni viskiler ve etkinlikler hakkında haberdar olun\n• Touch-friendly arayüz ile akıcı mobil deneyim\n\n🏆 GAMİFİKASYON VE BAŞARIMLAR:\n• Koleksiyon büyüklüğü başarımları kazanın\n• Sosyal etkileşim rozetleri toplayın\n• Fotoğraf çekme ödülleri ve milestone'lar\n• Keşif başarımları ile yeni viskiler keşfedin\n• Uzmanlık rozetleri ile bilginizi gösterin\n\n🌍 SOSYAL ÖZELLİKLER:\n• QR kod teknolojisi ile koleksiyonunuzu anında paylaşın\n• Yakınınızdaki viski barları ve mağazaları keşfedin\n• Native paylaşım desteği ile sosyal medyada koleksiyonunuzu sergileyin\n• Toplulukla etkileşim kurun ve deneyimlerinizi paylaşın\n\n🔧 TEKNİK ÖZELLİKLER:\n• Modern Progressive Web App teknolojisi\n• Güvenli kullanıcı kimlik doğrulama\n• Cloud tabanlı veri senkronizasyonu\n• Çoklu dil desteği (Türkçe/İngilizce)\n• Responsive tasarım - tüm cihazlarda mükemmel çalışır\n\nWhiskyVerse ile viski tutkunuzun dijital yolculuğuna başlayın ve küresel topluluğun bir parçası olun!",
+      "keywords": [
+        "viski",
+        "whisky",
+        "scotch",
+        "bourbon",
+        "japonya viskisi",
+        "koleksiyon",
+        "topluluk",
+        "fotoğraf",
+        "keşfet",
+        "tatma",
+        "arşiv",
+        "sosyal",
+        "mobil"
+      ],
+      "category": "Yaşam Tarzı",
+      "content_rating": "Teen",
+      "privacy_policy": "https://whiskyverse.com/privacy",
+      "whats_new": "🎉 Yeni Sürüm Özellikleri:\n• Gelişmiş kamera deneyimi ve fotoğraf kalitesi\n• QR kod paylaşım sistemi - koleksiyonunuzu anında paylaşın\n• Kapsamlı başarım sistemi ve rozetler\n• Pull-to-refresh desteği ile kolay güncelleme\n• Haptic feedback ile dokunsal geri bildirim\n• Push bildirimler ve kişiselleştirilebilir tercihler\n• Konum tabanlı yakın mekan bulma özelliği\n• iOS Safari PWA optimizasyonları\n• Performance iyileştirmeleri ve hata düzeltmeleri"
+    },
+    "en": {
+      "title": "WhiskyVerse - Whisky Community",
+      "short_description": "Discover whiskies, build your collection, connect with community",
+      "full_description": "WhiskyVerse is a comprehensive community platform specially designed for whisky enthusiasts. Discover whiskies, digitally build your personal collection, and connect with a global community of whisky lovers.\n\n🥃 KEY FEATURES:\n• Digitally record and manage your personal whisky collection\n• Discover, explore, and rate thousands of whisky varieties\n• Visually archive your whiskies with high-quality photography\n• Advanced search and filtering to easily find your desired whisky\n• Detailed whisky information, tasting notes, and user reviews\n\n📱 MOBILE EXPERIENCE:\n• PWA (Progressive Web App) technology for native app experience\n• Offline functionality - use without internet connection\n• Advanced camera integration for professional photography\n• Push notifications to stay updated on new whiskies and events\n• Touch-friendly interface for smooth mobile experience\n\n🏆 GAMIFICATION AND ACHIEVEMENTS:\n• Earn collection size achievements\n• Collect social interaction badges\n• Photography rewards and milestones\n• Discovery achievements for exploring new whiskies\n• Expertise badges to showcase your knowledge\n\n🌍 SOCIAL FEATURES:\n• Instantly share your collection using QR code technology\n• Discover nearby whisky bars and stores\n• Native sharing support to showcase your collection on social media\n• Interact with the community and share your experiences\n\n🔧 TECHNICAL FEATURES:\n• Modern Progressive Web App technology\n• Secure user authentication\n• Cloud-based data synchronization\n• Multi-language support (Turkish/English)\n• Responsive design - works perfectly on all devices\n\nStart your digital whisky journey with WhiskyVerse and become part of a global community!",
+      "keywords": [
+        "whisky",
+        "whiskey",
+        "scotch",
+        "bourbon",
+        "japanese whisky",
+        "collection",
+        "community",
+        "photography",
+        "discover",
+        "tasting",
+        "archive",
+        "social",
+        "mobile"
+      ],
+      "category": "Lifestyle",
+      "content_rating": "Teen",
+      "privacy_policy": "https://whiskyverse.com/privacy",
+      "whats_new": "🎉 New Version Features:\n• Enhanced camera experience and photo quality\n• QR code sharing system - instantly share your collection\n• Comprehensive achievement system and badges\n• Pull-to-refresh support for easy updates\n• Haptic feedback for tactile response\n• Push notifications with customizable preferences\n• Location-based nearby venue discovery\n• iOS Safari PWA optimizations\n• Performance improvements and bug fixes"
+    }
+  },
+  "apple_app_store": {
+    "tr": {
+      "title": "WhiskyVerse",
+      "subtitle": "Viski Severler Topluluğu",
+      "description": "WhiskyVerse ile viski dünyasına adım atın! Viskiler keşfedin, kişisel koleksiyonunuzu oluşturun ve küresel toplulukla bağlantı kurun.\n\nÖZELLİKLER:\n• Dijital viski koleksiyonu yönetimi\n• Binlerce viski çeşidini keşfetme\n• Gelişmiş kamera ile fotoğraflama\n• Başarım sistemi ve rozetler\n• QR kod paylaşım teknolojisi\n• Yakın mekan bulma\n• Offline çalışabilme\n• Push bildirimleri\n\nViski tutkunları için tasarlanan bu kapsamlı platform ile koleksiyonunuzu dijitalleştirin ve toplulukla paylaşın!",
+      "keywords": "viski,whisky,koleksiyon,topluluk,fotoğraf,keşfet",
+      "category": "Lifestyle",
+      "age_rating": "12+",
+      "privacy_policy": "https://whiskyverse.com/privacy"
+    },
+    "en": {
+      "title": "WhiskyVerse",
+      "subtitle": "Whisky Community",
+      "description": "Step into the whisky world with WhiskyVerse! Discover whiskies, build your personal collection, and connect with a global community.\n\nFEATURES:\n• Digital whisky collection management\n• Discover thousands of whisky varieties\n• Advanced camera for photography\n• Achievement system and badges\n• QR code sharing technology\n• Nearby venue discovery\n• Offline functionality\n• Push notifications\n\nDigitize your collection and share with the community using this comprehensive platform designed for whisky enthusiasts!",
+      "keywords": "whisky,whiskey,collection,community,photography,discover",
+      "category": "Lifestyle",
+      "age_rating": "12+",
+      "privacy_policy": "https://whiskyverse.com/privacy"
+    }
+  },
+  "microsoft_store": {
+    "tr": {
+      "title": "WhiskyVerse - Viski Topluluğu",
+      "description": "Windows için WhiskyVerse PWA uygulaması. Viski koleksiyonunuzu yönetin, yeni viskiler keşfedin ve toplulukla bağlantı kurun.",
+      "features": [
+        "Kişisel viski koleksiyonu",
+        "Fotoğraf çekme ve arşivleme",
+        "Başarım sistemi",
+        "QR kod paylaşımı",
+        "Offline çalışma",
+        "Cross-platform senkronizasyon"
+      ],
+      "category": "Productivity"
+    },
+    "en": {
+      "title": "WhiskyVerse - Whisky Community",
+      "description": "WhiskyVerse PWA app for Windows. Manage your whisky collection, discover new whiskies, and connect with the community.",
+      "features": [
+        "Personal whisky collection",
+        "Photography and archiving",
+        "Achievement system",
+        "QR code sharing",
+        "Offline functionality",
+        "Cross-platform sync"
+      ],
+      "category": "Productivity"
+    }
+  },
+  "pwa_directories": {
+    "progressive_web_app_store": {
+      "title": "WhiskyVerse - Whisky Community Platform",
+      "description": "Comprehensive PWA for whisky enthusiasts to manage collections, discover whiskies, and connect with community",
+      "tags": ["whisky", "collection", "community", "photography", "PWA", "social"],
+      "screenshots": 5,
+      "supported_features": [
+        "Offline Support",
+        "Push Notifications",
+        "Camera API",
+        "Geolocation",
+        "Web Share API",
+        "Service Worker",
+        "Add to Homescreen"
+      ]
+    }
+  },
+  "seo_metadata": {
+    "tr": {
+      "meta_title": "WhiskyVerse - Viski Severler Topluluğu | Koleksiyon ve Keşif Platformu",
+      "meta_description": "Viski severler için nihai topluluk platformu. Viskiler keşfedin, koleksiyonunuzu oluşturun, fotoğraflar çekin ve toplulukla bağlantı kurun. PWA uygulaması.",
+      "og_title": "WhiskyVerse - Viski Koleksiyonu ve Topluluk Platformu",
+      "og_description": "Dijital viski koleksiyonunuzu oluşturun, yeni viskiler keşfedin, başarımlar kazanın ve küresel toplulukla bağlantı kurun.",
+      "twitter_title": "WhiskyVerse - Viski Severler İçin PWA",
+      "twitter_description": "Viski koleksiyonunuzu dijitalleştirin ve toplulukla paylaşın. Kamera, QR kod, başarımlar ve daha fazlası!"
+    },
+    "en": {
+      "meta_title": "WhiskyVerse - Whisky Community | Collection and Discovery Platform",
+      "meta_description": "Ultimate community platform for whisky lovers. Discover whiskies, build collections, capture photos, and connect with community. PWA app.",
+      "og_title": "WhiskyVerse - Whisky Collection and Community Platform",
+      "og_description": "Build your digital whisky collection, discover new whiskies, earn achievements, and connect with global community.",
+      "twitter_title": "WhiskyVerse - PWA for Whisky Lovers",
+      "twitter_description": "Digitize your whisky collection and share with community. Camera, QR codes, achievements and more!"
+    }
+  },
+  "technical_specs": {
+    "supported_browsers": [
+      "Chrome 90+",
+      "Firefox 88+",
+      "Safari 14+",
+      "Edge 90+",
+      "Samsung Internet 14+"
+    ],
+    "pwa_features": [
+      "Service Worker",
+      "Web App Manifest",
+      "Add to Home Screen",
+      "Offline Support",
+      "Push Notifications",
+      "Background Sync",
+      "Camera API",
+      "Geolocation API",
+      "Web Share API",
+      "Fullscreen API",
+      "Vibration API"
+    ],
+    "performance": {
+      "lighthouse_pwa_score": "100%",
+      "lighthouse_performance": "90+",
+      "lighthouse_accessibility": "95+",
+      "lighthouse_best_practices": "100%",
+      "lighthouse_seo": "95+"
+    },
+    "security": [
+      "HTTPS Only",
+      "Content Security Policy",
+      "Row Level Security",
+      "JWT Authentication",
+      "Input Sanitization",
+      "XSS Protection"
+    ]
+  },
+  "marketing_copy": {
+    "value_propositions": {
+      "tr": [
+        "🥃 Dijital viski koleksiyonunuzu oluşturun",
+        "📷 Profesyonel fotoğraflar çekerek arşivleyin",
+        "🏆 Başarımlar kazanın ve rozetler toplayın",
+        "🌍 Küresel toplulukla bağlantı kurun",
+        "📱 Her yerden erişilebilir PWA teknolojisi",
+        "🔒 Güvenli ve özel veri koruması"
+      ],
+      "en": [
+        "🥃 Build your digital whisky collection",
+        "📷 Archive with professional photography",
+        "🏆 Earn achievements and collect badges",
+        "🌍 Connect with global community",
+        "📱 Accessible everywhere with PWA technology",
+        "🔒 Secure and private data protection"
+      ]
+    },
+    "target_audiences": [
+      "Whisky enthusiasts and collectors",
+      "Social media users who share lifestyle content",
+      "Photography hobbyists interested in product shots",
+      "Community-oriented users who enjoy gamification",
+      "Mobile-first users who prefer PWA experiences"
+    ],
+    "competitor_advantages": [
+      "Native PWA experience vs web-only competitors",
+      "Comprehensive gamification system",
+      "Advanced camera integration",
+      "QR code sharing technology",
+      "Offline-first functionality",
+      "Multi-language support"
+    ]
+  }
+}
