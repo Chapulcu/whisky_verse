@@ -85,7 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('📧 Current user email:', userEmail)
         
         // Special handling for admin users - create temp profile for admin or akhantalip
-        if (userEmail === 'admin@whiskyverse.com' || userEmail === 'akhantalip@gmail.com') {
+        if (userEmail === 'example@whiskyverse.com' || userEmail === 'example@gmail.com') {
           console.log('🔑 Creating temporary admin profile for:', userEmail)
           const tempProfile: Profile = {
             id: userId,
@@ -124,12 +124,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userEmail = currentUser.data.user?.email
       console.log('📧 Fallback: Current user email:', userEmail)
       
-      if (userEmail === 'admin@whiskyverse.com' || userEmail === 'akhantalip@gmail.com') {
+      if (userEmail === 'example@whiskyverse.com' || userEmail === 'example@gmail.com') {
         console.log('🔑 Creating fallback admin profile for:', userEmail)
         const tempProfile: Profile = {
           id: userId,
           email: userEmail,
-          full_name: userEmail === 'admin@whiskyverse.com' ? 'System Administrator' : 'Admin User',
+          full_name: userEmail === 'example@whiskyverse.com' ? 'System Administrator' : 'Admin User',
           role: 'admin',
           language: 'tr',
           avatar_url: null,
