@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Share2, Copy, Twitter, Facebook, Linkedin, MessageSquare, Check } from 'lucide-react'
 import { useWebShare, ShareData } from '@/hooks/useWebShare'
-import { useAchievements } from '@/hooks/useAchievements'
+import { useDbAchievements } from '@/hooks/useDbAchievements'
 import toast from 'react-hot-toast'
 
 interface ShareButtonProps {
@@ -21,7 +21,7 @@ export function ShareButton({
   className = ''
 }: ShareButtonProps) {
   const { isSupported, share, fallbackShare } = useWebShare()
-  const { makeShare } = useAchievements()
+  const { makeShare } = useDbAchievements()
   const [isSharing, setIsSharing] = useState(false)
   const [showFallback, setShowFallback] = useState(false)
   const [copied, setCopied] = useState(false)

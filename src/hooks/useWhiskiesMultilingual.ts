@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import toast from 'react-hot-toast'
 
-export type AppLanguage = 'tr' | 'en' | 'ru'
+export type AppLanguage = 'tr' | 'en' | 'ru' | 'bg'
 
 export interface MultilingualWhiskyRow {
   id: number
@@ -54,7 +54,8 @@ function pickBestTranslation(row: MultilingualWhiskyRow, lang: AppLanguage): { t
   }
 
   // For other languages, prioritize: requested language, then fallback order
-  const pref = [lang, 'tr', 'en'] as AppLanguage[]
+  const fallbackOrder: AppLanguage[] = ['tr', 'en', 'ru', 'bg']
+  const pref = [lang, ...fallbackOrder.filter(code => code !== lang)]
   const translations = row.whisky_translations || []
   for (const code of pref) {
     const t = translations.find(x => x.language_code === code)

@@ -76,7 +76,17 @@
       "Bash(sudo:*)",
       "Bash(ngrok:*)",
       "Bash(npx serve:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(npx vercel:*)",
+      "Bash(surge:*)",
+      "Bash(zip:*)",
+      "Bash(vercel login:*)",
+      "Bash(vercel:*)",
+      "WebFetch(domain:capable-bonbon-7c16bb.netlify.app)",
+      "Bash(.specify/scripts/bash/create-new-feature.sh:*)",
+      "Bash(.specify/scripts/bash/check-prerequisites.sh:*)",
+      "Bash(.specify/scripts/bash/setup-plan.sh:*)",
+      "Bash(.specify/scripts/bash/update-agent-context.sh:*)"
     ],
     "deny": [],
     "ask": []

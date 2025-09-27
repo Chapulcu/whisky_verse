@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAvatarUpload } from '@/hooks/useAvatarUpload'
@@ -24,24 +24,47 @@ import {
   Award
 } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { useAchievements } from '@/hooks/useAchievements'
+import { useDbAchievements } from '@/hooks/useDbAchievements'
+import { AchievementModal } from '@/components/AchievementModal'
+import { MigrationModal } from '@/components/MigrationModal'
+import { checkMigrationOnAppStart, migrateLocalStorageData, markMigrationDone } from '@/utils/migrateAchievements'
+import { AppLanguage } from '@/hooks/useWhiskiesMultilingual'
 import { AchievementsPanel } from '@/components/mobile/AchievementsPanel'
 import { QRCodeModal, QRCodeData } from '@/components/mobile/QRCodeModal'
 import toast from 'react-hot-toast'
+
+const SUPPORTED_LANGUAGES: AppLanguage[] = ['tr', 'en', 'ru', 'bg']
+
+const ensureLanguage = (value: string | null | undefined): AppLanguage => {
+  const normalized = (value || '').toLowerCase() as AppLanguage
+  return SUPPORTED_LANGUAGES.includes(normalized) ? normalized : 'tr'
+}
 
 export function ProfilePage() {
   const { t } = useTranslation()
   const { user, profile, updateProfile, loading } = useAuth()
   const { uploadAvatar, isUploading } = useAvatarUpload()
-  const { unlockedAchievements, totalPoints, level, recordLogin } = useAchievements()
+  const {
+    unlockedAchievements,
+    totalPoints,
+    level,
+    recordLogin,
+    totalAchievements,
+    isLoading: achievementsLoading,
+    newAchievement,
+    showAchievementModal,
+    closeAchievementModal,
+    loadUserData
+  } = useDbAchievements()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [showAchievements, setShowAchievements] = useState(false)
   const [showQRCode, setShowQRCode] = useState(false)
+  const [showMigrationModal, setShowMigrationModal] = useState(false)
   const [formData, setFormData] = useState({
     full_name: '',
-    language: 'tr' as 'tr' | 'en',
+    language: 'tr' as AppLanguage,
     bio: '',
     location: '',
     birth_date: '',
@@ -54,12 +77,19 @@ export function ProfilePage() {
     }
   })
 
+  const languageLabels = useMemo<Record<AppLanguage, string>>(() => ({
+    tr: t('profilePage.forms.turkish'),
+    en: t('profilePage.forms.english'),
+    ru: t('profilePage.forms.russian'),
+    bg: t('profilePage.forms.bulgarian')
+  }), [t])
+
   // Update form data when profile loads
   useEffect(() => {
     if (profile) {
       setFormData({
         full_name: profile.full_name || '',
-        language: profile.language || 'tr',
+        language: ensureLanguage((profile as any).language),
         bio: (profile as any).bio || '',
         location: (profile as any).location || '',
         birth_date: (profile as any).birth_date || '',
@@ -73,6 +103,80 @@ export function ProfilePage() {
       })
     }
   }, [profile])
+
+  // Check for migration needs when user loads
+  useEffect(() => {
+    if (!user || achievementsLoading) {
+      return
+    }
+
+    if (checkMigrationOnAppStart(user.id)) {
+      const timer = setTimeout(() => {
+        setShowMigrationModal(true)
+      }, 2000)
+
+      return () => clearTimeout(timer)
+    }
+
+    recordLogin()
+  }, [user, achievementsLoading, recordLogin])
+
+  // Handle migration confirmation
+  const handleMigrationConfirm = async () => {
+    if (!user) return
+
+    setShowMigrationModal(false)
+
+    // Show loading toast
+    const loadingToast = toast.loading('🔄 Başarımlar veritabanına taşınıyor...', {
+      duration: 0, // Don't auto-dismiss
+    })
+
+    try {
+      const result = await migrateLocalStorageData(user.id)
+
+      toast.dismiss(loadingToast)
+
+      if (result.success) {
+        let message = '🎉 Başarımlar başarıyla taşındı!\n\n'
+
+        if (result.progressMigrated) {
+          message += '📊 Progress verileri taşındı\n'
+        }
+
+        if (result.achievementsMigrated > 0) {
+          message += `🏆 ${result.achievementsMigrated} başarım taşındı\n`
+        }
+
+        toast.success(message, {
+          duration: 6000,
+          style: {
+            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+            color: 'white',
+            fontSize: '14px',
+            fontWeight: '600'
+          }
+        })
+
+        markMigrationDone(user.id)
+        await loadUserData()
+      } else {
+        toast.error(`❌ Migration başarısız: ${result.error || 'Bilinmeyen hata'}`, {
+          duration: 5000
+        })
+      }
+    } catch (error) {
+      toast.dismiss(loadingToast)
+      toast.error('❌ Migration sırasında hata oluştu', {
+        duration: 5000
+      })
+      console.error('Migration error:', error)
+    }
+  }
+
+  const handleMigrationCancel = () => {
+    setShowMigrationModal(false)
+  }
 
   const handleSave = async () => {
     if (!formData.full_name.trim()) {
@@ -105,7 +209,7 @@ export function ProfilePage() {
   const handleCancel = () => {
     setFormData({
       full_name: profile?.full_name || '',
-      language: profile?.language || 'tr',
+      language: ensureLanguage(profile?.language),
       bio: (profile as any)?.bio || '',
       location: (profile as any)?.location || '',
       birth_date: (profile as any)?.birth_date || '',
@@ -280,14 +384,14 @@ export function ProfilePage() {
                     {getRoleBadge()}
 
                     {/* Achievement Stats */}
-                    <div className="flex gap-2 text-sm">
-                      <div className="flex items-center gap-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-3 py-1 rounded-full">
-                        <Trophy className="w-4 h-4" />
-                        <span>Seviye {level}</span>
+                    <div className="flex flex-wrap gap-2 text-sm">
+                      <div className="flex items-center gap-2 rounded-full border border-white/25 bg-white/20 px-3 py-1.5 text-slate-700 backdrop-blur dark:border-white/15 dark:bg-white/10 dark:text-white shadow-[0_10px_30px_-20px_rgba(8,15,52,0.6)]">
+                        <Trophy className="w-4 h-4 text-amber-500" />
+                        <span className="font-semibold tracking-wide">Seviye {level}</span>
                       </div>
-                      <div className="flex items-center gap-1 bg-gradient-to-r from-blue-500 to-purple-500 text-white px-3 py-1 rounded-full">
-                        <Award className="w-4 h-4" />
-                        <span>{unlockedAchievements.length} Rozet</span>
+                      <div className="flex items-center gap-2 rounded-full border border-white/25 bg-white/20 px-3 py-1.5 text-slate-700 backdrop-blur dark:border-white/15 dark:bg-white/10 dark:text-white shadow-[0_10px_30px_-20px_rgba(79,70,229,0.6)]">
+                        <Award className="w-4 h-4 text-indigo-500" />
+                        <span className="font-semibold tracking-wide">{totalAchievements || unlockedAchievements.length} Rozet</span>
                       </div>
                     </div>
 
@@ -495,15 +599,18 @@ export function ProfilePage() {
                   {isEditing ? (
                     <select
                       value={formData.language}
-                      onChange={(e) => setFormData(prev => ({ ...prev, language: e.target.value as 'tr' | 'en' }))}
+                      onChange={(e) => setFormData(prev => ({ ...prev, language: ensureLanguage(e.target.value) }))}
                       className="input-glass w-full"
                     >
-                      <option value="tr">{t('profilePage.forms.turkish')}</option>
-                      <option value="en">English</option>
+                      {SUPPORTED_LANGUAGES.map(lang => (
+                        <option key={lang} value={lang}>
+                          {languageLabels[lang]}
+                        </option>
+                      ))}
                     </select>
                   ) : (
                     <p className="text-slate-600 dark:text-slate-400">
-                      {profile?.language === 'tr' ? t('profilePage.forms.turkish') : t('profilePage.forms.english')}
+                      {languageLabels[ensureLanguage(profile?.language)]}
                     </p>
                   )}
                 </div>
@@ -567,6 +674,20 @@ export function ProfilePage() {
             username: profile?.full_name || 'user'
           }
         }}
+      />
+
+      {/* Achievement Modal */}
+      <AchievementModal
+        achievement={newAchievement}
+        isOpen={showAchievementModal}
+        onClose={closeAchievementModal}
+      />
+
+      {/* Migration Modal */}
+      <MigrationModal
+        isOpen={showMigrationModal}
+        onConfirm={handleMigrationConfirm}
+        onCancel={handleMigrationCancel}
       />
     </div>
   )

@@ -74,9 +74,10 @@ export function LanguageToggle({ className = '' }: { className?: string }) {
     { code: 'tr', name: 'Türkçe', flag: '🇹🇷' },
     { code: 'en', name: 'English', flag: '🇺🇸' },
     { code: 'ru', name: 'Русский', flag: '🇷🇺' },
+    { code: 'bg', name: 'Български', flag: '🇧🇬' },
   ]
 
-  // Cycle through TR -> EN -> RU -> TR
+  // Cycle through TR -> EN -> RU -> BG -> TR
   const handleLanguageToggle = useCallback(() => {
     console.log('🌍 Language toggle clicked, current:', i18n.language)
     

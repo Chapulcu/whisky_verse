@@ -1,50 +1,51 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Sync Impact Report:
+- Version change: Template → v1.0.0 (initial constitution)
+- New constitution created with 5 core principles
+- Added sections: Security & Quality, Development Workflow
+- Templates requiring updates: ✅ All templates reviewed for consistency
+- Follow-up TODOs: None - all placeholders filled
+-->
+
+# WhiskyVerse Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Security-First Development
+Security is non-negotiable in WhiskyVerse. All development must prioritize user data protection and system security. Row Level Security (RLS) policies MUST be implemented for all database operations. Environment variables containing sensitive information MUST NEVER be committed to version control. JWT token-based authentication is required for all user operations. Input validation and sanitization are mandatory for all user inputs.
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+**Rationale**: WhiskyVerse handles personal user data including profiles, collections, and social interactions. Data breaches would destroy user trust and violate privacy expectations in a community platform.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### II. TypeScript-First, Type-Safe Development
+All code MUST be written in TypeScript with strict type checking enabled. The `any` type is prohibited except in exceptional circumstances that must be documented. All API interfaces and data models MUST have corresponding TypeScript types. Type definitions MUST be maintained in sync between frontend and backend.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+**Rationale**: Type safety prevents runtime errors, improves code maintainability, and enables better developer tooling. In a community platform with complex data relationships, type safety is critical for reliability.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### III. Component-Driven Architecture
+Follow React best practices with component-based architecture. Components MUST be reusable, properly typed, and follow single responsibility principle. Custom hooks MUST be used for shared logic. State management MUST use appropriate patterns (Context for global state, local state for component-specific data).
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+**Rationale**: WhiskyVerse's UI complexity requires maintainable, testable components. Consistency across the platform improves user experience and developer productivity.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### IV. Database-First Design
+All data operations MUST go through Supabase with properly configured RLS policies. Direct database access outside of Supabase client is prohibited. Database schema changes MUST be version controlled through SQL scripts. Real-time subscriptions should be used where appropriate for live updates.
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+**Rationale**: Supabase provides built-in security, real-time capabilities, and scalability. Centralized database management ensures data integrity and security across the platform.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+### V. Responsive, Accessible Design
+All UI components MUST be responsive across mobile, tablet, and desktop viewports. Tailwind CSS MUST be used for consistent styling. Components MUST be accessible following WCAG guidelines. Internationalization (i18n) MUST support Turkish and English languages consistently.
+
+**Rationale**: WhiskyVerse serves a global community requiring access across all devices and languages. Accessibility ensures the platform is inclusive for all users.
+
+## Security & Quality Standards
+
+All features MUST implement proper error boundaries and loading states. Performance MUST be considered - aim for <200ms response times for typical operations. Code MUST pass ESLint validation before commit. Production builds MUST be optimized and tested in Docker containers. Environment-specific configurations MUST be properly managed without exposing sensitive data.
+
+## Development Workflow
+
+All changes MUST go through the specification → plan → tasks → implementation workflow. Code reviews are required for all changes. Tests MUST be written before implementation (TDD). Database migrations MUST be tested in staging before production. Deployment MUST use Docker containers with proper health checks.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution supersedes all other development practices. Amendments require documentation of rationale and impact analysis. All PRs MUST verify compliance with these principles. Complexity that violates these principles MUST be justified with clear rationale for why simpler alternatives are insufficient. The CLAUDE.md file provides runtime development guidance complementing these constitutional principles.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2025-09-26 | **Last Amended**: 2025-09-26

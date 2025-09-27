@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAdminOperations } from '@/hooks/useAdminOperations'
 import { useDirectWhiskyUpload } from '@/hooks/useDirectWhiskyUpload'
+import type { AppLanguage } from '@/hooks/useWhiskiesMultilingual'
 import { supabase } from '@/lib/supabase'
 import {
   Users,
@@ -162,12 +163,12 @@ export function AdminPage() {
     confirmPassword: '',
     full_name: '',
     role: 'user' as 'user' | 'vip' | 'admin',
-    language: 'tr' as 'tr' | 'en'
+    language: 'tr' as AppLanguage
   })
   const [editForm, setEditForm] = useState({
     full_name: '',
     role: 'user' as 'user' | 'vip' | 'admin',
-    language: 'tr' as 'tr' | 'en'
+    language: 'tr' as AppLanguage
   })
   const [showPassword, setShowPassword] = useState(false)
   const [showUserPassword, setShowUserPassword] = useState(false)
@@ -472,8 +473,8 @@ export function AdminPage() {
     })
     
     // Only load data when we have a user, not loading, and haven't loaded yet
-    // For admin@whiskyverse.com, we don't require profile to be loaded
-    if (user && !isLoading && !hasLoadedData && (profile || user.email === 'admin@whiskyverse.com')) {
+    // Require valid profile with admin role for data loading
+    if (user && !isLoading && !hasLoadedData && profile && profile.role === 'admin') {
       console.log('AdminPage: Auth ready, loading data for the first time...')
       
       setHasLoadedData(true)
@@ -503,24 +504,19 @@ export function AdminPage() {
     setCurrentPage(1)
   }, [searchTerm, selectedCountry, selectedType, selectedLetter])
 
-  // Check if user is admin - temporarily disabled for admin access
-  // Allow access for admin@whiskyverse.com or if user is logged in
-  if (!user || (profile && profile.role !== 'admin' && user.email !== 'admin@whiskyverse.com')) {
-    // If user is admin@whiskyverse.com but profile role is not set, allow access
-    if (user?.email === 'admin@whiskyverse.com') {
-      console.log('Admin user detected, allowing access despite profile role')
-    } else {
-      return (
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 shadow-xl">
-            <Shield className="w-16 h-16 mx-auto mb-4 text-red-500" />
-            <h1 className="text-2xl font-bold mb-4 text-red-600">{t('admin.accessDenied')}</h1>
-            <p className="text-slate-600 dark:text-slate-400">{t('admin.adminAccessRequired')}</p>
-            <p className="text-sm text-slate-500 mt-2">User: {user?.email} | Role: {profile?.role || 'loading...'}</p>
-          </div>
+  // Check if user is admin - strict database verification only
+  // Only allow access if user has valid admin role in database
+  if (!user || !profile || profile.role !== 'admin') {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 shadow-xl">
+          <Shield className="w-16 h-16 mx-auto mb-4 text-red-500" />
+          <h1 className="text-2xl font-bold mb-4 text-red-600">{t('admin.accessDenied')}</h1>
+          <p className="text-slate-600 dark:text-slate-400">{t('admin.adminAccessRequired')}</p>
+          <p className="text-sm text-slate-500 mt-2">User: {user?.email} | Role: {profile?.role || 'loading...'}</p>
         </div>
-      )
-    }
+      </div>
+    )
   }
 
   const handleEditUser = (userToEdit: User) => {
@@ -1118,23 +1114,10 @@ export function AdminPage() {
       
       console.log('Final update data:', updateData)
 
-<<<<<<< HEAD
       // Use secure Supabase client with user session
       const { data: result, error } = await supabase
         .from('groups')
         .update({
-=======
-      // Use fetch API to bypass session issues
-      const updateResponse = await fetch(`https://örnek.supabase.co/rest/v1/groups?id=eq.${editingGroup.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': ''
-          'apikey': ''      
-          'Prefer': 'return=representation'
-        },
-        body: JSON.stringify({
->>>>>>> 8f1943bbb6cc9d099f9098ebca4193ba08ee5f55
           ...updateData,
           updated_at: new Date().toISOString()
         })
@@ -1328,7 +1311,6 @@ export function AdminPage() {
         updated_at: new Date().toISOString()
       }
 
-<<<<<<< HEAD
       // Use secure Supabase client with user session
       const { data, error } = await supabase
         .from('events')
@@ -1336,19 +1318,6 @@ export function AdminPage() {
         .eq('id', editingEvent.id)
         .select()
         .single()
-=======
-      // Use fetch API to bypass session issues
-      const updateResponse = await fetch(`https://örnek.supabase.co/rest/v1/groups?id=eq.${editingEvent.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': ''
-          'apikey': ''
-          'Prefer': 'return=representation'
-        },
-        body: JSON.stringify(updateData)
-      })
->>>>>>> 8f1943bbb6cc9d099f9098ebca4193ba08ee5f55
 
       if (error) {
         throw error
@@ -2638,11 +2607,13 @@ export function AdminPage() {
                     </label>
                     <select
                       value={editForm.language}
-                      onChange={(e) => setEditForm(prev => ({ ...prev, language: e.target.value as any }))}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, language: e.target.value as AppLanguage }))}
                       className="w-full px-4 py-3 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-slate-900 dark:text-white"
                     >
                       <option value="tr" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">{t('adminPage.userManagement.options.turkish')}</option>
-                      <option value="en" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">English</option>
+                      <option value="en" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">{t('adminPage.userManagement.options.english')}</option>
+                      <option value="ru" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">{t('adminPage.userManagement.options.russian')}</option>
+                      <option value="bg" className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white">{t('adminPage.userManagement.options.bulgarian')}</option>
                     </select>
                   </div>
 
@@ -2811,11 +2782,13 @@ export function AdminPage() {
                     </label>
                     <select
                       value={userForm.language}
-                      onChange={(e) => setUserForm(prev => ({ ...prev, language: e.target.value as any }))}
+                      onChange={(e) => setUserForm(prev => ({ ...prev, language: e.target.value as AppLanguage }))}
                       className="w-full px-4 py-3 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900 dark:text-white"
                     >
                       <option value="tr">{t('adminPage.userManagement.options.turkish')}</option>
-                      <option value="en">English</option>
+                      <option value="en">{t('adminPage.userManagement.options.english')}</option>
+                      <option value="ru">{t('adminPage.userManagement.options.russian')}</option>
+                      <option value="bg">{t('adminPage.userManagement.options.bulgarian')}</option>
                     </select>
                   </div>
 

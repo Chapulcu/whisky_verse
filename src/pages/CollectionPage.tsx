@@ -34,6 +34,7 @@ import {
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { ShareButton } from '@/components/mobile/ShareButton'
+import { useDbAchievements } from '@/hooks/useDbAchievements'
 
 export function CollectionPage() {
   const { t, i18n } = useTranslation()
@@ -46,6 +47,7 @@ export function CollectionPage() {
     updateCollectionItem,
     removeFromCollection
   } = useUserCollectionMultilingual(i18n.language as any)
+  const { makeRating } = useDbAchievements()
 
   const [searchTerm, setSearchTerm] = useState('')
   const [editingRating, setEditingRating] = useState<number | null>(null)
@@ -143,6 +145,9 @@ export function CollectionPage() {
   }
 
   const handleRating = async (itemId: number, rating: number) => {
+    const collectionItem = collection.find(item => item.id === itemId)
+    const isFirstRating = !collectionItem?.rating
+
     try {
       await updateCollectionItem(itemId, { 
         rating, 
@@ -151,6 +156,10 @@ export function CollectionPage() {
       })
       setEditingRating(null)
       toast.success(t('collectionPage.toasts.ratingUpdated'))
+
+      if (isFirstRating && rating > 0) {
+        await makeRating()
+      }
     } catch (error) {
       toast.error(t('collectionPage.toasts.ratingUpdateError'))
     }

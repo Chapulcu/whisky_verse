@@ -15,7 +15,8 @@ interface TranslationManagerProps {
 const languages = [
   { code: 'tr', name: 'Türkçe', flag: '🇹🇷', nativeName: 'Türkçe' },
   { code: 'en', name: 'English', flag: '🇺🇸', nativeName: 'English' },
-  { code: 'ru', name: 'Russian', flag: '🇷🇺', nativeName: 'Русский' }
+  { code: 'ru', name: 'Russian', flag: '🇷🇺', nativeName: 'Русский' },
+  { code: 'bg', name: 'Bulgarian', flag: '🇧🇬', nativeName: 'Български' }
 ]
 
 export function TranslationManager({ whiskyId, onClose, onSave }: TranslationManagerProps) {

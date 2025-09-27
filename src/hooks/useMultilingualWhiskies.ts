@@ -576,10 +576,16 @@ export function useWhiskyTranslations() {
         if (wtErr) throw wtErr
 
         if (wtRows && wtRows.length > 0) {
+          const languageNames: Record<string, string> = {
+            tr: 'Türkçe',
+            en: 'English',
+            ru: 'Русский',
+            bg: 'Български'
+          }
           const mapped: WhiskyTranslation[] = wtRows.map((r: any) => ({
             whisky_id: whiskyId,
             language_code: r.language_code,
-            language_name: r.language_code === 'en' ? 'English' : r.language_code === 'ru' ? 'Русский' : 'Türkçe',
+            language_name: languageNames[r.language_code] || r.language_code,
             name: r.name || '',
             type: r.type || '',
             description: r.description || '',
@@ -591,18 +597,18 @@ export function useWhiskyTranslations() {
           }))
 
           // Ensure entries for missing languages exist in UI (empty placeholders)
-          for (const lang of ['tr','en','ru']) {
+          for (const lang of ['tr','en','ru','bg']) {
             if (!mapped.find(m => m.language_code === lang)) {
               mapped.push({
                 whisky_id: whiskyId,
                 language_code: lang,
-                language_name: lang === 'en' ? 'English' : lang === 'ru' ? 'Русский' : 'Türkçe',
+                language_name: languageNames[lang] || lang,
                 name: '', type: '', description: '', aroma: '', taste: '', finish: '', color: '', is_complete: false
               })
             }
           }
 
-          return mapped.sort((a, b) => ['tr','en','ru'].indexOf(a.language_code) - ['tr','en','ru'].indexOf(b.language_code))
+          return mapped.sort((a, b) => ['tr','en','ru','bg'].indexOf(a.language_code) - ['tr','en','ru','bg'].indexOf(b.language_code))
         }
       } catch (wtPathErr: any) {
         const msg = String(wtPathErr?.message || '')
@@ -614,10 +620,16 @@ export function useWhiskyTranslations() {
       }
 
       // 2) Fallback: return placeholders only (no base fetch) to avoid timeouts entirely
-      const placeholders: WhiskyTranslation[] = ['tr','en','ru'].map((lang) => ({
+      const languageNames: Record<string, string> = {
+        tr: 'Türkçe',
+        en: 'English',
+        ru: 'Русский',
+        bg: 'Български'
+      }
+      const placeholders: WhiskyTranslation[] = ['tr','en','ru','bg'].map((lang) => ({
         whisky_id: whiskyId,
         language_code: lang,
-        language_name: lang === 'en' ? 'English' : lang === 'ru' ? 'Русский' : 'Türkçe',
+        language_name: languageNames[lang] || lang,
         name: '', type: '', description: '', aroma: '', taste: '', finish: '', color: '', is_complete: false
       }))
       return placeholders

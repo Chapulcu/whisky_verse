@@ -76,7 +76,7 @@ export function NearbyPage() {
           </div>
 
           {/* Filter Pills */}
-          <div className="flex gap-2 overflow-x-auto pb-2">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
             {[
               { id: 'all', label: 'Tümü', icon: '📍' },
               { id: 'bar', label: 'Barlar', icon: '🍸' },
@@ -86,14 +86,14 @@ export function NearbyPage() {
               <button
                 key={filter.id}
                 onClick={() => setSelectedFilter(filter.id as any)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-all duration-200 ${
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-full whitespace-nowrap transition-all duration-200 min-w-fit text-xs sm:text-sm mobile-touch-target ${
                   selectedFilter === filter.id
-                    ? 'bg-amber-500 text-white'
+                    ? 'bg-amber-500 text-white shadow-md'
                     : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600'
                 }`}
               >
-                <span>{filter.icon}</span>
-                <span className="text-sm font-medium">{filter.label}</span>
+                <span className="text-sm">{filter.icon}</span>
+                <span className="font-medium truncate">{filter.label}</span>
               </button>
             ))}
           </div>
@@ -120,31 +120,32 @@ export function NearbyPage() {
             </p>
             <button
               onClick={() => setShowLocationModal(true)}
-              className="px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
+              className="px-4 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl text-sm sm:text-base mobile-touch-target min-h-[44px] flex items-center justify-center"
             >
-              Yakınımdaki Mekanları Gör
+              <MapPin className="w-4 h-4 mr-2" />
+              <span className="whitespace-nowrap">Yakınımdaki Mekanları Gör</span>
             </button>
           </div>
         </motion.div>
 
         {/* Features Grid */}
-        <div className="grid grid-cols-2 gap-4 mb-8">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-8">
           {features.map((feature, index) => (
             <motion.div
               key={feature.title}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="glass-card p-4 text-center hover:border-amber-500/50 transition-all duration-200"
+              className="glass-card p-3 sm:p-4 text-center hover:border-amber-500/50 transition-all duration-200 min-h-[120px] flex flex-col justify-center"
             >
-              <div className="text-3xl mb-2">{feature.icon}</div>
-              <h3 className="font-semibold text-gray-900 dark:text-white text-sm mb-1">
+              <div className="text-2xl sm:text-3xl mb-2">{feature.icon}</div>
+              <h3 className="font-semibold text-gray-900 dark:text-white text-xs sm:text-sm mb-1 line-clamp-2">
                 {feature.title}
               </h3>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+              <p className="text-xs text-gray-600 dark:text-gray-400 mb-2 line-clamp-2 leading-tight">
                 {feature.description}
               </p>
-              <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">
+              <span className="text-xs text-amber-600 dark:text-amber-400 font-medium whitespace-nowrap">
                 {feature.count}
               </span>
             </motion.div>
@@ -166,17 +167,17 @@ export function NearbyPage() {
             {recentSearches.map((search, index) => (
               <button
                 key={search}
-                className="flex items-center justify-between w-full p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors text-left"
+                className="flex items-center justify-between w-full p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors text-left mobile-touch-target"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gray-100 dark:bg-slate-700 rounded-full flex items-center justify-center">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="w-8 h-8 bg-gray-100 dark:bg-slate-700 rounded-full flex items-center justify-center flex-shrink-0">
                     <Search className="w-4 h-4 text-gray-500" />
                   </div>
-                  <span className="text-sm text-gray-700 dark:text-gray-300">{search}</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300 truncate">{search}</span>
                 </div>
-                <div className="flex items-center gap-1 text-xs text-gray-500">
+                <div className="flex items-center gap-1 text-xs text-gray-500 flex-shrink-0 ml-2">
                   <Star className="w-3 h-3 fill-current text-yellow-400" />
-                  4.{5 - index}
+                  <span>4.{5 - index}</span>
                 </div>
               </button>
             ))}
@@ -198,7 +199,7 @@ export function NearbyPage() {
               • Mekan değerlendirmeleri yapın<br />
               • Özel indirimlerden yararlanın
             </p>
-            <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors">
+            <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors mobile-touch-target min-h-[44px] flex items-center justify-center">
               Üye Ol
             </button>
           </motion.div>

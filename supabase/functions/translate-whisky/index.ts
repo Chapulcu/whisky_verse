@@ -61,9 +61,10 @@ serve(async (req: Request) => {
       return jsonResponse({ error: 'Source language row not found for whisky' }, { status: 404 })
     }
 
+    const defaultTargets: AppLanguage[] = ['tr', 'en', 'ru', 'bg']
     const targets: AppLanguage[] = (target_languages && target_languages.length > 0)
       ? target_languages
-      : (['tr','en','ru'].filter(l => l !== source_language) as AppLanguage[])
+      : (defaultTargets.filter(l => l !== source_language) as AppLanguage[])
 
     const fields = src
 

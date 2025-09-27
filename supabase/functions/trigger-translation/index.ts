@@ -28,7 +28,7 @@ serve(async (req) => {
     const n8nWebhookUrl = Deno.env.get('N8N_WEBHOOK_URL')! // N8N webhook URL'inizi buraya ekleyin
 
     if (req.method === 'POST') {
-      const { whisky_id, target_languages = ['en', 'ru'], priority = 5 }: TranslationRequest = await req.json()
+      const { whisky_id, target_languages = ['en', 'ru', 'bg'], priority = 5 }: TranslationRequest = await req.json()
 
       // Whisky verisini kontrol et
       const { data: whisky, error: whiskyError } = await supabase

@@ -70,7 +70,8 @@
     "language": "Язык",
     "turkish": "Турецкий",
     "english": "Английский",
-    "russian": "Русский"
+    "russian": "Русский",
+    "bulgarian": "Болгарский"
   },
   "profile": {
     "user": "Пользователь",
@@ -182,7 +183,7 @@
     "ongoing": "Продолжается",
     "completed": "Завершено",
     "cancelled": "Отменено",
-    "manageTranslations": "Управление переводами (TR/EN/RU)",
+    "manageTranslations": "Управление переводами (TR/EN/RU/BG)",
     "imageUpload": "Загрузка изображения",
     "chooseFile": "Выбрать файл",
     "uploading": "Загрузка...",
@@ -614,7 +615,9 @@
       "phone": "Телефон",
       "language": "Язык",
       "turkish": "Турецкий",
-      "english": "Английский"
+      "english": "Английский",
+      "russian": "Русский",
+      "bulgarian": "Болгарский"
     },
     "placeholders": {
       "notSpecified": "Не указано",
@@ -908,6 +911,7 @@
         "turkish": "Турецкий",
         "english": "Английский",
         "russian": "Русский",
+        "bulgarian": "Болгарский",
         "selectRole": "Выбрать роль",
         "admin": "Админ",
         "standard": "Стандартный",
@@ -940,7 +944,7 @@
         "or": "или",
         "imageUrl": "URL изображения",
         "translationManagement": "Управление переводами",
-        "manageTranslations": "Управление переводами (TR/EN/RU)",
+        "manageTranslations": "Управление переводами (TR/EN/RU/BG)",
         "score": "Оценка",
         "currentImage": "Текущее изображение"
       },
@@ -989,7 +993,7 @@
       "region": "Регион",
       "regionPlaceholder": "Например. Спейсайд, Хайленд, Кентукки",
       "translationManagement": "Управление переводами",
-      "manageTranslations": "Управление переводами (TR/EN/RU)",
+      "manageTranslations": "Управление переводами (TR/EN/RU/BG)",
       "alcoholPercentage": "Процент алкоголя %",
       "score": "Оценка",
       "scorePlaceholder": "Например. 85.5",

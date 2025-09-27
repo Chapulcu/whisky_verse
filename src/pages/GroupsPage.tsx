@@ -360,7 +360,7 @@ export function GroupsPage() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: index * 0.1 }}
-            className="glass-cardgroup hover:scale-105"
+            className="glass-card p-6 hover:scale-105 transition-all duration-300 hover:shadow-xl hover:border-purple-500/50"
           >
             {/* Header */}
             <div className="flex items-start justify-between mb-4">

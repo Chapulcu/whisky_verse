@@ -22,7 +22,7 @@
       "parameters": {
         "authentication": "serviceAccount",
         "operation": "executeQuery",
-        "query": "SELECT id, name, description, aroma, taste, finish, color, region, type FROM whiskies WHERE id NOT IN (SELECT DISTINCT whisky_id FROM whisky_translations WHERE language_code IN ('en', 'ru')) ORDER BY id LIMIT 50"
+        "query": "SELECT id, name, description, aroma, taste, finish, color, region, type FROM whiskies WHERE id NOT IN (SELECT DISTINCT whisky_id FROM whisky_translations WHERE language_code IN ('en', 'ru', 'bg')) ORDER BY id LIMIT 50"
       },
       "name": "Get Untranslated Whiskies",
       "type": "n8n-nodes-base.supabase",

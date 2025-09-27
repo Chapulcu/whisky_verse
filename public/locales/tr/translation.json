@@ -68,11 +68,12 @@
     "light": "Açık",
     "dark": "Koyu"
   },
-  "language": {
-    "language": "Dil",
-    "turkish": "Türkçe",
-    "english": "English",
-    "russian": "Русский"
+    "language": {
+      "language": "Dil",
+      "turkish": "Türkçe",
+      "english": "English",
+      "russian": "Русский",
+      "bulgarian": "Bulgarca"
   },
   "profile": {
     "user": "Kullanıcı",
@@ -184,7 +185,7 @@
     "ongoing": "Devam Ediyor",
     "completed": "Tamamlandı",
     "cancelled": "İptal",
-    "manageTranslations": "Çevirileri Yönet (TR/EN/RU)",
+    "manageTranslations": "Çevirileri Yönet (TR/EN/RU/BG)",
     "imageUpload": "Resim Yükleme",
     "chooseFile": "Dosya Seç",
     "uploading": "Yükleniyor...",
@@ -635,7 +636,9 @@
       "phone": "Telefon",
       "language": "Dil",
       "turkish": "Türkçe",
-      "english": "English"
+      "english": "English",
+      "russian": "Русский",
+      "bulgarian": "Bulgarca"
     },
     "placeholders": {
       "notSpecified": "Belirtilmemiş",
@@ -986,6 +989,7 @@
         "turkish": "Türkçe",
         "english": "English",
         "russian": "Русский",
+        "bulgarian": "Bulgarca",
         "selectRole": "Rol Seçin",
         "admin": "Admin",
         "standard": "Standart",
@@ -1019,7 +1023,7 @@
         "or": "veya",
         "imageUrl": "Resim URL'si",
         "translationManagement": "Çeviri Yönetimi",
-        "manageTranslations": "Çevirileri Yönet (TR/EN/RU)",
+        "manageTranslations": "Çevirileri Yönet (TR/EN/RU/BG)",
         "score":"Puan",
         "currentImage": "Mevcut Resim"
       },
@@ -1068,7 +1072,7 @@
       "region": "Bölge",
       "regionPlaceholder": "Örn. Speyside, Highland, Kentucky",
       "translationManagement": "Çeviri Yönetimi",
-      "manageTranslations": "Çevirileri Yönet (TR/EN/RU)",
+      "manageTranslations": "Çevirileri Yönet (TR/EN/RU/BG)",
       "alcoholPercentage": "Alkol Oranı %",
       "score": "Puan",
       "scorePlaceholder": "Örn. 85.5",

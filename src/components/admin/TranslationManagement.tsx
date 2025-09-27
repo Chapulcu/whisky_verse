@@ -25,7 +25,7 @@ import toast from 'react-hot-toast'
 interface WhiskyTranslation {
   id: number
   whisky_id: number
-  language_code: 'tr' | 'en' | 'ru'
+  language_code: 'tr' | 'en' | 'ru' | 'bg'
   source_language_code: string
   name: string
   description: string | null
@@ -262,6 +262,7 @@ export function TranslationManagement() {
       case 'tr': return '🇹🇷'
       case 'en': return '🇺🇸'
       case 'ru': return '🇷🇺'
+      case 'bg': return '🇧🇬'
       default: return '🌐'
     }
   }
@@ -331,6 +332,7 @@ export function TranslationManagement() {
             <option value="tr">🇹🇷 Türkçe</option>
             <option value="en">🇺🇸 English</option>
             <option value="ru">🇷🇺 Русский</option>
+            <option value="bg">🇧🇬 Български</option>
           </select>
 
           {/* Status Filter */}

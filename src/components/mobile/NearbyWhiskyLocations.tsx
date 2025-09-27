@@ -155,31 +155,31 @@ export function NearbyWhiskyLocations({ isOpen, onClose }: NearbyWhiskyLocations
               </div>
               <button
                 onClick={onClose}
-                className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 mobile-touch-target text-lg font-bold"
               >
                 ×
               </button>
             </div>
 
             {/* Controls */}
-            <div className="mt-4 flex gap-3">
+            <div className="mt-4 flex gap-2 flex-wrap">
               <button
                 onClick={handleLocationRequest}
                 disabled={loading}
-                className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-medium disabled:opacity-50"
+                className="flex items-center gap-2 px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-medium disabled:opacity-50 text-sm mobile-touch-target min-h-[40px] flex-shrink-0"
               >
                 {loading ? (
                   <RefreshCw className="w-4 h-4 animate-spin" />
                 ) : (
                   <Navigation className="w-4 h-4" />
                 )}
-                Konumumu Al
+                <span className="whitespace-nowrap">Konumumu Al</span>
               </button>
 
               <select
                 value={searchRadius}
                 onChange={(e) => setSearchRadius(Number(e.target.value))}
-                className="px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm"
+                className="px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm min-h-[40px] mobile-touch-target"
               >
                 <option value={5}>5 km</option>
                 <option value={10}>10 km</option>
@@ -208,9 +208,10 @@ export function NearbyWhiskyLocations({ isOpen, onClose }: NearbyWhiskyLocations
                 </p>
                 <button
                   onClick={handleLocationRequest}
-                  className="px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg font-medium hover:from-amber-600 hover:to-orange-600"
+                  className="px-4 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg font-medium hover:from-amber-600 hover:to-orange-600 text-sm mobile-touch-target min-h-[44px] flex items-center justify-center"
                 >
-                  Konum İzni Ver
+                  <Navigation className="w-4 h-4 mr-2" />
+                  <span>Konum İzni Ver</span>
                 </button>
               </div>
             )}
@@ -277,10 +278,11 @@ export function NearbyWhiskyLocations({ isOpen, onClose }: NearbyWhiskyLocations
                       <div className="flex items-center gap-2 mt-3 flex-wrap">
                         <button
                           onClick={() => openInMaps(location)}
-                          className="flex items-center gap-1 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-lg"
+                          className="flex items-center gap-1 px-2 py-2 bg-blue-500 hover:bg-blue-600 text-white text-xs sm:text-sm rounded-lg mobile-touch-target min-h-[36px] flex-shrink-0"
                         >
-                          <Navigation className="w-4 h-4" />
-                          Yol Tarifi
+                          <Navigation className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <span className="hidden sm:inline">Yol Tarifi</span>
+                          <span className="sm:hidden">Yol</span>
                         </button>
 
                         <ShareButton
@@ -291,16 +293,17 @@ export function NearbyWhiskyLocations({ isOpen, onClose }: NearbyWhiskyLocations
                           }}
                           variant="icon"
                           size="sm"
-                          className="!w-8 !h-8 !bg-amber-500 hover:!bg-amber-600 !text-white"
+                          className="!w-8 !h-8 !bg-amber-500 hover:!bg-amber-600 !text-white !min-h-[36px] flex-shrink-0"
                         />
 
                         {location.phone && (
                           <a
                             href={`tel:${location.phone}`}
-                            className="flex items-center gap-1 px-3 py-2 bg-green-500 hover:bg-green-600 text-white text-sm rounded-lg"
+                            className="flex items-center gap-1 px-2 py-2 bg-green-500 hover:bg-green-600 text-white text-xs sm:text-sm rounded-lg mobile-touch-target min-h-[36px] flex-shrink-0"
                           >
-                            <Phone className="w-4 h-4" />
-                            Ara
+                            <Phone className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <span className="hidden sm:inline">Ara</span>
+                            <span className="sm:hidden">📞</span>
                           </a>
                         )}
 
@@ -309,10 +312,11 @@ export function NearbyWhiskyLocations({ isOpen, onClose }: NearbyWhiskyLocations
                             href={location.website}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-1 px-3 py-2 bg-gray-500 hover:bg-gray-600 text-white text-sm rounded-lg"
+                            className="flex items-center gap-1 px-2 py-2 bg-gray-500 hover:bg-gray-600 text-white text-xs sm:text-sm rounded-lg mobile-touch-target min-h-[36px] flex-shrink-0"
                           >
-                            <ExternalLink className="w-4 h-4" />
-                            Site
+                            <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <span className="hidden sm:inline">Site</span>
+                            <span className="sm:hidden">🌐</span>
                           </a>
                         )}
                       </div>

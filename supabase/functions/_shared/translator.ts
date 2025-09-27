@@ -1,7 +1,7 @@
 // Translator abstraction for Edge Functions
 // Providers: Google (REST v2). Fallback to Mock if not configured.
 
-export type AppLanguage = 'tr' | 'en' | 'ru'
+export type AppLanguage = 'tr' | 'en' | 'ru' | 'bg'
 
 export interface Translator {
   translate(text: string, from: AppLanguage, to: AppLanguage): Promise<string>

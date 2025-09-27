@@ -15,7 +15,8 @@ CREATE TABLE IF NOT EXISTS languages (
 INSERT INTO languages (code, name, native_name, is_default, is_active) VALUES
 ('tr', 'Turkish', 'Türkçe', TRUE, TRUE),
 ('en', 'English', 'English', FALSE, TRUE),
-('ru', 'Russian', 'Русский', FALSE, TRUE)
+('ru', 'Russian', 'Русский', FALSE, TRUE),
+('bg', 'Bulgarian', 'Български', FALSE, TRUE)
 ON CONFLICT (code) DO NOTHING;
 
 -- Backup existing whiskies table
@@ -104,40 +105,50 @@ INSERT INTO country_translations (country_code, language_code, name) VALUES
 ('TR', 'tr', 'Türkiye'),
 ('TR', 'en', 'Turkey'),
 ('TR', 'ru', 'Турция'),
+('TR', 'bg', 'Турция'),
 -- USA
 ('US', 'tr', 'Amerika Birleşik Devletleri'),
 ('US', 'en', 'United States'),
 ('US', 'ru', 'Соединённые Штаты'),
+('US', 'bg', 'Съединени щати'),
 -- UK
 ('GB', 'tr', 'Birleşik Krallık'),
 ('GB', 'en', 'United Kingdom'),
 ('GB', 'ru', 'Великобритания'),
+('GB', 'bg', 'Обединеното кралство'),
 -- Ireland
 ('IE', 'tr', 'İrlanda'),
 ('IE', 'en', 'Ireland'),
 ('IE', 'ru', 'Ирландия'),
+('IE', 'bg', 'Ирландия'),
 -- Canada
 ('CA', 'tr', 'Kanada'),
 ('CA', 'en', 'Canada'),
 ('CA', 'ru', 'Канада'),
+('CA', 'bg', 'Канада'),
 -- Japan
 ('JP', 'tr', 'Japonya'),
 ('JP', 'en', 'Japan'),
 ('JP', 'ru', 'Япония'),
+('JP', 'bg', 'Япония'),
 -- India
 ('IN', 'tr', 'Hindistan'),
 ('IN', 'en', 'India'),
 ('IN', 'ru', 'Индия'),
+('IN', 'bg', 'Индия'),
 -- Taiwan
 ('TW', 'tr', 'Tayvan'),
 ('TW', 'en', 'Taiwan'),
 ('TW', 'ru', 'Тайвань'),
+('TW', 'bg', 'Тайван'),
 -- France
 ('FR', 'tr', 'Fransa'),
 ('FR', 'en', 'France'),
 ('FR', 'ru', 'Франция'),
+('FR', 'bg', 'Франция'),
 -- Germany
 ('DE', 'tr', 'Almanya'),
 ('DE', 'en', 'Germany'),
-('DE', 'ru', 'Германия')
+('DE', 'ru', 'Германия'),
+('DE', 'bg', 'Германия')
 ON CONFLICT (country_code, language_code) DO NOTHING;

@@ -26,7 +26,8 @@ import {
 import toast from 'react-hot-toast'
 import { useAuth } from '@/contexts/AuthContext'
 import { useWhiskyUpload } from '@/hooks/useWhiskyUpload'
-import { useWhiskiesMultilingual, MultilingualWhisky } from '@/hooks/useWhiskiesMultilingual'
+import { useDbAchievements } from '@/hooks/useDbAchievements'
+import { useWhiskiesMultilingual, MultilingualWhisky, AppLanguage } from '@/hooks/useWhiskiesMultilingual'
 import { useUserCollection } from '@/hooks/useUserCollection'
 import { useSwipeGestures, usePullToRefresh } from '@/hooks/useSwipeGestures'
 import { useHapticFeedback } from '@/hooks/useHapticFeedback'
@@ -51,6 +52,7 @@ function WhiskiesPageContent() {
   const { hapticSuccess, hapticButton } = useHapticFeedback()
   const { whiskies, totalCount, loading: whiskyLoading, isRefetching: whiskyRefetching, loadWhiskies } = useWhiskiesMultilingual()
   const { collection: userCollection, loading: userCollectionLoading, addToCollection: addToCollectionHook, updateCollectionItem } = useUserCollection()
+  const { addWhisky } = useDbAchievements()
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -239,13 +241,14 @@ function WhiskiesPageContent() {
           console.log('📝 Available translations:', whiskyData.whisky_translations?.map(t => t.language_code) || [])
 
           // Apply same translation logic as useWhiskiesMultilingual
-          const currentLang = i18n.language as 'tr' | 'en' | 'ru'
+          const currentLang = i18n.language as AppLanguage
           let bestTranslation = null
 
           // For Turkish, prefer original data
           if (currentLang !== 'tr' && whiskyData.whisky_translations) {
             // Try to find translation for current language first
-            const pref = [currentLang, 'tr', 'en'] as ('tr' | 'en' | 'ru')[]
+            const fallbackOrder: AppLanguage[] = ['tr', 'en', 'ru', 'bg']
+            const pref = [currentLang, ...fallbackOrder.filter(code => code !== currentLang)]
             for (const code of pref) {
               const t = whiskyData.whisky_translations.find(x => x.language_code === code)
               if (t) {
@@ -367,6 +370,10 @@ function WhiskiesPageContent() {
 
       const result = await addToCollectionHook(whiskyId)
 
+      if (!result.error && result.data) {
+        await addWhisky()
+      }
+
       if (result.error) {
         console.error('Error adding to collection:', result.error)
 
@@ -417,6 +424,10 @@ function WhiskiesPageContent() {
       } else {
         // Create new record using hook
         const result = await addToCollectionHook(whiskyId)
+
+        if (!result.error && result.data) {
+          await addWhisky()
+        }
 
         if (result.error) {
           toast.error(t('whiskiesPage.toasts.statusUpdateError'))

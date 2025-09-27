@@ -35,7 +35,7 @@ export function useAutoTranslation() {
   // Otomatik çeviri tetikle
   const triggerTranslation = useCallback(async (
     whiskyId: number, 
-    targetLanguages: string[] = ['en', 'ru'],
+    targetLanguages: string[] = ['en', 'ru', 'bg'],
     priority: number = 5
   ) => {
     setLoading(true)

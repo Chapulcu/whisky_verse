@@ -83,36 +83,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const currentUser = await supabase.auth.getUser()
         const userEmail = currentUser.data.user?.email
         console.log('📧 Current user email:', userEmail)
-        
-<<<<<<< HEAD
+
         // No fallback admin access - require proper profile setup
         console.warn('⚠️ Profile creation required. User must be granted admin access through database.')
         setProfile(null)
-=======
-        // Special handling for admin users - create temp profile for admin or akhantalip
-        if (userEmail === 'example@whiskyverse.com' || userEmail === 'example@gmail.com') {
-          console.log('🔑 Creating temporary admin profile for:', userEmail)
-          const tempProfile: Profile = {
-            id: userId,
-            email: userEmail,
-            full_name: userEmail === 'admin@whiskyverse.com' ? 'System Administrator' : 'Admin User',
-            role: 'admin',
-            language: 'tr',
-            avatar_url: null,
-            bio: null,
-            location: null,
-            website: null,
-            phone: null,
-            birth_date: null,
-            preferences: null,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }
-          console.log('✅ Setting temporary profile:', tempProfile)
-          setProfile(tempProfile)
-          return
-        }
->>>>>>> 8f1943bbb6cc9d099f9098ebca4193ba08ee5f55
         return
       }
 
@@ -124,39 +98,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error) {
       console.error('❌ Exception loading profile:', error)
-      
-<<<<<<< HEAD
+
       // No hardcoded admin fallbacks - security risk
       console.warn('⚠️ Profile load failed. Admin access requires proper database setup.')
       setProfile(null)
-=======
-      // Fallback for admin users
-      const currentUser = await supabase.auth.getUser()
-      const userEmail = currentUser.data.user?.email
-      console.log('📧 Fallback: Current user email:', userEmail)
-      
-      if (userEmail === 'example@whiskyverse.com' || userEmail === 'example@gmail.com') {
-        console.log('🔑 Creating fallback admin profile for:', userEmail)
-        const tempProfile: Profile = {
-          id: userId,
-          email: userEmail,
-          full_name: userEmail === 'example@whiskyverse.com' ? 'System Administrator' : 'Admin User',
-          role: 'admin',
-          language: 'tr',
-          avatar_url: null,
-          bio: null,
-          location: null,
-          website: null,
-          phone: null,
-          birth_date: null,
-          preferences: null,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
-        console.log('✅ Setting fallback profile:', tempProfile)
-        setProfile(tempProfile)
-      }
->>>>>>> 8f1943bbb6cc9d099f9098ebca4193ba08ee5f55
     }
   }, [])
 
@@ -366,12 +311,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) {
         console.error('Profile update error:', error)
         
-        // For admin user, update local state even if DB update fails
-        if (user.email === 'admin@whiskyverse.com') {
-          console.log('Admin user - updating local profile state only')
-          setProfile(prev => prev ? { ...prev, ...updates } : null)
-          return
-        }
+        // No special admin bypass - all users must follow same security rules
         
         throw error
       }
@@ -379,12 +319,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Update local state
       setProfile(prev => prev ? { ...prev, ...updates } : null)
     } catch (error) {
-      // For admin user, still update local state
-      if (user.email === 'admin@whiskyverse.com') {
-        console.log('Admin user - fallback to local update only')
-        setProfile(prev => prev ? { ...prev, ...updates } : null)
-        return
-      }
+      // No admin bypass allowed - all users must follow security rules
       throw error
     }
   }

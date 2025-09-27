@@ -26,7 +26,7 @@ i18n
     },
     
     // Supported languages
-    supportedLngs: ['tr', 'en', 'ru'],
+    supportedLngs: ['tr', 'en', 'ru', 'bg'],
     
     // Pluralization support
     pluralSeparator: '_',

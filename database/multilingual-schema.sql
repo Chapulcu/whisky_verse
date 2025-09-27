@@ -16,7 +16,8 @@ CREATE TABLE IF NOT EXISTS languages (
 INSERT INTO languages (code, name, native_name, flag_emoji) VALUES
 ('tr', 'Turkish', 'Türkçe', '🇹🇷'),
 ('en', 'English', 'English', '🇺🇸'),
-('ru', 'Russian', 'Русский', '🇷🇺')
+('ru', 'Russian', 'Русский', '🇷🇺'),
+('bg', 'Bulgarian', 'Български', '🇧🇬')
 ON CONFLICT (code) DO NOTHING;
 
 -- 2. Viski çevirileri tablosu
@@ -262,7 +263,7 @@ BEGIN
         OLD.aroma IS DISTINCT FROM NEW.aroma OR
         OLD.taste IS DISTINCT FROM NEW.taste
     )) THEN
-        -- İngilizce ve Rusça çeviri işleri oluştur
+        -- İngilizce, Rusça ve Bulgarca çeviri işleri oluştur
         INSERT INTO translation_jobs (whisky_id, target_language, source_text, priority)
         SELECT 
             NEW.id,
@@ -278,7 +279,7 @@ BEGIN
             ),
             CASE lang.code WHEN 'en' THEN 3 ELSE 5 END -- İngilizce öncelikli
         FROM languages lang
-        WHERE lang.code IN ('en', 'ru') AND lang.is_active = true
+        WHERE lang.code IN ('en', 'ru', 'bg') AND lang.is_active = true
         ON CONFLICT DO NOTHING;
     END IF;
     

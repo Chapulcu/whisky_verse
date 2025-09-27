@@ -86,6 +86,7 @@ export const useSEOTranslation = () => {
         { hrefLang: 'tr', href: `/${pageKey}` },
         { hrefLang: 'en', href: `/en/${pageKey}` },
         { hrefLang: 'ru', href: `/ru/${pageKey}` },
+        { hrefLang: 'bg', href: `/bg/${pageKey}` },
       ]
     }
   }
@@ -114,7 +115,7 @@ export const useLanguageRouting = () => {
     const firstSegment = pathSegments[0]
     
     // Check if first segment is a language code
-    if (['en', 'ru'].includes(firstSegment)) {
+    if (['en', 'ru', 'bg'].includes(firstSegment)) {
       return firstSegment
     }
     
@@ -127,7 +128,7 @@ export const useLanguageRouting = () => {
     const firstSegment = pathSegments[0]
     
     // If first segment is a language code, remove it
-    if (['en', 'ru'].includes(firstSegment)) {
+    if (['en', 'ru', 'bg'].includes(firstSegment)) {
       return '/' + pathSegments.slice(1).join('/')
     }
     

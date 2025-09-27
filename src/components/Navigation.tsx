@@ -45,7 +45,7 @@ export function Navigation() {
       { path: '/events', label: t('navigation.events'), icon: Calendar },
     ] : []
 
-    const adminItems = (profile?.role === 'admin' || user?.email === 'admin@whiskyverse.com') ? [
+    const adminItems = (profile?.role === 'admin') ? [
       { path: '/admin', label: 'Admin Panel', icon: Settings },
     ] : []
 

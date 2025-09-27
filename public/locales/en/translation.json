@@ -68,11 +68,12 @@
     "light": "Light",
     "dark": "Dark"
   },
-  "language": {
-    "language": "Language",
-    "turkish": "Turkish",
-    "english": "English",
-    "russian": "Russian"
+    "language": {
+      "language": "Language",
+      "turkish": "Turkish",
+      "english": "English",
+      "russian": "Russian",
+      "bulgarian": "Bulgarian"
   },
   "profile": {
     "user": "User",
@@ -184,7 +185,7 @@
     "ongoing": "Ongoing",
     "completed": "Completed",
     "cancelled": "Cancelled",
-    "manageTranslations": "Manage Translations (TR/EN/RU)",
+    "manageTranslations": "Manage Translations (TR/EN/RU/BG)",
     "imageUpload": "Image Upload",
     "chooseFile": "Choose File",
     "uploading": "Uploading...",
@@ -635,7 +636,9 @@
       "phone": "Phone",
       "language": "Language",
       "turkish": "Turkish",
-      "english": "English"
+      "english": "English",
+      "russian": "Russian",
+      "bulgarian": "Bulgarian"
     },
     "placeholders": {
       "notSpecified": "Not specified",
@@ -986,6 +989,7 @@
         "turkish": "Turkish",
         "english": "English",
         "russian": "Russian",
+        "bulgarian": "Bulgarian",
         "selectRole": "Select Role",
         "admin": "Admin",
         "standard": "Standard",
@@ -1018,7 +1022,7 @@
         "or": "or",
         "imageUrl": "Image URL",
         "translationManagement": "Translation Management",
-        "manageTranslations": "Manage Translations (TR/EN/RU)",
+        "manageTranslations": "Manage Translations (TR/EN/RU/BG)",
         "score": "Score",
         "currentImage": "Current Image"
       },
@@ -1067,7 +1071,7 @@
       "region": "Region",
       "regionPlaceholder": "e.g. Speyside, Highland, Kentucky",
       "translationManagement": "Translation Management",
-      "manageTranslations": "Manage Translations (TR/EN/RU)",
+      "manageTranslations": "Manage Translations (TR/EN/RU/BG)",
       "alcoholPercentage": "Alcohol Percentage %",
       "score": "Score",
       "scorePlaceholder": "e.g. 85.5",

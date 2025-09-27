@@ -107,7 +107,7 @@ function WhiskyEditForm({ whiskyId }: { whiskyId: number }) {
   
   const handleAutoTranslate = async () => {
     try {
-      await triggerTranslation(whiskyId, ['en', 'ru'])
+      await triggerTranslation(whiskyId, ['en', 'ru', 'bg'])
     } catch (error) {
       console.error('Translation failed:', error)
     }
@@ -262,7 +262,7 @@ psql -h db.your-project.supabase.co -U postgres -d postgres -f database/multilin
 // Birden fazla viskiyi aynı anda çevir
 const whiskyIds = [1, 2, 3, 4, 5]
 await Promise.all(
-  whiskyIds.map(id => triggerTranslation(id, ['en', 'ru'], 3))
+  whiskyIds.map(id => triggerTranslation(id, ['en', 'ru', 'bg'], 3))
 )
 ```
 

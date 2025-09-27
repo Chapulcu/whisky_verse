@@ -1,0 +1,578 @@
+openapi: 3.0.3
+info:
+  title: WhiskyVerse Recommendation System API
+  description: API contracts for personalized whisky recommendation system
+  version: 1.0.0
+  contact:
+    name: WhiskyVerse Team
+    email: akhantalip@gmail.com
+
+servers:
+  - url: https://api.whiskyverse.com/v1
+    description: Production server
+  - url: http://localhost:5173/api/v1
+    description: Development server
+
+paths:
+  /recommendations:
+    get:
+      summary: Get personalized recommendations for user
+      description: Retrieve personalized whisky recommendations based on user preferences and rating history
+      tags:
+        - Recommendations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of recommendations to return
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+        - name: min_price
+          in: query
+          description: Minimum price filter (user currency)
+          required: false
+          schema:
+            type: number
+            minimum: 0
+        - name: max_price
+          in: query
+          description: Maximum price filter (user currency)
+          required: false
+          schema:
+            type: number
+            minimum: 0
+        - name: refresh
+          in: query
+          description: Force refresh recommendations instead of using cached
+          required: false
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Successfully retrieved recommendations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  recommendations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Recommendation'
+                  metadata:
+                    $ref: '#/components/schemas/RecommendationMetadata'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /recommendations/{recommendationId}/feedback:
+    post:
+      summary: Submit feedback on a recommendation
+      description: Provide user feedback (like, dislike, already tried, etc.) on a specific recommendation
+      tags:
+        - Recommendations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: recommendationId
+          in: path
+          required: true
+          description: ID of the recommendation to provide feedback for
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecommendationFeedbackRequest'
+      responses:
+        '201':
+          description: Feedback submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecommendationFeedbackResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Recommendation not found
+        '409':
+          description: Feedback already submitted for this recommendation
+
+  /user/preferences:
+    get:
+      summary: Get user recommendation preferences
+      description: Retrieve current user's recommendation preferences and filters
+      tags:
+        - User Preferences
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User preferences retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPreferences'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: User preferences not found (first time user)
+
+    put:
+      summary: Update user recommendation preferences
+      description: Update user's recommendation preferences and filtering options
+      tags:
+        - User Preferences
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPreferencesRequest'
+      responses:
+        '200':
+          description: Preferences updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPreferences'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /recommendations/analytics:
+    get:
+      summary: Get recommendation performance analytics
+      description: Retrieve analytics data for recommendation system performance (admin only)
+      tags:
+        - Analytics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: metric_type
+          in: query
+          description: Type of metrics to retrieve
+          required: false
+          schema:
+            type: string
+            enum: [engagement, feedback, conversion, all]
+            default: all
+        - name: period
+          in: query
+          description: Time period for analytics
+          required: false
+          schema:
+            type: string
+            enum: [day, week, month, quarter]
+            default: week
+      responses:
+        '200':
+          description: Analytics data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Forbidden - admin access required
+
+  /whiskies/{whiskyId}/purchase-links:
+    get:
+      summary: Get purchase links for a whisky
+      description: Retrieve available purchase links from local and international sources
+      tags:
+        - Purchase Links
+      parameters:
+        - name: whiskyId
+          in: path
+          required: true
+          description: ID of the whisky to get purchase links for
+          schema:
+            type: string
+            format: uuid
+        - name: region
+          in: query
+          description: Preferred region for purchase options
+          required: false
+          schema:
+            type: string
+            enum: [local, international, all]
+            default: all
+      responses:
+        '200':
+          description: Purchase links retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  whisky_id:
+                    type: string
+                    format: uuid
+                  purchase_links:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PurchaseLink'
+        '404':
+          description: Whisky not found
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Recommendation:
+      type: object
+      required:
+        - id
+        - whisky_id
+        - score
+        - reason
+        - whisky_details
+      properties:
+        id:
+          type: string
+          format: uuid
+        whisky_id:
+          type: string
+          format: uuid
+        score:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Recommendation confidence score
+        reason:
+          type: object
+          description: Structured reasoning for the recommendation
+          properties:
+            primary_factor:
+              type: string
+              enum: [similar_taste, user_rating_pattern, popular_choice, region_preference]
+            explanation:
+              type: string
+            similarity_score:
+              type: number
+        position:
+          type: integer
+          description: Display order position
+        algorithm_type:
+          type: string
+          enum: [content_based, collaborative, hybrid, popularity]
+        whisky_details:
+          $ref: '#/components/schemas/WhiskyDetails'
+        generated_at:
+          type: string
+          format: date-time
+
+    RecommendationMetadata:
+      type: object
+      properties:
+        total_count:
+          type: integer
+        algorithm_mix:
+          type: object
+          properties:
+            content_based:
+              type: integer
+            collaborative:
+              type: integer
+            hybrid:
+              type: integer
+            popularity:
+              type: integer
+        last_updated:
+          type: string
+          format: date-time
+        next_update:
+          type: string
+          format: date-time
+
+    WhiskyDetails:
+      type: object
+      required:
+        - id
+        - name
+        - brand
+        - age
+        - region
+        - abv
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        brand:
+          type: string
+        age:
+          type: integer
+          nullable: true
+        region:
+          type: string
+        abv:
+          type: number
+        taste_profile:
+          type: object
+          properties:
+            sweetness:
+              type: integer
+              minimum: 1
+              maximum: 10
+            smokiness:
+              type: integer
+              minimum: 1
+              maximum: 10
+            fruitiness:
+              type: integer
+              minimum: 1
+              maximum: 10
+            spiciness:
+              type: integer
+              minimum: 1
+              maximum: 10
+        image_url:
+          type: string
+          format: uri
+        price_category:
+          type: string
+          enum: [budget, mid_range, premium, luxury]
+
+    RecommendationFeedbackRequest:
+      type: object
+      required:
+        - feedback_type
+      properties:
+        feedback_type:
+          type: string
+          enum: [like, dislike, already_tried, not_interested, purchased]
+        engagement_duration:
+          type: integer
+          description: Time spent viewing in seconds
+          minimum: 0
+        purchase_link_clicked:
+          type: boolean
+        added_to_favorites:
+          type: boolean
+        feedback_text:
+          type: string
+          maxLength: 500
+
+    RecommendationFeedbackResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        feedback_type:
+          type: string
+        processed_at:
+          type: string
+          format: date-time
+        impact_on_future_recommendations:
+          type: string
+          description: How this feedback will influence future recommendations
+
+    UserPreferences:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        taste_preferences:
+          type: object
+          properties:
+            sweetness_preference:
+              type: integer
+              minimum: 1
+              maximum: 10
+            smokiness_preference:
+              type: integer
+              minimum: 1
+              maximum: 10
+            complexity_preference:
+              type: integer
+              minimum: 1
+              maximum: 10
+        preferred_regions:
+          type: array
+          items:
+            type: string
+        experience_level:
+          type: string
+          enum: [beginner, intermediate, expert]
+        price_range:
+          type: object
+          properties:
+            min_price:
+              type: number
+              minimum: 0
+            max_price:
+              type: number
+              minimum: 0
+        preferred_age_range:
+          type: object
+          properties:
+            min_age:
+              type: integer
+              minimum: 0
+            max_age:
+              type: integer
+              minimum: 0
+        updated_at:
+          type: string
+          format: date-time
+
+    UserPreferencesRequest:
+      type: object
+      properties:
+        taste_preferences:
+          type: object
+          properties:
+            sweetness_preference:
+              type: integer
+              minimum: 1
+              maximum: 10
+            smokiness_preference:
+              type: integer
+              minimum: 1
+              maximum: 10
+            complexity_preference:
+              type: integer
+              minimum: 1
+              maximum: 10
+        preferred_regions:
+          type: array
+          items:
+            type: string
+        experience_level:
+          type: string
+          enum: [beginner, intermediate, expert]
+        price_range:
+          type: object
+          properties:
+            min_price:
+              type: number
+              minimum: 0
+            max_price:
+              type: number
+              minimum: 0
+        preferred_age_range:
+          type: object
+          properties:
+            min_age:
+              type: integer
+              minimum: 0
+            max_age:
+              type: integer
+              minimum: 0
+
+    PurchaseLink:
+      type: object
+      properties:
+        platform_name:
+          type: string
+        platform_type:
+          type: string
+          enum: [local, international]
+        product_url:
+          type: string
+          format: uri
+        current_price:
+          type: number
+        currency:
+          type: string
+        availability_status:
+          type: string
+          enum: [available, out_of_stock, discontinued]
+        last_checked:
+          type: string
+          format: date-time
+
+    AnalyticsResponse:
+      type: object
+      properties:
+        metrics:
+          type: array
+          items:
+            type: object
+            properties:
+              metric_name:
+                type: string
+              metric_value:
+                type: number
+              metric_type:
+                type: string
+              time_period:
+                type: string
+        summary:
+          type: object
+          properties:
+            total_recommendations:
+              type: integer
+            avg_engagement_rate:
+              type: number
+            avg_satisfaction_score:
+              type: number
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+
+  responses:
+    BadRequest:
+      description: Bad request - invalid parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Unauthorized - authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    RateLimited:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
