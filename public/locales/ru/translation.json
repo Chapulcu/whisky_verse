@@ -632,6 +632,7 @@
       "location": "Местоположение",
       "locationPlaceholder": "Город, Страна",
       "birthDate": "Дата рождения",
+      "email": "Эл. почта",
       "website": "Веб-сайт",
       "phone": "Телефон",
       "language": "Язык",
@@ -639,6 +640,16 @@
       "english": "Английский",
       "russian": "Русский",
       "bulgarian": "Болгарский"
+    },
+    "stats": {
+      "level": "Уровень",
+      "achievements": "Достижения",
+      "points": "Всего очков"
+    },
+    "actions": {
+      "changeAvatar": "Обновить аватар",
+      "showQr": "Показать QR",
+      "viewAchievements": "Посмотреть достижения"
     },
     "placeholders": {
       "notSpecified": "Не указано",

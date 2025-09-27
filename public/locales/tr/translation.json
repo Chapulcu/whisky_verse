@@ -661,6 +661,7 @@
       "location": "Konum",
       "locationPlaceholder": "Şehir, Ülke",
       "birthDate": "Doğum Tarihi",
+      "email": "E-posta",
       "website": "Website",
       "phone": "Telefon",
       "language": "Dil",
@@ -668,6 +669,16 @@
       "english": "English",
       "russian": "Русский",
       "bulgarian": "Bulgarca"
+    },
+    "stats": {
+      "level": "Seviye",
+      "achievements": "Başarımlar",
+      "points": "Toplam Puan"
+    },
+    "actions": {
+      "changeAvatar": "Avatarı güncelle",
+      "showQr": "QR Kod",
+      "viewAchievements": "Başarımları Gör"
     },
     "placeholders": {
       "notSpecified": "Belirtilmemiş",

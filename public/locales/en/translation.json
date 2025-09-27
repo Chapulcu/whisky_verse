@@ -661,6 +661,7 @@
       "location": "Location",
       "locationPlaceholder": "City, Country",
       "birthDate": "Birth Date",
+      "email": "Email",
       "website": "Website",
       "phone": "Phone",
       "language": "Language",
@@ -668,6 +669,16 @@
       "english": "English",
       "russian": "Russian",
       "bulgarian": "Bulgarian"
+    },
+    "stats": {
+      "level": "Level",
+      "achievements": "Achievements",
+      "points": "Total Points"
+    },
+    "actions": {
+      "changeAvatar": "Tap to update avatar",
+      "showQr": "Share QR",
+      "viewAchievements": "View Achievements"
     },
     "placeholders": {
       "notSpecified": "Not specified",

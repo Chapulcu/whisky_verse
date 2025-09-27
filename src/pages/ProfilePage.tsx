@@ -84,6 +84,14 @@ export function ProfilePage() {
     bg: t('profilePage.forms.bulgarian')
   }), [t])
 
+  const glassBackdrop = 'relative overflow-hidden rounded-3xl border border-white/30 bg-white/80 dark:bg-white/5 backdrop-blur-2xl shadow-[0_35px_85px_-35px_rgba(15,23,42,0.65)]'
+  const glassSection = 'relative rounded-2xl border border-white/25 bg-white/70 dark:bg-white/5 backdrop-blur-xl shadow-[0_30px_70px_-40px_rgba(15,23,42,0.6)]'
+  const glassInput = 'w-full rounded-2xl border border-white/30 bg-white/80 dark:bg-white/10 px-4 py-3 text-slate-700 dark:text-slate-100 placeholder:text-slate-500/70 focus:outline-none focus:ring-2 focus:ring-amber-400/60 focus:border-transparent backdrop-blur'
+  const glassTextarea = `${glassInput} h-24 resize-none`
+  const glassChip = 'inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/40 dark:bg-white/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.25em] text-slate-700 dark:text-white/75 backdrop-blur shadow-[0_20px_45px_-30px_rgba(15,23,42,0.7)]'
+  const glassButton = 'inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/40 dark:bg-white/10 px-4 py-2 text-sm font-semibold text-slate-700 dark:text-white/80 backdrop-blur transition hover:bg-white/60 dark:hover:bg-white/20 shadow-[0_22px_45px_-25px_rgba(15,23,42,0.65)]'
+  const primaryButton = 'inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_20px_55px_-15px_rgba(249,115,22,0.6)] transition hover:shadow-[0_25px_60px_-10px_rgba(249,115,22,0.55)]'
+
   // Update form data when profile loads
   useEffect(() => {
     if (profile) {
@@ -250,31 +258,59 @@ export function ProfilePage() {
   }
 
   const getRoleBadge = () => {
-    if (!profile?.role) return null
-    
-    switch (profile.role) {
-      case 'vip':
-        return (
-          <div className="flex items-center gap-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-            <Crown className="w-4 h-4" />
-            <span>{t('vipMember')}</span>
-          </div>
-        )
-      case 'admin':
-        return (
-          <div className="flex items-center gap-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-            <Settings className="w-4 h-4" />
-            <span>{t('profilePage.adminBadge')}</span>
-          </div>
-        )
-      default:
-        return (
-          <div className="bg-slate-500/20 text-slate-600 dark:text-slate-400 px-3 py-1 rounded-full text-sm">
-            {t('profilePage.memberBadge')}
-          </div>
-        )
+    if (!profile?.role) {
+      return (
+        <span className={`${glassChip} text-slate-700 dark:text-white/80`}>{t('profilePage.memberBadge')}</span>
+      )
     }
+
+    if (profile.role === 'vip') {
+      return (
+        <span className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.25em] text-white shadow-[0_18px_40px_-20px_rgba(249,115,22,0.6)] bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500">
+          <Crown className="w-4 h-4" />
+          {t('vipMember')}
+        </span>
+      )
+    }
+
+    if (profile.role === 'admin') {
+      return (
+        <span className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.25em] text-white shadow-[0_18px_40px_-20px_rgba(134,25,143,0.6)] bg-gradient-to-r from-purple-500 via-indigo-500 to-blue-500">
+          <Settings className="w-4 h-4" />
+          {t('profilePage.adminBadge')}
+        </span>
+      )
+    }
+
+    return (
+      <span className={`${glassChip} text-slate-700 dark:text-white/80`}>{t('profilePage.memberBadge')}</span>
+    )
   }
+
+  const achievementsCount = totalAchievements || unlockedAchievements.length
+
+  const statCards = useMemo(() => (
+    [
+      {
+        label: t('profilePage.stats.level'),
+        value: level ? `Lv. ${level}` : 'Lv. 1',
+        icon: Trophy,
+        accent: 'from-amber-400/35 via-orange-400/20 to-transparent'
+      },
+      {
+        label: t('profilePage.stats.achievements'),
+        value: achievementsCount.toString(),
+        icon: Award,
+        accent: 'from-indigo-400/30 via-purple-400/20 to-transparent'
+      },
+      {
+        label: t('profilePage.stats.points'),
+        value: (totalPoints ?? 0).toString(),
+        icon: Crown,
+        accent: 'from-emerald-400/30 via-teal-400/20 to-transparent'
+      }
+    ]
+  ), [achievementsCount, level, totalPoints, t])
 
   if (loading) {
     return (
@@ -298,309 +334,277 @@ export function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 py-8">
-      <div className="container mx-auto px-4 max-w-4xl">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-100 via-amber-50 to-sky-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 py-12">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-56 -left-40 h-96 w-96 rounded-full bg-amber-400/30 blur-3xl" />
+        <div className="absolute -top-24 right-[-90px] h-[420px] w-[420px] rounded-full bg-indigo-500/30 blur-3xl" />
+        <div className="absolute bottom-[-160px] left-1/2 h-[420px] w-[420px] -translate-x-1/2 rounded-full bg-emerald-400/25 blur-3xl" />
+      </div>
+      <div className="relative container mx-auto max-w-5xl px-4">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          className="space-y-6"
+          className="space-y-10"
         >
-          {/* Header Section */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gradient bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent">
+          <div className="mx-auto max-w-2xl text-center">
+            <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white drop-shadow-sm">
               {t('profilePage.title')}
             </h1>
-            <p className="text-slate-600 dark:text-slate-400 mt-2">
+            <p className="mt-3 text-slate-600 dark:text-slate-300">
               {t('profilePage.subtitle')}
             </p>
           </div>
 
-          {/* Profile Card */}
-          <div className="glass rounded-2xl p-6 shadow-xl">
-            <div className="flex flex-col lg:flex-row lg:items-center gap-6">
-              {/* Avatar Section */}
-              <div className="flex-shrink-0 text-center lg:text-left">
-                <div className="relative inline-block group">
-                  <div 
-                    className={`w-24 h-24 lg:w-32 lg:h-32 rounded-full overflow-hidden bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center cursor-pointer transition-all duration-300 ${
-                      isUploading ? 'opacity-50' : 'group-hover:scale-105 group-hover:shadow-lg'
-                    }`}
+          <section className={`${glassBackdrop} p-8`}>
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/70 via-white/25 to-transparent dark:from-white/10 dark:via-white/10 dark:to-transparent" />
+            <div className="relative flex flex-col gap-8 lg:flex-row">
+              <div className="flex flex-col items-center gap-4 lg:w-1/3">
+                <div className="relative">
+                  <div className="pointer-events-none absolute inset-0 -m-6 rounded-full bg-gradient-to-br from-amber-400/45 via-orange-500/25 to-purple-500/25 blur-3xl" />
+                  <div
                     onClick={handleAvatarClick}
+                    className={`group relative h-28 w-28 lg:h-36 lg:w-36 cursor-pointer overflow-hidden rounded-full border border-white/40 bg-white/75 dark:bg-white/10 backdrop-blur-xl shadow-[0_32px_80px_-30px_rgba(15,23,42,0.55)] transition-all duration-300 ${
+                      isUploading ? 'opacity-60' : 'hover:scale-105 hover:shadow-[0_40px_90px_-30px_rgba(15,23,42,0.6)]'
+                    }`}
                   >
                     {profile?.avatar_url ? (
-                      <img 
-                        src={profile.avatar_url} 
-                        alt="Avatar" 
-                        className="w-full h-full object-cover"
-                      />
+                      <img src={profile.avatar_url} alt={profile.full_name || 'Avatar'} className="h-full w-full object-cover" />
                     ) : (
-                      <User className="w-12 h-12 lg:w-16 lg:h-16 text-white" />
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-800">
+                        <User className="h-12 w-12 text-slate-400 dark:text-slate-500" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition duration-300 group-hover:bg-black/35">
+                      <Camera className="h-6 w-6 text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                    </div>
+                    {isUploading && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                        <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/80 border-t-transparent" />
+                      </div>
                     )}
                   </div>
-                  
-                  <button 
-                    className={`absolute -bottom-2 -right-2 bg-white dark:bg-slate-800 shadow-lg border border-slate-200 dark:border-slate-700 p-2 rounded-full transition-all duration-300 ${
-                      isUploading 
-                        ? 'cursor-not-allowed opacity-50' 
-                        : 'hover:bg-slate-50 dark:hover:bg-slate-700 hover:scale-110'
-                    }`}
-                    onClick={handleAvatarClick}
-                    disabled={isUploading}
-                  >
-                    {isUploading ? (
-                      <div className="animate-spin w-4 h-4 border-2 border-primary-500 border-t-transparent rounded-full" />
-                    ) : (
-                      <Camera className="w-4 h-4 text-slate-600 dark:text-slate-400" />
-                    )}
-                  </button>
-                  
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarChange}
-                    className="hidden"
-                  />
+                  <input ref={fileInputRef} type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
                 </div>
+                <span className="text-xs font-semibold uppercase tracking-[0.35em] text-slate-600/80 dark:text-white/50">
+                  {t('profilePage.actions.changeAvatar')}
+                </span>
               </div>
 
-              {/* Profile Info */}
-              <div className="flex-1">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div>
-                    <h2 className="text-2xl font-bold text-slate-800 dark:text-white">
+              <div className="flex-1 space-y-6">
+                <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                  <div className="space-y-2">
+                    <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">
                       {profile?.full_name || t('user')}
                     </h2>
-                    <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 mt-1">
-                      <Mail className="w-4 h-4" />
-                      <span>{user.email}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 mt-1">
-                      <Calendar className="w-4 h-4" />
-                      <span>{t('profilePage.joinDate')}: {formatDate(profile?.created_at || null)}</span>
+                    <div className="flex flex-col gap-2 text-sm text-slate-600 dark:text-slate-300 sm:flex-row sm:items-center">
+                      <span className="inline-flex items-center gap-2">
+                        <Mail className="h-4 w-4" />
+                        {user.email}
+                      </span>
+                      <span className="hidden text-slate-400 sm:inline">•</span>
+                      <span className="inline-flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        {t('profilePage.joinDate')}: {formatDate(profile?.created_at || null)}
+                      </span>
                     </div>
                   </div>
-                  <div className="flex flex-col sm:items-end gap-2">
+
+                  <div className="flex flex-col gap-3 sm:items-end">
                     {getRoleBadge()}
-
-                    {/* Achievement Stats */}
-                    <div className="flex flex-wrap gap-2 text-sm">
-                      <div className="flex items-center gap-2 rounded-full border border-white/25 bg-white/20 px-3 py-1.5 text-slate-700 backdrop-blur dark:border-white/15 dark:bg-white/10 dark:text-white shadow-[0_10px_30px_-20px_rgba(8,15,52,0.6)]">
-                        <Trophy className="w-4 h-4 text-amber-500" />
-                        <span className="font-semibold tracking-wide">Seviye {level}</span>
-                      </div>
-                      <div className="flex items-center gap-2 rounded-full border border-white/25 bg-white/20 px-3 py-1.5 text-slate-700 backdrop-blur dark:border-white/15 dark:bg-white/10 dark:text-white shadow-[0_10px_30px_-20px_rgba(79,70,229,0.6)]">
-                        <Award className="w-4 h-4 text-indigo-500" />
-                        <span className="font-semibold tracking-wide">{totalAchievements || unlockedAchievements.length} Rozet</span>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-2 flex-wrap">
-                      <button
-                        onClick={() => setShowQRCode(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-sm font-medium"
-                      >
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M3 11h8V3H3v8zm2-6h4v4H5V5zM3 21h8v-8H3v8zm2-6h4v4H5v-4zM13 3v8h8V3h-8zm6 6h-4V5h4v4zM13 13h2v2h-2v-2zM15 15h2v2h-2v-2zM13 17h2v2h-2v-2zM15 19h2v2h-2v-2zM17 13h2v2h-2v-2zM19 15h2v2h-2v-2zM17 17h2v2h-2v-2zM19 19h2v2h-2v-2z"/>
+                    <div className="flex flex-wrap gap-2">
+                      <button onClick={() => setShowQRCode(true)} className={`${glassButton} !px-4`}>
+                        <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M3 11h8V3H3v8zm2-6h4v4H5V5zM3 21h8v-8H3v8zm2-6h4v4H5v-4zM13 3v8h8V3h-8zm6 6h-4V5h4v4zM13 13h2v2h-2v-2zM15 15h2v2h-2v-2zM13 17h2v2h-2v-2zM15 19h2v2h-2v-2zM17 13h2v2h-2v-2zM19 15h2v2h-2v-2zM17 17h2v2h-2v-2zM19 19h2v2h-2v-2z" />
                         </svg>
-                        QR Kod
+                        {t('profilePage.actions.showQr')}
                       </button>
-                      <button
-                        onClick={() => setShowAchievements(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition-colors text-sm font-medium"
-                      >
-                        <Trophy className="w-4 h-4" />
-                        Başarımlar
+                      <button onClick={() => setShowAchievements(true)} className={`${glassButton} !px-4`}>
+                        <Trophy className="h-4 w-4" />
+                        {t('profilePage.actions.viewAchievements')}
                       </button>
-                      <button
-                        onClick={() => setIsEditing(!isEditing)}
-                        className="flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors text-sm font-medium"
-                      >
-                        <Edit3 className="w-4 h-4" />
+                      <button onClick={() => setIsEditing(!isEditing)} className={primaryButton}>
+                        <Edit3 className="h-4 w-4" />
                         {isEditing ? t('profilePage.closeEditButton') : t('profilePage.editButton')}
                       </button>
                     </div>
                   </div>
                 </div>
+
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {statCards.map(({ label, value, icon: Icon, accent }) => (
+                    <div key={label} className="relative overflow-hidden rounded-2xl border border-white/25 bg-white/45 dark:bg-white/10 backdrop-blur shadow-[0_28px_75px_-38px_rgba(15,23,42,0.7)]">
+                      <div className={`absolute inset-0 bg-gradient-to-br ${accent}`} />
+                      <div className="relative flex flex-col gap-2 p-4 text-slate-800 dark:text-white">
+                        <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-600/80 dark:text-white/60">
+                          {label}
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        <span className="text-2xl font-bold tracking-tight">{value}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+          </section>
 
           {/* Content Grid */}
-          <div className="grid lg:grid-cols-2 gap-6">
-            {/* Personal Information */}
-            <div className="glass rounded-xl p-6">
-              <h3 className="text-xl font-semibold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
-                <User className="w-5 h-5 text-primary-500" />
+          <div className="grid gap-6 lg:grid-cols-2">
+            <section className={`${glassSection} p-6 space-y-5`}>
+              <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
+                <User className="h-5 w-5 text-amber-500" />
                 {t('profilePage.personalInfo')}
               </h3>
-              
               <div className="space-y-4">
-                {/* Full Name */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Ad Soyad
-                  </label>
+                  <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-600/80 dark:text-white/50">
+                    {t('profilePage.forms.fullName')}
+                  </span>
                   {isEditing ? (
                     <input
                       type="text"
                       value={formData.full_name}
                       onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
-                      className="input-glass w-full"
+                      className={glassInput}
                       placeholder={t('profilePage.forms.fullNamePlaceholder')}
                     />
                   ) : (
-                    <p className="text-slate-600 dark:text-slate-400">
+                    <p className="text-slate-700 dark:text-slate-300">
                       {profile?.full_name || t('profilePage.placeholders.notSpecified')}
                     </p>
                   )}
                 </div>
 
-                {/* Bio */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Biyografi
-                  </label>
+                  <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-600/80 dark:text-white/50">
+                    {t('profilePage.forms.bio')}
+                  </span>
                   {isEditing ? (
                     <textarea
                       value={formData.bio}
                       onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
-                      className="input-glass w-full h-20 resize-none"
+                      className={glassTextarea}
                       placeholder={t('profilePage.forms.bioPlaceholder')}
                     />
                   ) : (
-                    <p className="text-slate-600 dark:text-slate-400">
+                    <p className="text-slate-700 dark:text-slate-300">
                       {(profile as any)?.bio || t('profilePage.placeholders.bioNotAdded')}
                     </p>
                   )}
                 </div>
 
-                {/* Location */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-2">
-                    <MapPin className="w-4 h-4" />
-                    Konum
-                  </label>
+                  <span className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-slate-600/80 dark:text-white/50">
+                    <MapPin className="h-4 w-4" />
+                    {t('profilePage.forms.location')}
+                  </span>
                   {isEditing ? (
                     <input
                       type="text"
                       value={formData.location}
                       onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
-                      className="input-glass w-full"
+                      className={glassInput}
                       placeholder={t('profilePage.forms.locationPlaceholder')}
                     />
                   ) : (
-                    <p className="text-slate-600 dark:text-slate-400">
+                    <p className="text-slate-700 dark:text-slate-300">
                       {(profile as any)?.location || t('profilePage.placeholders.notSpecified')}
                     </p>
                   )}
                 </div>
 
-                {/* Birth Date */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-600/80 dark:text-white/50">
                     {t('profilePage.forms.birthDate')}
-                  </label>
+                  </span>
                   {isEditing ? (
                     <input
                       type="date"
                       value={formData.birth_date}
                       onChange={(e) => setFormData(prev => ({ ...prev, birth_date: e.target.value }))}
-                      className="input-glass w-full"
+                      className={glassInput}
                     />
                   ) : (
-                    <p className="text-slate-600 dark:text-slate-400">
+                    <p className="text-slate-700 dark:text-slate-300">
                       {formatDate((profile as any)?.birth_date)}
                     </p>
                   )}
                 </div>
               </div>
-            </div>
+            </section>
 
-            {/* Contact Information */}
-            <div className="glass rounded-xl p-6">
-              <h3 className="text-xl font-semibold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
-                <Mail className="w-5 h-5 text-primary-500" />
+            <section className={`${glassSection} p-6 space-y-5`}>
+              <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
+                <Mail className="h-5 w-5 text-amber-500" />
                 {t('profilePage.contactInfo')}
               </h3>
-              
               <div className="space-y-4">
-                {/* Email (read-only) */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    E-posta Adresi
-                  </label>
-                  <p className="text-slate-600 dark:text-slate-400">
-                    {user.email}
-                  </p>
-                  <p className="text-xs text-slate-500 mt-1">
+                  <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-600/80 dark:text-white/50">
+                    {t('profilePage.forms.email')}
+                  </span>
+                  <p className="text-slate-700 dark:text-slate-300">{user.email}</p>
+                  <p className="mt-1 text-xs text-slate-500">
                     {t('profilePage.placeholders.emailCannotChange')}
                   </p>
                 </div>
 
-                {/* Phone */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-2">
-                    <Phone className="w-4 h-4" />
-                    Telefon
-                  </label>
+                  <span className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-slate-600/80 dark:text-white/50">
+                    <Phone className="h-4 w-4" />
+                    {t('profilePage.forms.phone')}
+                  </span>
                   {isEditing ? (
                     <input
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                      className="input-glass w-full"
+                      className={glassInput}
                       placeholder="+90 555 123 45 67"
                     />
                   ) : (
-                    <p className="text-slate-600 dark:text-slate-400">
+                    <p className="text-slate-700 dark:text-slate-300">
                       {(profile as any)?.phone || t('profilePage.placeholders.notSpecified')}
                     </p>
                   )}
                 </div>
 
-                {/* Website */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-2">
-                    <Globe className="w-4 h-4" />
-                    Web Sitesi
-                  </label>
+                  <span className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-slate-600/80 dark:text-white/50">
+                    <Globe className="h-4 w-4" />
+                    {t('profilePage.forms.website')}
+                  </span>
                   {isEditing ? (
                     <input
                       type="url"
                       value={formData.website}
                       onChange={(e) => setFormData(prev => ({ ...prev, website: e.target.value }))}
-                      className="input-glass w-full"
+                      className={glassInput}
                       placeholder="https://example.com"
                     />
+                  ) : ( (profile as any)?.website ? (
+                    <a
+                      href={(profile as any).website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-amber-600 underline transition hover:text-amber-500"
+                    >
+                      {(profile as any).website}
+                    </a>
                   ) : (
-                    <div>
-                      {(profile as any)?.website ? (
-                        <a 
-                          href={(profile as any).website} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-primary-500 hover:text-primary-600 underline"
-                        >
-                          {(profile as any).website}
-                        </a>
-                      ) : (
-                        <p className="text-slate-600 dark:text-slate-400">{t('profilePage.placeholders.notSpecified')}</p>
-                      )}
-                    </div>
-                  )}
+                    <p className="text-slate-700 dark:text-slate-300">{t('profilePage.placeholders.notSpecified')}</p>
+                  ))}
                 </div>
 
-                {/* Language */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Tercih Edilen Dil
-                  </label>
+                  <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.3em] text-slate-600/80 dark:text-white/50">
+                    {t('profilePage.forms.language')}
+                  </span>
                   {isEditing ? (
                     <select
                       value={formData.language}
                       onChange={(e) => setFormData(prev => ({ ...prev, language: ensureLanguage(e.target.value) }))}
-                      className="input-glass w-full"
+                      className={glassInput}
                     >
                       {SUPPORTED_LANGUAGES.map(lang => (
                         <option key={lang} value={lang}>
@@ -609,43 +613,43 @@ export function ProfilePage() {
                       ))}
                     </select>
                   ) : (
-                    <p className="text-slate-600 dark:text-slate-400">
+                    <p className="text-slate-700 dark:text-slate-300">
                       {languageLabels[ensureLanguage(profile?.language)]}
                     </p>
                   )}
                 </div>
               </div>
-            </div>
+            </section>
           </div>
 
           {/* Action Buttons */}
           {isEditing && (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex flex-col sm:flex-row gap-3 justify-center"
+              className="flex flex-col items-center justify-center gap-3 sm:flex-row"
             >
               <button
                 onClick={handleCancel}
                 disabled={isSaving}
-                className="flex items-center justify-center gap-2 px-6 py-3 bg-slate-500 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium"
+                className={`${glassButton} justify-center px-6 py-2.5 disabled:cursor-not-allowed disabled:opacity-60`}
               >
-                <X className="w-4 h-4" />
+                <X className="h-4 w-4" />
                 {t('profilePage.buttons.cancel')}
               </button>
               <button
                 onClick={handleSave}
                 disabled={isSaving}
-                className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-500 to-secondary-500 hover:from-primary-600 hover:to-secondary-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-all font-medium"
+                className={`${primaryButton} justify-center px-6 py-2.5 disabled:cursor-not-allowed disabled:opacity-60`}
               >
                 {isSaving ? (
                   <>
-                    <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/80 border-t-transparent" />
                     {t('saving')}
                   </>
                 ) : (
                   <>
-                    <Save className="w-4 h-4" />
+                    <Save className="h-4 w-4" />
                     {t('profilePage.buttons.saveChanges')}
                   </>
                 )}

@@ -661,6 +661,7 @@
       "location": "Местоположение",
       "locationPlaceholder": "Град, Държава",
       "birthDate": "Дата на раждане",
+      "email": "Имейл",
       "website": "Уебсайт",
       "phone": "Телефон",
       "language": "Език",
@@ -668,6 +669,16 @@
       "english": "Английски",
       "russian": "Руски",
       "bulgarian": "Български"
+    },
+    "stats": {
+      "level": "Ниво",
+      "achievements": "Постижения",
+      "points": "Общо точки"
+    },
+    "actions": {
+      "changeAvatar": "Обнови аватара",
+      "showQr": "Покажи QR",
+      "viewAchievements": "Виж постиженията"
     },
     "placeholders": {
       "notSpecified": "Не е посочено",
