@@ -172,14 +172,16 @@ export function AchievementsPanel({ isOpen, onClose }: AchievementsPanelProps) {
                         <button
                           key={category.id}
                           onClick={() => setSelectedCategory(category.id)}
-                          className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold tracking-wide backdrop-blur transition-all duration-200 ${
+                          className={`flex h-11 w-11 items-center justify-center rounded-full border backdrop-blur transition-all duration-200 ${
                             isActive
-                              ? 'border-amber-300/70 bg-gradient-to-r from-amber-400/35 via-orange-500/30 to-purple-500/30 text-white shadow-[0_10px_30px_-18px_rgba(251,191,36,0.95)]'
+                              ? 'border-amber-300/70 bg-gradient-to-br from-amber-400/35 via-orange-500/30 to-purple-500/30 text-white shadow-[0_10px_30px_-18px_rgba(251,191,36,0.95)]'
                               : 'border-white/15 bg-white/8 text-white/70 hover:border-amber-300/50 hover:text-white'
                           }`}
+                          title={t(category.labelKey)}
+                          aria-label={t(category.labelKey)}
                         >
-                          <IconComponent className="h-4 w-4" />
-                          <span>{t(category.labelKey)}</span>
+                          <IconComponent className="h-5 w-5" />
+                          <span className="sr-only">{t(category.labelKey)}</span>
                         </button>
                       )
                     })}
