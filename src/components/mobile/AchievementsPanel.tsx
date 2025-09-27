@@ -95,33 +95,32 @@ export function AchievementsPanel({ isOpen, onClose }: AchievementsPanelProps) {
             </div>
 
             <div className="relative flex h-full flex-col">
-              <div className="sticky top-0 z-10 border-b border-white/10 bg-white/5 px-5 pt-6 pb-4 backdrop-blur-xl">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="relative h-12 w-12">
-                      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-amber-400 via-orange-500 to-orange-600 opacity-80" />
-                      <div className="absolute inset-[2px] flex items-center justify-center rounded-full border border-white/40 bg-white/20 backdrop-blur shadow-[0_12px_25px_-20px_rgba(251,191,36,0.9)]">
-                        <Trophy className="h-5 w-5 text-white" />
+              <div className="sticky top-0 z-10 border-b border-white/10 bg-white/6 px-4 pt-4 pb-3 backdrop-blur-xl">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="relative h-10 w-10">
+                      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-amber-400 via-orange-500 to-orange-600 opacity-75" />
+                      <div className="absolute inset-[2px] flex items-center justify-center rounded-full border border-white/35 bg-white/15 backdrop-blur shadow-[0_12px_22px_-18px_rgba(251,191,36,0.85)]">
+                        <Trophy className="h-4 w-4 text-white" />
                       </div>
                     </div>
-                    <div>
-                      <h2 className="text-xl font-semibold tracking-wide text-white drop-shadow">
-                        Başarımlar
-                      </h2>
-                      <p className="text-sm text-white/70">
-                        {unlockedAchievements.length}/{allAchievements.length} rozet tamamlandı
+                    <div className="leading-tight">
+                      <h2 className="text-lg font-semibold text-white">Başarımlar</h2>
+                      <p className="text-[11px] uppercase tracking-[0.28em] text-white/60">
+                        {unlockedAchievements.length}/{allAchievements.length} rozet
                       </p>
                     </div>
                   </div>
                   <button
                     onClick={onClose}
-                    className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white/80 backdrop-blur transition-all duration-200 hover:bg-white/20 hover:text-white"
+                    className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white/75 transition hover:bg-white/20 hover:text-white"
+                    aria-label="Kapat"
                   >
                     <X className="h-4 w-4" />
                   </button>
                 </div>
 
-                <div className="mt-5 grid grid-cols-3 gap-3">
+                <div className="mt-4 grid grid-cols-3 gap-2">
                   {[
                     { label: 'Seviye', value: level, gradient: 'from-blue-500/70 via-indigo-500/60 to-purple-500/60' },
                     { label: 'Puan', value: totalPoints, gradient: 'from-amber-400/80 via-orange-500/65 to-amber-500/70' },
@@ -129,18 +128,18 @@ export function AchievementsPanel({ isOpen, onClose }: AchievementsPanelProps) {
                   ].map(item => (
                     <div
                       key={item.label}
-                      className="relative overflow-hidden rounded-2xl border border-white/15 bg-white/10 p-3 shadow-[0_18px_45px_-25px_rgba(15,23,42,0.9)] backdrop-blur"
+                      className="relative overflow-hidden rounded-2xl border border-white/15 bg-white/10 p-2.5 shadow-[0_18px_45px_-28px_rgba(15,23,42,0.9)] backdrop-blur"
                     >
                       <div className={`absolute inset-0 bg-gradient-to-br ${item.gradient} opacity-40`} />
                       <div className="relative text-center">
-                        <div className="text-2xl font-semibold text-white drop-shadow-sm">{item.value}</div>
-                        <div className="text-[11px] uppercase tracking-[0.18em] text-white/70">{item.label}</div>
+                        <div className="text-xl font-semibold text-white drop-shadow-sm">{item.value}</div>
+                        <div className="text-[10px] uppercase tracking-[0.2em] text-white/65">{item.label}</div>
                       </div>
                     </div>
                   ))}
                 </div>
 
-                <div className="relative mt-5 overflow-hidden rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur">
+                <div className="relative mt-4 overflow-hidden rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur">
                   <div className="absolute inset-0 bg-gradient-to-r from-amber-400/20 via-orange-500/15 to-purple-500/20" />
                   <div className="relative mb-3 flex items-center justify-between text-sm text-white/75">
                     <span className="font-medium tracking-wide">Seviye {level} → {level + 1}</span>
@@ -154,10 +153,9 @@ export function AchievementsPanel({ isOpen, onClose }: AchievementsPanelProps) {
                   </div>
                 </div>
 
-                <div className="mt-5 space-y-2">
-                  {/* First row - Primary categories */}
-                  <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
-                    {categoriesConfig.slice(0, 4).map(category => {
+                <div className="mt-4">
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {categoriesConfig.map(category => {
                       const IconComponent = category.icon
                       const isActive = selectedCategory === category.id
 
@@ -165,37 +163,14 @@ export function AchievementsPanel({ isOpen, onClose }: AchievementsPanelProps) {
                         <button
                           key={category.id}
                           onClick={() => setSelectedCategory(category.id)}
-                          className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs font-medium tracking-wide backdrop-blur transition-all duration-200 whitespace-nowrap ${
+                          className={`flex items-center gap-1 rounded-full border px-3 py-1 text-[11px] font-medium tracking-wide backdrop-blur transition-all duration-200 ${
                             isActive
-                              ? 'border-amber-300/60 bg-gradient-to-r from-amber-400/35 via-orange-500/30 to-purple-500/30 text-white shadow-[0_12px_35px_-20px_rgba(251,191,36,0.95)]'
-                              : 'border-white/20 bg-white/10 text-white/70 hover:border-amber-300/50 hover:text-white'
+                              ? 'border-amber-300/70 bg-gradient-to-r from-amber-400/35 via-orange-500/30 to-purple-500/30 text-white shadow-[0_10px_30px_-18px_rgba(251,191,36,0.95)]'
+                              : 'border-white/15 bg-white/8 text-white/70 hover:border-amber-300/50 hover:text-white'
                           }`}
                         >
-                          <IconComponent className="h-3.5 w-3.5 flex-shrink-0" />
-                          <span className="text-[11px]">{category.label}</span>
-                        </button>
-                      )
-                    })}
-                  </div>
-
-                  {/* Second row - Secondary categories */}
-                  <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
-                    {categoriesConfig.slice(4).map(category => {
-                      const IconComponent = category.icon
-                      const isActive = selectedCategory === category.id
-
-                      return (
-                        <button
-                          key={category.id}
-                          onClick={() => setSelectedCategory(category.id)}
-                          className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs font-medium tracking-wide backdrop-blur transition-all duration-200 whitespace-nowrap ${
-                            isActive
-                              ? 'border-amber-300/60 bg-gradient-to-r from-amber-400/35 via-orange-500/30 to-purple-500/30 text-white shadow-[0_12px_35px_-20px_rgba(251,191,36,0.95)]'
-                              : 'border-white/20 bg-white/10 text-white/70 hover:border-amber-300/50 hover:text-white'
-                          }`}
-                        >
-                          <IconComponent className="h-3.5 w-3.5 flex-shrink-0" />
-                          <span className="text-[11px]">{category.label}</span>
+                          <IconComponent className="h-3.5 w-3.5" />
+                          <span>{category.label}</span>
                         </button>
                       )
                     })}
