@@ -72,6 +72,7 @@ interface Whisky {
   created_by: string | null
   created_at: string
   updated_at: string
+  is_published: boolean
 }
 
 interface Group {
@@ -188,6 +189,7 @@ export function AdminPage() {
     description: string
     image_url: string
     selectedImageFile: File | null
+    is_published: boolean
   }>({
     name: '',
     type: '',
@@ -202,7 +204,8 @@ export function AdminPage() {
     finish: '',
     description: '',
     image_url: '',
-    selectedImageFile: null
+    selectedImageFile: null,
+    is_published: true
   })
 
   const [groupForm, setGroupForm] = useState({
@@ -725,7 +728,8 @@ export function AdminPage() {
         aroma: whiskyForm.aroma.trim() || undefined,
         taste: whiskyForm.taste.trim() || undefined,
         finish: whiskyForm.finish.trim() || undefined,
-        description: whiskyForm.description.trim() || undefined
+        description: whiskyForm.description.trim() || undefined,
+        is_published: whiskyForm.is_published
       }
 
       console.log('📊 Creating whisky with data:', whiskyData)
@@ -754,7 +758,8 @@ export function AdminPage() {
         finish: '',
         description: '',
         image_url: '',
-        selectedImageFile: null
+        selectedImageFile: null,
+        is_published: true
       })
 
       // Reload whiskies list
@@ -792,7 +797,8 @@ export function AdminPage() {
       finish: currentWhisky.finish || '',
       description: currentWhisky.description || '',
       image_url: currentWhisky.image_url || '',
-      selectedImageFile: null
+      selectedImageFile: null,
+      is_published: currentWhisky.is_published ?? true
     })
   }
 
@@ -828,7 +834,8 @@ export function AdminPage() {
         aroma: whiskyForm.aroma.trim() || undefined,
         taste: whiskyForm.taste.trim() || undefined,
         finish: whiskyForm.finish.trim() || undefined,
-        description: whiskyForm.description.trim() || undefined
+        description: whiskyForm.description.trim() || undefined,
+        is_published: whiskyForm.is_published
       }
 
       console.log('🔄 Updating whisky:', editingWhisky.id, whiskyData)
@@ -869,7 +876,8 @@ export function AdminPage() {
         finish: '',
         description: '',
         image_url: '',
-        selectedImageFile: null
+        selectedImageFile: null,
+        is_published: true
       })
 
       // Also reload whiskies list as backup
@@ -895,10 +903,44 @@ export function AdminPage() {
         finish: '',
         description: '',
         image_url: '',
-        selectedImageFile: null
+        selectedImageFile: null,
+        is_published: true
       })
     } finally {
       setIsWhiskyLoading(false)
+    }
+  }
+
+  const handleToggleWhiskyPublished = async (whiskyId: number, currentStatus: boolean) => {
+    try {
+      console.log('🔄 Toggling whisky publication status:', whiskyId, 'from', currentStatus, 'to', !currentStatus)
+
+      const { error } = await supabase
+        .from('whiskies')
+        .update({
+          is_published: !currentStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', whiskyId)
+
+      if (error) {
+        console.error('❌ Error updating whisky publication status:', error)
+        toast.error('Yayın durumu güncellenirken hata oluştu: ' + error.message)
+        return
+      }
+
+      // Update local state
+      setWhiskies(prev => prev.map(w =>
+        w.id === whiskyId
+          ? { ...w, is_published: !currentStatus, updated_at: new Date().toISOString() }
+          : w
+      ))
+
+      toast.success(`Viski ${!currentStatus ? 'yayınlandı' : 'yayından kaldırıldı'}`)
+      console.log('✅ Whisky publication status updated successfully')
+    } catch (error: any) {
+      console.error('❌ Unexpected error updating whisky publication status:', error)
+      toast.error('Beklenmeyen hata: ' + (error.message || 'Bilinmeyen hata'))
     }
   }
 
@@ -2449,6 +2491,7 @@ export function AdminPage() {
                       <th className="px-6 py-4 text-left text-sm font-medium text-slate-600 dark:text-slate-400">{t('adminPage.whiskyManagement.tableHeaders.type')}</th>
                       <th className="px-6 py-4 text-left text-sm font-medium text-slate-600 dark:text-slate-400">{t('adminPage.whiskyManagement.tableHeaders.country')}</th>
                       <th className="px-6 py-4 text-left text-sm font-medium text-slate-600 dark:text-slate-400">Alkol %</th>
+                      <th className="px-6 py-4 text-left text-sm font-medium text-slate-600 dark:text-slate-400">Yayın Durumu</th>
                       <th className="px-6 py-4 text-left text-sm font-medium text-slate-600 dark:text-slate-400">{t('adminPage.whiskyManagement.tableHeaders.creation')}</th>
                       <th className="px-6 py-4 text-left text-sm font-medium text-slate-600 dark:text-slate-400">{t('adminPage.whiskyManagement.tableHeaders.actions')}</th>
                     </tr>
@@ -2499,6 +2542,29 @@ export function AdminPage() {
                             <Percent className="w-3 h-3" />
                             {whisky.alcohol_percentage}
                           </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <button
+                            onClick={() => handleToggleWhiskyPublished(whisky.id, whisky.is_published ?? true)}
+                            className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                              whisky.is_published ?? true
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/30'
+                                : 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-900/30'
+                            }`}
+                            title={`Tıklayarak ${whisky.is_published ?? true ? 'yayından kaldır' : 'yayınla'}`}
+                          >
+                            {whisky.is_published ?? true ? (
+                              <>
+                                <Eye className="w-3 h-3" />
+                                Yayında
+                              </>
+                            ) : (
+                              <>
+                                <EyeOff className="w-3 h-3" />
+                                Taslak
+                              </>
+                            )}
+                          </button>
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-slate-600 dark:text-slate-400 text-sm">

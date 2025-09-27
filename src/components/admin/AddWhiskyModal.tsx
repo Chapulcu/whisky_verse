@@ -22,7 +22,8 @@ export function AddWhiskyModal({ isOpen, onClose, onSuccess }: AddWhiskyModalPro
     aroma: '',
     taste: '',
     finish: '',
-    description: ''
+    description: '',
+    is_published: true
   })
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
@@ -208,7 +209,8 @@ export function AddWhiskyModal({ isOpen, onClose, onSuccess }: AddWhiskyModalPro
         aroma: '',
         taste: '',
         finish: '',
-        description: ''
+        description: '',
+        is_published: true
       })
       setImageFile(null)
       
@@ -410,6 +412,27 @@ export function AddWhiskyModal({ isOpen, onClose, onSuccess }: AddWhiskyModalPro
                 </span>
               </label>
             </div>
+          </div>
+
+          {/* Publication Status */}
+          <div className="form-group">
+            <label className="form-label flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={formData.is_published}
+                onChange={(e) => setFormData(prev => ({ ...prev, is_published: e.target.checked }))}
+                className="w-5 h-5 text-whiskey-amber focus:ring-whiskey-amber border-whiskey-bronze/30 rounded"
+              />
+              <span>
+                Yayında <span className="text-sm text-gray-500">(Kullanıcılara görünür olsun)</span>
+              </span>
+            </label>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+              {formData.is_published
+                ? "✅ Bu viski kullanıcılara görünür olacak"
+                : "⚠️ Bu viski taslak olarak kaydedilecek (sadece adminler görebilir)"
+              }
+            </p>
           </div>
 
           {/* Submit */}

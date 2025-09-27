@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react'
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
@@ -101,26 +101,52 @@ function WhiskiesPageContent() {
   const [viewingWhisky, setViewingWhisky] = useState<MultilingualWhisky | null>(null)
   const [showImageViewer, setShowImageViewer] = useState(false)
   const [viewingImage, setViewingImage] = useState<{ url: string; name: string } | null>(null)
+  
+  // Local search state to prevent excessive API calls
+  const [localSearchTerm, setLocalSearchTerm] = useState('')
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
 
   // Pull-to-refresh functionality
-  const handleRefresh = async () => {
-    hapticButton()
+  const executeRefresh = useCallback(async ({ silent = false } = {}) => {
+    if (!silent) {
+      hapticButton()
+    }
+
     try {
-      await loadWhiskies({
-        search: debouncedSearchTerm,
-        country: selectedCountry,
-        type: selectedType,
-        letter: selectedLetter,
-        page: 1,
-        limit: itemsPerPage
-      })
-      hapticSuccess()
-      toast.success(t('whiskiesPage.refreshSuccess') || 'Viski listesi yenilendi!')
+      const offset = Math.max(0, (currentPage - 1) * itemsPerPage)
+      await loadWhiskies(
+        i18n.language as AppLanguage,
+        itemsPerPage,
+        offset,
+        debouncedSearchTerm ? debouncedSearchTerm : undefined,
+        selectedCountry ? selectedCountry : undefined,
+        selectedType ? selectedType : undefined
+      )
+
+      if (!silent) {
+        hapticSuccess()
+        toast.success(t('whiskiesPage.refreshSuccess') || 'Viski listesi yenilendi!')
+      }
     } catch (error) {
       console.error('Refresh failed:', error)
-      toast.error(t('whiskiesPage.refreshError') || 'Yenileme başarısız')
+      if (!silent) {
+        toast.error(t('whiskiesPage.refreshError') || 'Yenileme başarısız')
+      }
     }
-  }
+  }, [
+    currentPage,
+    debouncedSearchTerm,
+    hapticButton,
+    hapticSuccess,
+    i18n.language,
+    itemsPerPage,
+    loadWhiskies,
+    selectedCountry,
+    selectedType,
+    t
+  ])
+
+  const handleRefresh = useCallback(async () => executeRefresh(), [executeRefresh])
 
   const { isRefreshing, isPulling, pullDistance, progress } = usePullToRefresh(
     containerRef,
@@ -133,14 +159,30 @@ function WhiskiesPageContent() {
     }
   )
 
+  useEffect(() => {
+    const refetch = () => {
+      void executeRefresh({ silent: true })
+    }
 
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        refetch()
+      }
+    }
+
+    window.addEventListener('focus', refetch)
+    window.addEventListener('online', refetch)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      window.removeEventListener('focus', refetch)
+      window.removeEventListener('online', refetch)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [executeRefresh])
   // loadUserCollection is now handled by useUserCollection hook
 
   // Note: Loading state and user collection are now handled by hooks automatically
-
-  // Local search state to prevent excessive API calls
-  const [localSearchTerm, setLocalSearchTerm] = useState('')
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
 
   // Debounce the search term with proper cleanup
   useEffect(() => {
@@ -159,6 +201,19 @@ function WhiskiesPageContent() {
       }
     }
   }, [localSearchTerm])
+
+  // Reset pagination when filters/search/language change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [debouncedSearchTerm, selectedCountry, selectedType, i18n.language])
+
+  // Ensure current page stays within bounds after data updates
+  useEffect(() => {
+    const maxPage = Math.max(1, Math.ceil((totalCount || 0) / itemsPerPage))
+    if (currentPage > maxPage) {
+      setCurrentPage(maxPage)
+    }
+  }, [currentPage, itemsPerPage, totalCount])
 
   // Handle URL query parameter for whisky ID
   useEffect(() => {

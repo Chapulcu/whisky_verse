@@ -71,6 +71,23 @@ export function useWhiskiesMultilingual() {
   const [isRefetching, setIsRefetching] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const requestIdRef = useRef(0)
+  const lastArgsRef = useRef<{
+    lang: AppLanguage
+    limit: number
+    offset: number
+    searchTerm?: string
+    countryFilter?: string
+    typeFilter?: string
+    includeUnpublished: boolean
+  }>({
+    lang: 'tr',
+    limit: 12,
+    offset: 0,
+    searchTerm: undefined,
+    countryFilter: undefined,
+    typeFilter: undefined,
+    includeUnpublished: false
+  })
 
   const loadWhiskies = useCallback(async (
     lang: AppLanguage,
@@ -78,9 +95,22 @@ export function useWhiskiesMultilingual() {
     offset: number = 0,
     searchTerm?: string,
     countryFilter?: string,
-    typeFilter?: string
+    typeFilter?: string,
+    options?: {
+      includeUnpublished?: boolean
+    }
   ) => {
+    const includeUnpublished = options?.includeUnpublished ?? false
     const currentRequestId = ++requestIdRef.current
+    lastArgsRef.current = {
+      lang,
+      limit,
+      offset,
+      searchTerm,
+      countryFilter,
+      typeFilter,
+      includeUnpublished
+    }
     try {
       if (whiskies.length === 0) {
         setLoading(true)
@@ -129,6 +159,10 @@ export function useWhiskiesMultilingual() {
         `, { count: 'exact' })
         .order('created_at', { ascending: false })
 
+      if (!includeUnpublished) {
+        query = query.or('is_published.eq.true,is_published.is.null')
+      }
+
       // Filters on base table (server-side)
       if (countryFilter) {
         query = query.eq('country', countryFilter)
@@ -163,6 +197,7 @@ export function useWhiskiesMultilingual() {
             .from('whiskies')
             .select('*', { count: 'exact' })
             .order('created_at', { ascending: false })
+          if (!includeUnpublished) baseQuery = baseQuery.or('is_published.eq.true,is_published.is.null')
           if (countryFilter) baseQuery = baseQuery.eq('country', countryFilter)
           if (typeFilter) baseQuery = baseQuery.eq('type', typeFilter)
           if (searchTerm && searchTerm.trim().length >= 3) {
@@ -272,6 +307,43 @@ export function useWhiskiesMultilingual() {
     }
   }, [whiskies.length])
 
+  const refetchWithLastParams = useCallback(() => {
+    const args = lastArgsRef.current
+    return loadWhiskies(
+      args.lang,
+      args.limit,
+      args.offset,
+      args.searchTerm,
+      args.countryFilter,
+      args.typeFilter,
+      { includeUnpublished: args.includeUnpublished }
+    )
+  }, [loadWhiskies])
+
+  useEffect(() => {
+    const handleFocus = () => {
+      void refetchWithLastParams()
+    }
+    const handleOnline = () => {
+      void refetchWithLastParams()
+    }
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        void refetchWithLastParams()
+      }
+    }
+
+    window.addEventListener('focus', handleFocus)
+    window.addEventListener('online', handleOnline)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+      window.removeEventListener('online', handleOnline)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [refetchWithLastParams])
+
   // Initial load no-op; consumers should call loadWhiskies with lang + params
 
   return {
@@ -281,5 +353,6 @@ export function useWhiskiesMultilingual() {
     isRefetching,
     error,
     loadWhiskies,
+    refetch: refetchWithLastParams,
   }
 }
