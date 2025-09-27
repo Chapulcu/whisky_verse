@@ -334,12 +334,7 @@ export function ProfilePage() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-100 via-amber-50 to-sky-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 py-12">
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-56 -left-40 h-96 w-96 rounded-full bg-amber-400/30 blur-3xl" />
-        <div className="absolute -top-24 right-[-90px] h-[420px] w-[420px] rounded-full bg-indigo-500/30 blur-3xl" />
-        <div className="absolute bottom-[-160px] left-1/2 h-[420px] w-[420px] -translate-x-1/2 rounded-full bg-emerald-400/25 blur-3xl" />
-      </div>
+    <div className="relative min-h-screen overflow-hidden py-12">
       <div className="relative container mx-auto max-w-5xl px-4">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
