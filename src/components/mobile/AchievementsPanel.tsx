@@ -120,7 +120,7 @@ export function AchievementsPanel({ isOpen, onClose }: AchievementsPanelProps) {
                   </button>
                 </div>
 
-                <div className="mt-4 grid grid-cols-3 gap-2">
+                <div className="mt-4 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
                   {[
                     { label: 'Seviye', value: level, gradient: 'from-blue-500/70 via-indigo-500/60 to-purple-500/60' },
                     { label: 'Puan', value: totalPoints, gradient: 'from-amber-400/80 via-orange-500/65 to-amber-500/70' },
@@ -128,7 +128,7 @@ export function AchievementsPanel({ isOpen, onClose }: AchievementsPanelProps) {
                   ].map(item => (
                     <div
                       key={item.label}
-                      className="relative overflow-hidden rounded-2xl border border-white/15 bg-white/10 p-2.5 shadow-[0_18px_45px_-28px_rgba(15,23,42,0.9)] backdrop-blur"
+                      className="relative min-w-[116px] flex-1 overflow-hidden rounded-2xl border border-white/15 bg-white/10 p-2.5 shadow-[0_18px_45px_-28px_rgba(15,23,42,0.85)] backdrop-blur"
                     >
                       <div className={`absolute inset-0 bg-gradient-to-br ${item.gradient} opacity-40`} />
                       <div className="relative text-center">
@@ -153,8 +153,8 @@ export function AchievementsPanel({ isOpen, onClose }: AchievementsPanelProps) {
                   </div>
                 </div>
 
-                <div className="mt-4">
-                  <div className="flex flex-wrap justify-center gap-2">
+                <div className="mt-3">
+                  <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
                     {categoriesConfig.map(category => {
                       const IconComponent = category.icon
                       const isActive = selectedCategory === category.id
