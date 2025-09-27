@@ -6,6 +6,7 @@ interface GeolocationState {
   accuracy: number | null
   error: string | null
   loading: boolean
+  permissionState: 'unknown' | 'granted' | 'denied' | 'prompt'
 }
 
 interface GeolocationOptions {
@@ -20,22 +21,45 @@ export function useGeolocation(options: GeolocationOptions = {}) {
     longitude: null,
     accuracy: null,
     error: null,
-    loading: false
+    loading: false,
+    permissionState: 'unknown'
   })
 
   const defaultOptions: PositionOptions = {
-    enableHighAccuracy: true,
-    timeout: 10000,
-    maximumAge: 300000, // 5 minutes
+    enableHighAccuracy: false, // Start with low accuracy for better compatibility
+    timeout: 15000, // Increase timeout for mobile devices
+    maximumAge: 600000, // 10 minutes cache for better UX
     ...options
   }
 
-  const getCurrentPosition = useCallback(() => {
+  // Check permission status
+  const checkPermissionStatus = useCallback(async () => {
+    if ('permissions' in navigator) {
+      try {
+        const permission = await navigator.permissions.query({ name: 'geolocation' })
+        setState(prev => ({ ...prev, permissionState: permission.state }))
+
+        permission.addEventListener('change', () => {
+          setState(prev => ({ ...prev, permissionState: permission.state }))
+        })
+      } catch (error) {
+        // Permission API not supported, continue with standard geolocation
+        console.log('Permission API not supported')
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    checkPermissionStatus()
+  }, [])
+
+  const getCurrentPosition = useCallback(async (tryHighAccuracy = false) => {
     if (!navigator.geolocation) {
       setState(prev => ({
         ...prev,
-        error: 'Geolocation is not supported by this browser',
-        loading: false
+        error: 'Bu tarayıcıda konum servisi desteklenmiyor',
+        loading: false,
+        permissionState: 'denied'
       }))
       return
     }
@@ -46,42 +70,57 @@ export function useGeolocation(options: GeolocationOptions = {}) {
       error: null
     }))
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setState({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          accuracy: position.coords.accuracy,
-          error: null,
-          loading: false
-        })
-      },
-      (error) => {
-        let errorMessage = 'Location access denied'
+    const options = {
+      ...defaultOptions,
+      enableHighAccuracy: tryHighAccuracy
+    }
 
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            errorMessage = 'Location access denied by user'
-            break
-          case error.POSITION_UNAVAILABLE:
-            errorMessage = 'Location information unavailable'
-            break
-          case error.TIMEOUT:
-            errorMessage = 'Location request timed out'
-            break
-          default:
-            errorMessage = 'An unknown error occurred'
-            break
-        }
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, options)
+      })
 
-        setState(prev => ({
-          ...prev,
-          error: errorMessage,
-          loading: false
-        }))
-      },
-      defaultOptions
-    )
+      setState(prev => ({
+        ...prev,
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        accuracy: position.coords.accuracy,
+        error: null,
+        loading: false,
+        permissionState: 'granted'
+      }))
+    } catch (error: any) {
+      let errorMessage = 'Konum alınamadı'
+      let permissionState: 'denied' | 'unknown' = 'unknown'
+
+      switch (error.code) {
+        case error.PERMISSION_DENIED:
+          errorMessage = 'Konum izni reddedildi. Lütfen tarayıcı ayarlarından konum iznini aktifleştirin.'
+          permissionState = 'denied'
+          break
+        case error.POSITION_UNAVAILABLE:
+          errorMessage = 'Konum bilgisi mevcut değil. GPS\'iniz açık olduğundan emin olun.'
+          break
+        case error.TIMEOUT:
+          errorMessage = 'Konum isteği zaman aşımına uğradı. Tekrar deneyin.'
+          // Try with low accuracy if high accuracy timed out
+          if (tryHighAccuracy) {
+            setTimeout(() => getCurrentPosition(false), 1000)
+            return
+          }
+          break
+        default:
+          errorMessage = 'Bilinmeyen bir hata oluştu. Tekrar deneyin.'
+          break
+      }
+
+      setState(prev => ({
+        ...prev,
+        error: errorMessage,
+        loading: false,
+        permissionState
+      }))
+    }
   }, [defaultOptions])
 
   const watchPosition = useCallback(() => {
@@ -135,11 +174,19 @@ export function useGeolocation(options: GeolocationOptions = {}) {
     [state.latitude, state.longitude]
   )
 
+  // Request permission with user guidance
+  const requestPermission = useCallback(async () => {
+    // First try to get current position which will trigger permission prompt
+    await getCurrentPosition(false)
+  }, [getCurrentPosition])
+
   return {
     ...state,
     getCurrentPosition,
+    requestPermission,
     watchPosition,
     calculateDistance,
-    isSupported: 'geolocation' in navigator
+    isSupported: 'geolocation' in navigator,
+    canRetry: state.permissionState !== 'denied'
   }
 }

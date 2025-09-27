@@ -14,8 +14,6 @@ import {
   Plus,
   ChevronDown,
   X,
-  Upload,
-  Camera,
   Eye,
   Grid3X3,
   List,
@@ -25,7 +23,6 @@ import {
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuth } from '@/contexts/AuthContext'
-import { useWhiskyUpload } from '@/hooks/useWhiskyUpload'
 import { useDbAchievements } from '@/hooks/useDbAchievements'
 import { useWhiskiesMultilingual, MultilingualWhisky, AppLanguage } from '@/hooks/useWhiskiesMultilingual'
 import { useUserCollection } from '@/hooks/useUserCollection'
@@ -43,18 +40,38 @@ interface UserWhisky {
   personal_notes: string | null
 }
 
+/**
+ * CRITICAL TRANSLATION REMINDER:
+ * ================================
+ *
+ * 🚨 NEVER USE STATIC TEXT IN UI COMPONENTS!
+ *
+ * ✅ ALWAYS use: t('translationKey')
+ * ❌ NEVER use: "Static text"
+ *
+ * Supported languages: Turkish (tr), English (en), Russian (ru), Bulgarian (bg)
+ *
+ * Before committing ANY changes:
+ * 1. Ensure ALL user-facing text uses t() function
+ * 2. Test in ALL 4 languages
+ * 3. Add missing translation keys to all language files
+ *
+ * Translation files location:
+ * - public/locales/tr/translation.json
+ * - public/locales/en/translation.json
+ * - public/locales/ru/translation.json
+ * - public/locales/bg/translation.json
+ */
 function WhiskiesPageContent() {
   const { t, i18n } = useTranslation()
   const { user, profile } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
 
-  const { uploadWhiskyImage, isUploading } = useWhiskyUpload()
   const { hapticSuccess, hapticButton } = useHapticFeedback()
   const { whiskies, totalCount, loading: whiskyLoading, isRefetching: whiskyRefetching, loadWhiskies } = useWhiskiesMultilingual()
   const { collection: userCollection, loading: userCollectionLoading, addToCollection: addToCollectionHook, updateCollectionItem } = useUserCollection()
   const { addWhisky } = useDbAchievements()
 
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
   // Convert collection to legacy format for compatibility
@@ -81,26 +98,9 @@ function WhiskiesPageContent() {
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(12)
   const [gridColumns, setGridColumns] = useState<2 | 3 | 4 | 5 | 6>(3)
-  const [showAddModal, setShowAddModal] = useState(false)
   const [viewingWhisky, setViewingWhisky] = useState<MultilingualWhisky | null>(null)
   const [showImageViewer, setShowImageViewer] = useState(false)
   const [viewingImage, setViewingImage] = useState<{ url: string; name: string } | null>(null)
-  const [addForm, setAddForm] = useState({
-    name: '',
-    type: '',
-    country: '',
-    region: '',
-    alcohol_percentage: 40,
-    rating: null as number | null,
-    age_years: null as number | null,
-    color: '',
-    aroma: '',
-    taste: '',
-    finish: '',
-    description: ''
-  })
-  const [selectedImage, setSelectedImage] = useState<File | null>(null)
-  const [imagePreview, setImagePreview] = useState<string>('')
 
   // Pull-to-refresh functionality
   const handleRefresh = async () => {
@@ -567,96 +567,6 @@ function WhiskiesPageContent() {
     setCurrentPage(1)
   }, [localSearchTerm, selectedCountry, selectedType, selectedLetter])
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      if (!file.type.startsWith('image/')) {
-        toast.error(t('whiskiesPage.toasts.validImageFile'))
-        return
-      }
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error(t('whiskiesPage.toasts.maxFileSize'))
-        return
-      }
-      setSelectedImage(file)
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string)
-      }
-      reader.readAsDataURL(file)
-    }
-  }
-
-  const resetAddForm = () => {
-    setAddForm({
-      name: '',
-      type: '',
-      country: '',
-      region: '',
-      alcohol_percentage: 40,
-      rating: null,
-      age_years: null,
-      color: '',
-      aroma: '',
-      taste: '',
-      finish: '',
-      description: ''
-    })
-    setSelectedImage(null)
-    setImagePreview('')
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
-    }
-  }
-
-  const handleAddWhisky = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!user) {
-      toast.error(t('whiskiesPage.toasts.loginRequiredAdd'))
-      return
-    }
-
-    if (!addForm.name.trim()) {
-      toast.error(t('whiskiesPage.toasts.nameRequired'))
-      return
-    }
-
-    if (!selectedImage) {
-      toast.error(t('whiskiesPage.toasts.imageRequired'))
-      return
-    }
-
-    try {
-      const whiskeyData = {
-        name: addForm.name.trim(),
-        type: addForm.type || 'Single Malt',
-        country: addForm.country || 'Bilinmeyen',
-        region: addForm.region.trim() || null,
-        alcohol_percentage: addForm.alcohol_percentage,
-        rating: addForm.rating,
-        age_years: addForm.age_years,
-        color: addForm.color.trim() || null,
-        aroma: addForm.aroma.trim() || null,
-        taste: addForm.taste.trim() || null,
-        finish: addForm.finish.trim() || null,
-        description: addForm.description.trim() || null
-      }
-
-      await uploadWhiskyImage(selectedImage, whiskeyData)
-
-      // Reload whiskies with current pagination
-      const offset = (currentPage - 1) * itemsPerPage
-      await loadWhiskies(i18n.language as any, itemsPerPage, offset, debouncedSearchTerm, selectedCountry, selectedType)
-
-      // Reset and close
-      setShowAddModal(false)
-      resetAddForm()
-    } catch (error) {
-      // Error already handled in hook
-    }
-  }
-
   if (loading) {
     return (
       <div className="space-y-8">
@@ -664,11 +574,6 @@ function WhiskiesPageContent() {
         <div className="text-center mobile-card-spacing animate-pulse">
           <div className="h-12 bg-slate-300 dark:bg-slate-700 rounded-md mx-auto mb-4 w-64"></div>
           <div className="h-6 bg-slate-300 dark:bg-slate-700 rounded-md mx-auto max-w-2xl mb-6"></div>
-          {user && (
-            <div className="mt-6">
-              <div className="h-12 bg-slate-300 dark:bg-slate-700 rounded-md w-48 mx-auto"></div>
-            </div>
-          )}
         </div>
 
         {/* Search and filters skeleton */}
@@ -721,7 +626,7 @@ function WhiskiesPageContent() {
             transition={{
               rotate: { duration: 1, ease: "linear", repeat: (isRefreshing || whiskyRefetching) ? Infinity : 0 }
             }}
-            title={isRefreshing || whiskyRefetching ? t('actions.refreshing') || "Yenileniyor..." : t('actions.refresh') || "Viski listesini yenile"}
+            title={isRefreshing || whiskyRefetching ? t('actions.refreshing') : t('actions.refresh')}
           >
             <RefreshCw className={`w-5 h-5 ${(isRefreshing || whiskyRefetching) ? 'animate-spin' : ''}`} />
           </motion.button>
@@ -729,81 +634,100 @@ function WhiskiesPageContent() {
         <p className="mobile-text-size text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
           {t('whiskiesPage.subtitle')}
         </p>
-        
-        {user && (
-          <div className="mt-6">
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="btn-primary mobile-button mobile-touch-target touch-friendly inline-flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              {t('whiskiesPage.addNewWhisky')}
-            </button>
-          </div>
-        )}
       </div>
 
-      {/* Search and Filters */}
-      <div className="glass-panel space-y-4 p-6">
-        {/* Search Bar */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+      {/* Modern Search and Filter Section */}
+      <div className="relative bg-gradient-to-br from-white/20 via-white/10 to-white/5 backdrop-blur-xl border border-white/20 rounded-3xl p-6 shadow-2xl">
+        {/* Enhanced Search Bar with Smart Suggestions */}
+        <div className="relative mb-4">
+          <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
+            <Search className={`w-5 h-5 transition-colors ${
+              localSearchTerm.length >= 3 ? 'text-amber-400' : 'text-slate-400'
+            }`} />
+          </div>
           <input
             type="text"
             placeholder={t('whiskiesPage.searchPlaceholder')}
             value={localSearchTerm}
             onChange={(e) => setLocalSearchTerm(e.target.value)}
-            className="glass-input pl-10 pr-32 w-full"
+            className="w-full pl-12 pr-20 py-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400/50 transition-all"
             autoComplete="off"
           />
+
+          {/* Search Status Indicator */}
+          <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+            {isSearching ? (
+              <div className="animate-spin w-5 h-5 border-2 border-amber-400 border-t-transparent rounded-full" />
+            ) : localSearchTerm.length >= 3 ? (
+              <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                <div className="w-2 h-2 bg-white rounded-full" />
+              </div>
+            ) : localSearchTerm.length > 0 ? (
+              <div className="text-xs text-amber-400 font-medium">
+                {t('whiskiesPage.charactersNeeded', { count: 3 - localSearchTerm.length })}
+              </div>
+            ) : (
+              <div className="text-slate-400">
+                <Search className="w-4 h-4" />
+              </div>
+            )}
+          </div>
+
+          {/* Search Feedback */}
           {localSearchTerm.length > 0 && localSearchTerm.length < 3 && (
-            <div className="absolute left-3 top-full mt-1 text-xs text-amber-500 z-10 bg-black/80 px-2 py-1 rounded">
-              {t('whiskiesPage.searchMinChars')}
+            <div className="absolute left-4 top-full mt-2 text-xs text-amber-400 bg-amber-900/20 border border-amber-400/30 px-3 py-1 rounded-lg backdrop-blur animate-pulse">
+              {t('whiskiesPage.searchMinCharsHint', { count: 3 - localSearchTerm.length })}
             </div>
           )}
-          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+
+        </div>
+
+
+        {/* Controls Row - Mobile Optimized */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4">
+          <div className="flex items-center gap-2 md:gap-3">
             {/* View Toggle */}
-            <div className="flex items-center bg-white/10 dark:bg-slate-800/30 rounded-lg p-1 backdrop-blur-md border border-white/20">
+            <div className="flex items-center bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-1">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-2 rounded-md transition-all duration-200 ${
-                  viewMode === 'grid'
-                    ? 'bg-amber-500/30 text-amber-200 shadow-lg'
-                    : 'text-slate-400 hover:text-slate-300 hover:bg-white/10'
-                }`}
+                className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-amber-500/30 text-amber-200 shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
                 title={t('whiskiesPage.gridView')}
               >
                 <Grid3X3 className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-2 rounded-md transition-all duration-200 ${
-                  viewMode === 'list'
-                    ? 'bg-amber-500/30 text-amber-200 shadow-lg'
-                    : 'text-slate-400 hover:text-slate-300 hover:bg-white/10'
-                }`}
+                className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-amber-500/30 text-amber-200 shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
                 title={t('whiskiesPage.listView')}
               >
                 <List className="w-4 h-4" />
               </button>
             </div>
-            
+
+            {/* Filter Toggle - Enhanced */}
             <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="btn-glass p-2 flex items-center gap-2"
-              title={t('whiskiesPage.toggleFilters')}
-              aria-label={t('whiskiesPage.toggleFilters')}
+              onClick={() => {
+                hapticButton()
+                setShowFilters(!showFilters)
+              }}
+              className={`flex items-center gap-2 px-3 md:px-4 py-2 backdrop-blur-md border rounded-xl transition-all duration-300 hover:scale-105 ${
+                showFilters
+                  ? 'bg-amber-500/30 border-amber-400/50 text-amber-100 shadow-lg shadow-amber-500/25'
+                  : 'bg-white/10 hover:bg-white/20 border-white/20 text-slate-300 hover:text-white'
+              }`}
             >
               <Filter className="w-4 h-4" />
-              <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+              <span className="text-xs md:text-sm font-medium">{t('whiskiesPage.filters')}</span>
+              <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${showFilters ? 'rotate-180' : ''}`} />
             </button>
-            
-            {/* Quick Clear Button - Always Visible */}
+          </div>
+
+          {/* Clear and Results */}
+          <div className="flex items-center justify-between md:justify-end gap-2 md:gap-3">
             {(localSearchTerm || selectedCountry || selectedType || selectedLetter) && (
               <button
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
+                onClick={() => {
+                  hapticButton()
                   setSelectedCountry('')
                   setSelectedType('')
                   setSelectedLetter('')
@@ -811,12 +735,23 @@ function WhiskiesPageContent() {
                   setDebouncedSearchTerm('')
                   setCurrentPage(1)
                 }}
-                className="btn-glass p-2 flex items-center gap-2 bg-red-500/20 hover:bg-red-500/30 text-red-200 border-red-400/20"
-                title={t('whiskiesPage.clearAllFilters')}
+                className="flex items-center gap-2 px-3 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-400/30 rounded-xl text-red-200 text-xs md:text-sm font-medium transition-all hover:scale-105"
               >
                 <X className="w-4 h-4" />
+                <span className="hidden md:inline">{t('whiskiesPage.clear')}</span>
               </button>
             )}
+
+            <div className="flex items-center gap-2 text-xs md:text-sm text-slate-300 bg-white/10 backdrop-blur border border-white/20 rounded-xl px-2 md:px-3 py-2">
+              <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
+              <span className="font-bold text-amber-300">{totalCount}</span>
+              <span className="hidden md:inline">{t('whiskiesPage.whiskiesFound')}</span>
+              {(localSearchTerm || selectedCountry || selectedType || selectedLetter) && (
+                <div className="ml-2 text-xs bg-blue-500/20 px-2 py-1 rounded-full border border-blue-400/30">
+                  {t('whiskiesPage.filtered')}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -896,7 +831,7 @@ function WhiskiesPageContent() {
                             ? 'bg-white/10 hover:bg-white/20 text-slate-600 dark:text-slate-400'
                             : 'bg-slate-300/20 text-slate-400 cursor-not-allowed'
                         }`}
-                        title={`${count} viski`}
+                        title={t('whiskiesPage.letterCountTooltip', { count })}
                       >
                         {letter}
                         {count > 0 && (
@@ -911,24 +846,45 @@ function WhiskiesPageContent() {
               </div>
             </div>
 
-            <div className="flex items-end col-span-full">
-              <button
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  console.log('Clear filters clicked') // Debug log
-                  setSelectedCountry('')
-                  setSelectedType('')
-                  setSelectedLetter('')
-                  setLocalSearchTerm('')
-                  setDebouncedSearchTerm('')
-                  setCurrentPage(1) // Reset page to 1
-                }}
-                className="btn-glass w-full flex items-center justify-center gap-2"
-              >
-                <X className="w-4 h-4" />
-                {t('whiskiesPage.clearFilters')}
-              </button>
+            {/*
+              TRANSLATION REMINDER:
+              - NEVER use static text in UI components
+              - ALWAYS use t('key') for all user-facing text
+              - Support all 4 languages: tr, en, ru, bg
+              - Test in all languages before committing
+            */}
+            <div className="col-span-full space-y-3">
+              {/* Action Buttons - Simple and Clean */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                <Link
+                  to="/nearby"
+                  className="flex items-center justify-center gap-3 px-4 py-3 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 hover:from-blue-500/30 hover:to-cyan-500/30 border border-blue-400/30 rounded-xl text-blue-200 text-sm font-medium transition-all duration-300 hover:scale-105 backdrop-blur shadow-lg hover:shadow-xl hover:shadow-blue-500/25"
+                  onClick={() => hapticButton()}
+                >
+                  <MapPin className="w-4 h-4" />
+                  <span>{t('whiskiesPage.nearbyWhiskyBars')}</span>
+                  <div className="ml-auto text-xs bg-blue-400/20 px-2 py-1 rounded-full">{t('whiskiesPage.map')}</div>
+                </Link>
+
+                <button
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    hapticButton()
+                    setSelectedCountry('')
+                    setSelectedType('')
+                    setSelectedLetter('')
+                    setLocalSearchTerm('')
+                    setDebouncedSearchTerm('')
+                    setCurrentPage(1)
+                  }}
+                  className="flex items-center justify-center gap-3 px-4 py-3 bg-gradient-to-r from-red-500/20 to-rose-500/20 hover:from-red-500/30 hover:to-rose-500/30 border border-red-400/30 rounded-xl text-red-200 text-sm font-medium transition-all duration-300 hover:scale-105 backdrop-blur shadow-lg hover:shadow-xl hover:shadow-red-500/25"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  <span>{t('whiskiesPage.resetFilters')}</span>
+                  <div className="ml-auto text-xs bg-red-400/20 px-2 py-1 rounded-full">{t('whiskiesPage.clear')}</div>
+                </button>
+              </div>
             </div>
           </motion.div>
         )}
@@ -936,72 +892,116 @@ function WhiskiesPageContent() {
 
 
 
-      {/* Results Count and Grid Settings */}
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-        <div className="text-slate-600 dark:text-slate-300">
-          {totalCount} {t('whiskiesPage.whiskiesFound')} • {t('whiskiesPage.page')} {currentPage} / {totalPages}
+      {/* Enhanced Results Count and Grid Settings */}
+      <div className="bg-gradient-to-r from-white/10 via-white/5 to-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 shadow-xl">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          {/* Info Panel */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="text-slate-300 font-medium flex items-center gap-2">
+              <span role="img" aria-hidden="true">📊</span>
+              <span className="text-amber-300 font-bold text-lg">{totalCount}</span>
+              <span className="hidden md:inline">{t('whiskiesPage.whiskiesFound')}</span>
+            </div>
+
+            <div className="flex items-center gap-2 text-sm">
+              <div className="bg-amber-500/20 border border-amber-400/30 rounded-lg px-3 py-1">
+                <span className="text-amber-200">{t('whiskiesPage.pageStatus', { current: currentPage, total: totalPages })}</span>
+              </div>
+
+              {(localSearchTerm || selectedCountry || selectedType || selectedLetter) && (
+                <div className="bg-blue-500/20 border border-blue-400/30 rounded-lg px-3 py-1">
+                  <span className="text-blue-200">
+                    {t('whiskiesPage.filtersActive', { count: [localSearchTerm, selectedCountry, selectedType, selectedLetter].filter(Boolean).length })}
+                  </span>
+                </div>
+              )}
+
+              {totalCount > 100 && (
+                <div className="bg-green-500/20 border border-green-400/30 rounded-lg px-3 py-1">
+                  <span className="text-green-200 text-xs">{t('whiskiesPage.largeCollection')}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Enhanced Settings Panel */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            {viewMode === 'grid' && (
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                <div className="flex items-center gap-2 bg-white/5 backdrop-blur border border-white/10 rounded-lg px-3 py-2">
+                  <Grid3X3 className="w-4 h-4 text-amber-400" />
+                  <span className="text-sm text-slate-300 font-medium">{t('whiskiesPage.columns')}:</span>
+                  <select
+                    id="gridColumnsSelect"
+                    value={gridColumns}
+                    onChange={(e) => {
+                      hapticButton()
+                      setGridColumns(Number(e.target.value) as 2 | 3 | 4 | 5 | 6)
+                    }}
+                    className="bg-transparent text-white text-sm font-medium focus:outline-none cursor-pointer"
+                    aria-label={t('whiskiesPage.columnCount')}
+                  >
+                    <option value={2} className="bg-slate-800">2</option>
+                    <option value={3} className="bg-slate-800">3</option>
+                    <option value={4} className="bg-slate-800">4</option>
+                    <option value={5} className="bg-slate-800">5</option>
+                    <option value={6} className="bg-slate-800">6</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-2 bg-white/5 backdrop-blur border border-white/10 rounded-lg px-3 py-2">
+                  <Eye className="w-4 h-4 text-amber-400" />
+                  <span className="text-sm text-slate-300 font-medium">{t('whiskiesPage.show')}:</span>
+                  <select
+                    id="itemsPerPageSelectGrid"
+                    value={itemsPerPage}
+                    onChange={(e) => {
+                      hapticButton()
+                      setItemsPerPage(Number(e.target.value))
+                      setCurrentPage(1)
+                    }}
+                    className="bg-transparent text-white text-sm font-medium focus:outline-none cursor-pointer"
+                    aria-label={t('whiskiesPage.itemsPerPage')}
+                  >
+                    <option value={6} className="bg-slate-800">6</option>
+                    <option value={12} className="bg-slate-800">12</option>
+                    <option value={18} className="bg-slate-800">18</option>
+                    <option value={24} className="bg-slate-800">24</option>
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {viewMode === 'list' && (
+              <div className="flex items-center gap-2 bg-white/5 backdrop-blur border border-white/10 rounded-lg px-3 py-2">
+                <List className="w-4 h-4 text-amber-400" />
+                <span className="text-sm text-slate-300 font-medium">{t('whiskiesPage.show')}:</span>
+                <select
+                  id="itemsPerPageSelectList"
+                  value={itemsPerPage}
+                  onChange={(e) => {
+                    hapticButton()
+                    setItemsPerPage(Number(e.target.value))
+                    setCurrentPage(1)
+                  }}
+                  className="bg-transparent text-white text-sm font-medium focus:outline-none cursor-pointer"
+                  aria-label={t('whiskiesPage.listItemsPerPage')}
+                >
+                  <option value={5} className="bg-slate-800">5</option>
+                  <option value={10} className="bg-slate-800">10</option>
+                  <option value={15} className="bg-slate-800">15</option>
+                  <option value={20} className="bg-slate-800">20</option>
+                </select>
+              </div>
+            )}
+
+            {/* Quick Tips */}
+            <div className="text-xs text-slate-400 bg-slate-500/10 border border-slate-400/20 rounded-lg px-3 py-2 max-w-xs">
+              <span role="img" aria-hidden="true">💡</span>{' '}
+              {viewMode === 'grid' ? t('whiskiesPage.gridViewTip') : t('whiskiesPage.listViewTip')}
+            </div>
+          </div>
         </div>
-        
-        {viewMode === 'grid' && (
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-slate-600 dark:text-slate-300">{t('whiskiesPage.column')}:</span>
-              <select
-                id="gridColumnsSelect"
-                value={gridColumns}
-                onChange={(e) => setGridColumns(Number(e.target.value) as 2 | 3 | 4 | 5 | 6)}
-                className="glass-input text-sm px-3 py-1 w-full"
-                aria-label={t('whiskiesPage.column')}
-              >
-                <option value={2}>2</option>
-                <option value={3}>3</option>
-                <option value={4}>4</option>
-                <option value={5}>5</option>
-                <option value={6}>6</option>
-              </select>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-slate-600 dark:text-slate-300">{t('whiskiesPage.perPage')}:</span>
-              <select
-                id="itemsPerPageSelectGrid"
-                value={itemsPerPage}
-                onChange={(e) => {
-                  setItemsPerPage(Number(e.target.value))
-                  setCurrentPage(1)
-                }}
-                className="glass-input text-sm px-3 py-1 w-full"
-                aria-label={t('whiskiesPage.perPage')}
-              >
-                <option value={6}>6</option>
-                <option value={12}>12</option>
-                <option value={18}>18</option>
-                <option value={24}>24</option>
-              </select>
-            </div>
-          </div>
-        )}
-        
-        {viewMode === 'list' && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-slate-600 dark:text-slate-300">{t('whiskiesPage.perPage')}:</span>
-            <select
-              id="itemsPerPageSelectList"
-              value={itemsPerPage}
-              onChange={(e) => {
-                setItemsPerPage(Number(e.target.value))
-                setCurrentPage(1)
-              }}
-              className="glass-input text-sm px-3 py-1 w-full"
-              aria-label={t('whiskiesPage.perPage')}
-            >
-              <option value={5}>5</option>
-              <option value={10}>10</option>
-              <option value={15}>15</option>
-              <option value={20}>20</option>
-            </select>
-          </div>
-        )}
       </div>
 
       {/* Top Pagination */}
@@ -1025,15 +1025,15 @@ function WhiskiesPageContent() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: index * 0.1 }}
-            className={`card group hover:scale-[1.02] hover:shadow-2xl transition-all duration-500 hover:shadow-amber-500/20 hover:border-amber-300/30 ${
+            className={`relative bg-gradient-to-br from-white/20 via-white/10 to-white/5 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl group hover:scale-[1.02] hover:shadow-3xl transition-all duration-500 hover:shadow-amber-500/30 hover:border-amber-400/40 hover:from-white/25 hover:via-white/15 hover:to-white/10 ${
               viewMode === 'list' ? 'flex items-center gap-6' : 'p-6'
             }`}
           >
             {viewMode === 'grid' ? (
               // Grid View
               <>
-                {/* Image */}
-                <div className="relative h-80 md:h-96 lg:h-[420px] mb-6 rounded-xl overflow-hidden bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/20 dark:to-orange-900/20 shadow-2xl ring-2 ring-amber-200/30 dark:ring-amber-500/20">
+                {/* Enhanced Image with Glassmorphism */}
+                <div className="relative h-80 md:h-96 lg:h-[420px] mb-6 rounded-2xl overflow-hidden bg-gradient-to-br from-amber-100/80 to-orange-100/80 dark:from-amber-900/40 dark:to-orange-900/40 shadow-2xl ring-1 ring-white/20 backdrop-blur-sm group-hover:ring-amber-400/40 transition-all duration-500">
                   <button
                     onClick={() => handleViewWhisky(whisky)}
                     className="w-full h-full block cursor-pointer group"
@@ -1055,8 +1055,8 @@ function WhiskiesPageContent() {
                     )}
                   </button>
                   
-                  {/* Quick Actions */}
-                  <div className="absolute top-3 right-3 flex gap-2">
+                  {/* Enhanced Quick Actions */}
+                  <div className="absolute top-3 right-3 flex gap-2 opacity-90 group-hover:opacity-100 transition-opacity duration-300">
                     <button
                       onClick={() => handleViewWhisky(whisky)}
                       className="p-2 rounded-full bg-amber-600/20 hover:bg-amber-500/30 text-amber-100 hover:text-white backdrop-blur-md border border-amber-400/20 hover:border-amber-300/30 transition-all duration-300 shadow-lg hover:shadow-amber-500/25"
@@ -1101,8 +1101,8 @@ function WhiskiesPageContent() {
                   </div>
                 </div>
 
-                {/* Content */}
-                <div className="space-y-4 p-1">
+                {/* Enhanced Content */}
+                <div className="space-y-4 p-2">
                   <div>
                     <button
                       onClick={() => handleViewWhisky(whisky)}
@@ -1113,7 +1113,7 @@ function WhiskiesPageContent() {
                         {whisky.name}
                       </h3>
                     </button>
-                    <p className="text-base text-primary-600 dark:text-primary-400 font-semibold bg-primary-50/50 dark:bg-primary-900/20 px-3 py-1 rounded-full inline-block">
+                    <p className="text-base text-primary-600 dark:text-primary-400 font-semibold bg-gradient-to-r from-primary-50/60 to-primary-100/60 dark:from-primary-900/30 dark:to-primary-800/30 backdrop-blur-sm px-4 py-2 rounded-full inline-block border border-primary-200/30 dark:border-primary-700/30 shadow-lg">
                       {whisky.type}
                     </p>
                   </div>
@@ -1126,7 +1126,11 @@ function WhiskiesPageContent() {
                     </div>
                     <div className="flex items-center gap-2 bg-amber-100/70 dark:bg-amber-900/20 px-3 py-2 rounded-lg">
                       <Percent className="w-5 h-5 text-amber-600" />
-                      <span className="font-semibold">{whisky.alcohol_percentage}%</span>
+                      <span className="font-semibold">
+                        {whisky.alcohol_percentage && typeof whisky.alcohol_percentage === 'string' && whisky.alcohol_percentage.includes('%')
+                          ? whisky.alcohol_percentage
+                          : `${whisky.alcohol_percentage || 0}`}
+                      </span>
                     </div>
                   </div>
 
@@ -1142,8 +1146,8 @@ function WhiskiesPageContent() {
             ) : (
               // List View
               <>
-                {/* Image */}
-                <div className="relative w-32 h-32 flex-shrink-0 rounded-lg overflow-hidden bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/20 dark:to-orange-900/20 shadow-lg ring-1 ring-white/20 dark:ring-white/10">
+                {/* Enhanced Image */}
+                <div className="relative w-32 h-32 flex-shrink-0 rounded-xl overflow-hidden bg-gradient-to-br from-amber-100/80 to-orange-100/80 dark:from-amber-900/40 dark:to-orange-900/40 shadow-xl ring-1 ring-white/30 dark:ring-white/20 backdrop-blur-sm group-hover:ring-amber-400/50 transition-all duration-300">
                   <button
                     onClick={() => handleViewWhisky(whisky)}
                     className="w-full h-full block cursor-pointer group"
@@ -1166,8 +1170,8 @@ function WhiskiesPageContent() {
                   </button>
                 </div>
 
-                {/* Content */}
-                <div className="flex-1 space-y-3">
+                {/* Enhanced Content */}
+                <div className="flex-1 space-y-3 p-1">
                   <div>
                     <button
                       onClick={() => handleViewWhisky(whisky)}
@@ -1191,7 +1195,11 @@ function WhiskiesPageContent() {
                     </div>
                     <div className="flex items-center gap-1">
                       <Percent className="w-4 h-4" />
-                      <span>{whisky.alcohol_percentage}%</span>
+                      <span>
+                        {whisky.alcohol_percentage && typeof whisky.alcohol_percentage === 'string' && whisky.alcohol_percentage.includes('%')
+                          ? whisky.alcohol_percentage
+                          : `${whisky.alcohol_percentage || 0}`}
+                      </span>
                     </div>
                   </div>
 
@@ -1202,8 +1210,8 @@ function WhiskiesPageContent() {
                   )}
                 </div>
 
-                {/* Actions */}
-                <div className="flex flex-col gap-2 flex-shrink-0">
+                {/* Enhanced Actions */}
+                <div className="flex flex-col gap-2 flex-shrink-0 opacity-90 group-hover:opacity-100 transition-opacity duration-300">
                   <button
                     onClick={() => handleViewWhisky(whisky)}
                     className="p-2 rounded-lg bg-amber-600/20 hover:bg-amber-500/30 text-amber-100 hover:text-white backdrop-blur-md border border-amber-400/20 hover:border-amber-300/30 transition-all duration-300 shadow-lg hover:shadow-amber-500/25 min-w-[44px] min-h-[44px] flex items-center justify-center"
@@ -1267,279 +1275,6 @@ function WhiskiesPageContent() {
           </p>
         </div>
       )}
-
-      {/* Add Whisky Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="modal-content rounded-2xl mobile-card-spacing w-full max-w-2xl mobile-modal overflow-y-auto"
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
-                {t('whiskiesPage.addWhiskyModal.title')}
-              </h3>
-              <button
-                onClick={() => {
-                  setShowAddModal(false)
-                  resetAddForm()
-                }}
-                className="modal-text-muted hover:text-slate-600 dark:hover:text-slate-300 p-2"
-                aria-label={t('common.close')}
-                title={t('common.close')}
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleAddWhisky} className="space-y-6">
-              {/* Image Upload */}
-              <div>
-                <label htmlFor="whiskyImageInput" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                  {t('whiskiesPage.addWhiskyModal.whiskyImageRequired')}
-                </label>
-                <div className="flex items-start gap-4">
-                  <div className="flex-1">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageSelect}
-                      id="whiskyImageInput"
-                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:bg-amber-500 file:text-white hover:file:bg-amber-600"
-                    />
-                  </div>
-                  {imagePreview && (
-                    <div className="w-24 h-24 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 flex-shrink-0">
-                      <img 
-                        src={imagePreview} 
-                        alt={t('whiskiesPage.addWhiskyModal.preview')} 
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4">
-                {/* Name */}
-                <div>
-                  <label htmlFor="addNameInput" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                    {t('whiskiesPage.addWhiskyModal.whiskyNameRequired')}
-                  </label>
-                  <input
-                    id="addNameInput"
-                    type="text"
-                    value={addForm.name}
-                    onChange={(e) => setAddForm(prev => ({ ...prev, name: e.target.value }))}
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
-                    placeholder={t('whiskiesPage.addWhiskyModal.whiskyNamePlaceholder')}
-                    required
-                  />
-                </div>
-
-                {/* Type */}
-                <div>
-                  <label htmlFor="addTypeSelect" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                    {t('whiskiesPage.addWhiskyModal.type')}
-                  </label>
-                  <select
-                    id="addTypeSelect"
-                    value={addForm.type}
-                    onChange={(e) => setAddForm(prev => ({ ...prev, type: e.target.value }))}
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
-                  >
-                    <option value="Single Malt">Single Malt</option>
-                    <option value="Blended">Blended</option>
-                    <option value="Bourbon">Bourbon</option>
-                    <option value="Rye">Rye</option>
-                    <option value="Irish">Irish</option>
-                    <option value="Canadian">Canadian</option>
-                    <option value="Japanese">Japanese</option>
-                  </select>
-                </div>
-
-                {/* Country */}
-                <div>
-                  <label htmlFor="addCountryInput" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                    {t('whisky.country')}
-                  </label>
-                  <input
-                    id="addCountryInput"
-                    type="text"
-                    value={addForm.country}
-                    onChange={(e) => setAddForm(prev => ({ ...prev, country: e.target.value }))}
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
-                    placeholder={t('whiskiesPage.addWhiskyModal.countryPlaceholder')}
-                  />
-                </div>
-
-                {/* Region */}
-                <div>
-                  <label htmlFor="addRegionInput" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                    {t('whiskiesPage.addWhiskyModal.region')}
-                  </label>
-                  <input
-                    id="addRegionInput"
-                    type="text"
-                    value={addForm.region}
-                    onChange={(e) => setAddForm(prev => ({ ...prev, region: e.target.value }))}
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
-                    placeholder={t('whiskiesPage.addWhiskyModal.regionPlaceholder')}
-                  />
-                </div>
-
-                {/* Alcohol Percentage */}
-                <div>
-                  <label htmlFor="addAbvInput" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                    {t('whiskiesPage.addWhiskyModal.alcoholPercent')}
-                  </label>
-                  <input
-                    id="addAbvInput"
-                    type="number"
-                    value={addForm.alcohol_percentage}
-                    onChange={(e) => setAddForm(prev => ({ ...prev, alcohol_percentage: parseFloat(e.target.value) || 40 }))}
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
-                    min="0"
-                    max="100"
-                    step="0.1"
-                  />
-                </div>
-
-                {/* Rating */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                    {t('whiskiesPage.addWhiskyModal.ratingLabel')}
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="100"
-                    step="0.1"
-                    value={addForm.rating || ''}
-                    onChange={(e) => setAddForm(prev => ({ ...prev, rating: e.target.value ? parseFloat(e.target.value) : null }))}
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
-                    placeholder={t('whiskiesPage.addWhiskyModal.ratingPlaceholder')}
-                  />
-                </div>
-
-                {/* Age */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                    {t('whiskiesPage.addWhiskyModal.ageLabel')}
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="100"
-                    value={addForm.age_years || ''}
-                    onChange={(e) => setAddForm(prev => ({ ...prev, age_years: e.target.value ? parseInt(e.target.value) : null }))}
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
-                    placeholder={t('whiskiesPage.addWhiskyModal.agePlaceholder')}
-                  />
-                </div>
-
-                {/* Color */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                    {t('whiskiesPage.addWhiskyModal.color')}
-                  </label>
-                  <input
-                    type="text"
-                    value={addForm.color}
-                    onChange={(e) => setAddForm(prev => ({ ...prev, color: e.target.value }))}
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200"
-                    placeholder={t('whiskiesPage.addWhiskyModal.colorPlaceholder')}
-                  />
-                </div>
-              </div>
-
-              {/* Aroma */}
-              <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                  {t('whiskiesPage.addWhiskyModal.aroma')}
-                </label>
-                <textarea
-                  value={addForm.aroma}
-                  onChange={(e) => setAddForm(prev => ({ ...prev, aroma: e.target.value }))}
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 min-h-[80px] resize-none"
-                  placeholder={t('whiskiesPage.addWhiskyModal.aromaPlaceholder')}
-                  rows={3}
-                />
-              </div>
-
-              {/* Taste */}
-              <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                  {t('whiskiesPage.addWhiskyModal.taste')}
-                </label>
-                <textarea
-                  value={addForm.taste}
-                  onChange={(e) => setAddForm(prev => ({ ...prev, taste: e.target.value }))}
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 min-h-[80px] resize-none"
-                  placeholder={t('whiskiesPage.addWhiskyModal.tastePlaceholder')}
-                  rows={3}
-                />
-              </div>
-
-              {/* Finish */}
-              <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                  {t('whiskiesPage.addWhiskyModal.finish')}
-                </label>
-                <textarea
-                  value={addForm.finish}
-                  onChange={(e) => setAddForm(prev => ({ ...prev, finish: e.target.value }))}
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 min-h-[80px] resize-none"
-                  placeholder={t('whiskiesPage.addWhiskyModal.finishPlaceholder')}
-                  rows={3}
-                />
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-                  {t('whiskiesPage.addWhiskyModal.generalDescription')}
-                </label>
-                <textarea
-                  value={addForm.description}
-                  onChange={(e) => setAddForm(prev => ({ ...prev, description: e.target.value }))}
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 min-h-[100px] resize-none"
-                  placeholder={t('whiskiesPage.addWhiskyModal.descriptionPlaceholder')}
-                  rows={4}
-                />
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowAddModal(false)
-                    resetAddForm()
-                  }}
-                  className="flex-1 px-4 py-2 bg-slate-500/20 hover:bg-slate-500/30 text-slate-600 dark:text-slate-400 rounded-lg transition-colors"
-                >
-                  {t('whiskiesPage.addWhiskyModal.cancel')}
-                </button>
-                <button
-                  type="submit"
-                  disabled={isUploading || !addForm.name.trim() || !selectedImage}
-                  className="flex-1 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {isUploading ? (
-                    <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
-                  ) : (
-                    <Upload className="w-4 h-4" />
-                  )}
-                  {isUploading ? t('whiskiesPage.addWhiskyModal.adding') : t('whiskiesPage.addWhiskyModal.addWhisky')}
-                </button>
-              </div>
-            </form>
-          </motion.div>
-        </div>
-      )}
-
       {/* Whisky Detail Modal */}
       {viewingWhisky && (() => {
         console.log('🎭 Rendering modal for whisky:', viewingWhisky.name)

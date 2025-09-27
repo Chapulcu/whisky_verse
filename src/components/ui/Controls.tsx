@@ -11,6 +11,15 @@ interface ThemeToggleProps {
   className?: string
 }
 
+const SUPPORTED_LANGUAGES = [
+  { code: 'tr', name: 'Türkçe', flag: '🇹🇷' },
+  { code: 'en', name: 'English', flag: '🇺🇸' },
+  { code: 'ru', name: 'Русский', flag: '🇷🇺' },
+  { code: 'bg', name: 'Български', flag: '🇧🇬' },
+] as const
+
+type SupportedLanguageCode = typeof SUPPORTED_LANGUAGES[number]['code']
+
 export function ThemeToggle({ className = '' }: ThemeToggleProps) {
   const { theme, setTheme } = useTheme()
   const { t } = useTranslation()
@@ -70,26 +79,30 @@ export function ThemeToggle({ className = '' }: ThemeToggleProps) {
 export function LanguageToggle({ className = '' }: { className?: string }) {
   const { i18n } = useTranslation()
 
-  const languages = [
-    { code: 'tr', name: 'Türkçe', flag: '🇹🇷' },
-    { code: 'en', name: 'English', flag: '🇺🇸' },
-    { code: 'ru', name: 'Русский', flag: '🇷🇺' },
-    { code: 'bg', name: 'Български', flag: '🇧🇬' },
-  ]
+  const languages = SUPPORTED_LANGUAGES
+
+  const normalizeLanguage = useCallback((lang: string): SupportedLanguageCode => {
+    const base = (lang || '').split('-')[0]
+    const matched = languages.find(l => l.code === base)
+    return (matched?.code || languages[0].code) as SupportedLanguageCode
+  }, [languages])
+  const currentLanguageCode = normalizeLanguage(i18n.language)
 
   // Cycle through TR -> EN -> RU -> BG -> TR
   const handleLanguageToggle = useCallback(() => {
     console.log('🌍 Language toggle clicked, current:', i18n.language)
-    
-    const currentIndex = languages.findIndex(lang => lang.code === i18n.language)
-    const nextIndex = (currentIndex + 1) % languages.length
+
+    const normalizedCurrent = normalizeLanguage(i18n.language)
+    const currentIndex = languages.findIndex(lang => lang.code === normalizedCurrent)
+    const safeIndex = currentIndex === -1 ? 0 : currentIndex
+    const nextIndex = (safeIndex + 1) % languages.length
     const nextLanguage = languages[nextIndex].code
-    
+
     console.log('🌍 Setting language to:', nextLanguage)
     i18n.changeLanguage(nextLanguage)
-  }, [i18n, languages])
+  }, [i18n, languages, normalizeLanguage])
 
-  const currentLanguage = languages.find(lang => lang.code === i18n.language) || languages[0]
+  const currentLanguage = languages.find(lang => lang.code === currentLanguageCode) || languages[0]
 
   return (
     <ErrorBoundary>

@@ -154,31 +154,59 @@ export function AchievementsPanel({ isOpen, onClose }: AchievementsPanelProps) {
                   </div>
                 </div>
 
-                <div className="mt-5 flex gap-2 overflow-x-auto pb-2">
-                  {categoriesConfig.map(category => {
-                    const IconComponent = category.icon
-                    const isActive = selectedCategory === category.id
+                <div className="mt-5 space-y-2">
+                  {/* First row - Primary categories */}
+                  <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
+                    {categoriesConfig.slice(0, 4).map(category => {
+                      const IconComponent = category.icon
+                      const isActive = selectedCategory === category.id
 
-                    return (
-                      <button
-                        key={category.id}
-                        onClick={() => setSelectedCategory(category.id)}
-                        className={`flex items-center gap-2 rounded-full border px-3.5 py-2 text-sm font-medium tracking-wide backdrop-blur transition-all duration-200 ${
-                          isActive
-                            ? 'border-amber-300/60 bg-gradient-to-r from-amber-400/35 via-orange-500/30 to-purple-500/30 text-white shadow-[0_12px_35px_-20px_rgba(251,191,36,0.95)]'
-                            : 'border-white/20 bg-white/10 text-white/70 hover:border-amber-300/50 hover:text-white'
-                        }`}
-                      >
-                        <IconComponent className="h-4 w-4" />
-                        {category.label}
-                      </button>
-                    )
-                  })}
+                      return (
+                        <button
+                          key={category.id}
+                          onClick={() => setSelectedCategory(category.id)}
+                          className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs font-medium tracking-wide backdrop-blur transition-all duration-200 whitespace-nowrap ${
+                            isActive
+                              ? 'border-amber-300/60 bg-gradient-to-r from-amber-400/35 via-orange-500/30 to-purple-500/30 text-white shadow-[0_12px_35px_-20px_rgba(251,191,36,0.95)]'
+                              : 'border-white/20 bg-white/10 text-white/70 hover:border-amber-300/50 hover:text-white'
+                          }`}
+                        >
+                          <IconComponent className="h-3.5 w-3.5 flex-shrink-0" />
+                          <span className="text-[11px]">{category.label}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  {/* Second row - Secondary categories */}
+                  <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
+                    {categoriesConfig.slice(4).map(category => {
+                      const IconComponent = category.icon
+                      const isActive = selectedCategory === category.id
+
+                      return (
+                        <button
+                          key={category.id}
+                          onClick={() => setSelectedCategory(category.id)}
+                          className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs font-medium tracking-wide backdrop-blur transition-all duration-200 whitespace-nowrap ${
+                            isActive
+                              ? 'border-amber-300/60 bg-gradient-to-r from-amber-400/35 via-orange-500/30 to-purple-500/30 text-white shadow-[0_12px_35px_-20px_rgba(251,191,36,0.95)]'
+                              : 'border-white/20 bg-white/10 text-white/70 hover:border-amber-300/50 hover:text-white'
+                          }`}
+                        >
+                          <IconComponent className="h-3.5 w-3.5 flex-shrink-0" />
+                          <span className="text-[11px]">{category.label}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
               </div>
 
-              <div className="relative flex-1 space-y-4 overflow-y-auto px-5 pb-7 pt-5">
-                {getFilteredAchievements().map(achievement => {
+              <div className="relative flex-1 overflow-hidden">
+                <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-slate-950/90 via-slate-950/50 to-transparent pointer-events-none z-10" />
+                <div className="space-y-4 overflow-y-auto px-5 pb-8 pt-5 h-full" style={{ maxHeight: 'calc(90vh - 320px)' }}>
+                  {getFilteredAchievements().map(achievement => {
                   const isUnlocked = isAchievementUnlocked(achievement.id)
                   const progress = getAchievementProgress(achievement.id)
 
@@ -212,8 +240,13 @@ export function AchievementsPanel({ isOpen, onClose }: AchievementsPanelProps) {
                                 <h3 className={`font-semibold tracking-wide ${isUnlocked ? 'text-white' : 'text-white/60'}`}>
                                   {achievement.title}
                                 </h3>
-                                <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${rarityBadgeClasses(achievement.rarity)}`}>
-                                  {achievement.rarity.toUpperCase()}
+                                <span className={`rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] ${rarityBadgeClasses(achievement.rarity)} backdrop-blur border border-white/20`}>
+                                  {achievement.rarity === 'common' ? 'SİRDAN' :
+                                   achievement.rarity === 'uncommon' ? 'NADİR' :
+                                   achievement.rarity === 'rare' ? 'SEÇKİN' :
+                                   achievement.rarity === 'epic' ? 'DESTANI' :
+                                   achievement.rarity === 'legendary' ? 'EFSANEVİ' :
+                                   achievement.rarity.toUpperCase()}
                                 </span>
                               </div>
                               <p className={`text-sm leading-relaxed ${isUnlocked ? 'text-white/70' : 'text-white/55'}`}>
@@ -222,24 +255,25 @@ export function AchievementsPanel({ isOpen, onClose }: AchievementsPanelProps) {
                             </div>
 
                             <div className="text-right">
-                              <div className={`text-lg font-semibold ${isUnlocked ? 'text-amber-300 drop-shadow' : 'text-white/40'}`}>
+                              <div className={`flex items-center gap-1 text-lg font-bold ${isUnlocked ? 'text-amber-300 drop-shadow' : 'text-white/40'}`}>
+                                <Trophy className="h-4 w-4" />
                                 +{achievement.points}
                               </div>
-                              <div className="text-[11px] uppercase tracking-[0.28em] text-white/50">puan</div>
+                              <div className="text-[11px] uppercase tracking-[0.28em] text-white/60 font-medium">puan</div>
                             </div>
                           </div>
 
                           {!isUnlocked && progress.max > 1 && (
-                            <div className="mt-3">
-                              <div className="mb-1 flex items-center justify-between text-xs text-white/60">
-                                <span>İlerleme</span>
-                                <span>
+                            <div className="mt-3 space-y-2">
+                              <div className="flex items-center justify-between text-xs text-white/70">
+                                <span className="font-medium">İlerleme</span>
+                                <span className="text-white/80">
                                   {progress.current}/{progress.max}
                                 </span>
                               </div>
-                              <div className="h-2 rounded-full bg-white/10">
+                              <div className="h-2.5 rounded-full bg-white/15 overflow-hidden">
                                 <div
-                                  className="h-2 rounded-full bg-gradient-to-r from-amber-400 via-orange-500 to-purple-500 shadow-[0_0_14px_rgba(251,191,36,0.55)] transition-all duration-500"
+                                  className="h-2.5 rounded-full bg-gradient-to-r from-amber-400 via-orange-500 to-purple-500 shadow-[0_0_14px_rgba(251,191,36,0.55)] transition-all duration-500"
                                   style={{ width: `${progress.percentage}%` }}
                                 />
                               </div>
@@ -247,15 +281,21 @@ export function AchievementsPanel({ isOpen, onClose }: AchievementsPanelProps) {
                           )}
 
                           {isUnlocked && achievement.unlockedAt && (
-                            <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-white/20 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-white/60">
-                              {new Date(achievement.unlockedAt).toLocaleDateString('tr-TR')} tarihinde kazanıldı
+                            <div className="mt-3">
+                              <div className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-xs font-medium text-white/75 backdrop-blur">
+                                <Calendar className="h-3 w-3" />
+                                <span>
+                                  {new Date(achievement.unlockedAt).toLocaleDateString('tr-TR')} tarihinde kazanıldı
+                                </span>
+                              </div>
                             </div>
                           )}
                         </div>
                       </div>
                     </motion.div>
-                  )
-                })}
+                    )
+                  })}
+                </div>
               </div>
             </div>
           </div>
