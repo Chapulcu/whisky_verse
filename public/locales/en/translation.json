@@ -68,12 +68,12 @@
     "light": "Light",
     "dark": "Dark"
   },
-    "language": {
-      "language": "Language",
-      "turkish": "Turkish",
-      "english": "English",
-      "russian": "Russian",
-      "bulgarian": "Bulgarian"
+  "language": {
+    "language": "Language",
+    "turkish": "Turkish",
+    "english": "English",
+    "russian": "Russian",
+    "bulgarian": "Bulgarian"
   },
   "profile": {
     "user": "User",
@@ -1101,7 +1101,7 @@
         "selectFile": "Select File",
         "save": "Save",
         "selectNewFile": "Select New File",
-         "uploading": "Uploading..."
+        "uploading": "Uploading..."
       },
       "whiskyName": "Whisky Name",
       "whiskyNamePlaceholder": "e.g. Macallan 18",
@@ -1155,14 +1155,14 @@
         "close": "Close"
       }
     },
-     "whiskyManagement":{
+    "whiskyManagement": {
       "refreshAll": "Refresh All",
       "loading": "Loading whiskies...",
       "error": "An Error Occurred",
       "tryAgain": "Try Again",
       "noWhiskies": "No whiskies found",
       "firstWhiskyMessage": "Click the 'Add New Whisky' button to add your first whisky",
-      "filters":{
+      "filters": {
         "alphabetical": "Alphabetical",
         "all": "All",
         "country": "Country",
@@ -1191,18 +1191,18 @@
         "changeSearchCriteria": "Change your search criteria and try again",
         "importWhiskies": "Import Whiskies",
         "totalLoaded": "Total Loaded",
-       "showing": "showing",
-       "whiskiesFound": "whiskies found"
+        "showing": "showing",
+        "whiskiesFound": "whiskies found"
       },
-      "tableHeaders":{
-        "name":"Name",
-        "type":"Type",
-        "country":"Country",
-        "age":"Age (Years)",
-        "alcoholPercentage":"Alcohol Percentage %",
-        "actions":"Actions",
-        "creation":"Creation Date",
-        "lastUpdated":"Last Update"
+      "tableHeaders": {
+        "name": "Name",
+        "type": "Type",
+        "country": "Country",
+        "age": "Age (Years)",
+        "alcoholPercentage": "Alcohol Percentage %",
+        "actions": "Actions",
+        "creation": "Creation Date",
+        "lastUpdated": "Last Update"
       },
       "emptyStates": {
         "noMatchingWhiskies": "No whiskies found matching your search criteria",
@@ -1211,12 +1211,12 @@
       },
       "viewDetails": "View Details",
       "previousPage": "Previous page",
-     "importSection": {
-      "requiredColumns": "Required Columns: name, type, country, alcohol_percentage",
-      "optionalColumns": "Optional Columns: imageUrl",
-      "csvFile": "CSV File",
-      "downloadTemplate": "Download Template"
-     }
+      "importSection": {
+        "requiredColumns": "Required Columns: name, type, country, alcohol_percentage",
+        "optionalColumns": "Optional Columns: imageUrl",
+        "csvFile": "CSV File",
+        "downloadTemplate": "Download Template"
+      }
     },
     "country": "Country",
     "region": "Region",
@@ -1278,5 +1278,31 @@
   "usingDefaultBackground": "Using Default Background",
   "upgradeToVip": "Upgrade to VIP",
   "signUp": "Sign Up",
-  "whiskies": "Whiskies"
+  "whiskies": "Whiskies",
+  "achievements": {
+    "title": "Achievements",
+    "badges": "badges",
+    "level": "Level",
+    "points": "points",
+    "completed": "Completed",
+    "progress": "Progress",
+    "levelProgress": "Level {{current}} → {{next}}",
+    "unlockedAt": "Unlocked on {{date}}",
+    "categories": {
+      "all": "All",
+      "collection": "Collection",
+      "photography": "Photography",
+      "social": "Social",
+      "exploration": "Exploration",
+      "expertise": "Expertise",
+      "milestone": "Milestone"
+    },
+    "rarity": {
+      "common": "COMMON",
+      "uncommon": "UNCOMMON",
+      "rare": "RARE",
+      "epic": "EPIC",
+      "legendary": "LEGENDARY"
+    }
+  }
 }

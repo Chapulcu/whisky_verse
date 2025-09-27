@@ -1015,7 +1015,7 @@
         "selectFile": "Выбрать файл",
         "save": "Сохранить",
         "selectNewFile": "Выбрать новый файл",
-         "uploading": "Загрузка..."
+        "uploading": "Загрузка..."
       },
       "whiskyName": "Название виски",
       "whiskyNamePlaceholder": "Например. Macallan 18",
@@ -1094,7 +1094,6 @@
         "clearFilters": "Очистить фильтры",
         "gridView": "Вид сеткой",
         "listView": "Вид списком"
-
       },
       "pagination": {
         "perPage": "На страницу",
@@ -1182,5 +1181,31 @@
   "usingDefaultBackground": "Используется стандартный фон",
   "upgradeToVip": "Обновить до VIP",
   "signUp": "Зарегистрироваться",
-  "whiskies": "Типы виски"
+  "whiskies": "Типы виски",
+  "achievements": {
+    "title": "Достижения",
+    "badges": "значков",
+    "level": "Уровень",
+    "points": "очков",
+    "completed": "Завершено",
+    "progress": "Прогресс",
+    "levelProgress": "Уровень {{current}} → {{next}}",
+    "unlockedAt": "Получено {{date}}",
+    "categories": {
+      "all": "Все",
+      "collection": "Коллекция",
+      "photography": "Фотография",
+      "social": "Социальные",
+      "exploration": "Исследование",
+      "expertise": "Экспертиза",
+      "milestone": "Веха"
+    },
+    "rarity": {
+      "common": "ОБЫЧНОЕ",
+      "uncommon": "РЕДКОЕ",
+      "rare": "ЭЛИТНОЕ",
+      "epic": "ЭПИЧЕСКОЕ",
+      "legendary": "ЛЕГЕНДАРНОЕ"
+    }
+  }
 }

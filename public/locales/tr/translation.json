@@ -63,17 +63,17 @@
   },
   "theme": {
     "darkMode": "Koyu Mod",
-    "lightMode": "Açık Mod", 
+    "lightMode": "Açık Mod",
     "systemMode": "Sistem Modu",
     "light": "Açık",
     "dark": "Koyu"
   },
-    "language": {
-      "language": "Dil",
-      "turkish": "Türkçe",
-      "english": "English",
-      "russian": "Русский",
-      "bulgarian": "Bulgarca"
+  "language": {
+    "language": "Dil",
+    "turkish": "Türkçe",
+    "english": "English",
+    "russian": "Русский",
+    "bulgarian": "Bulgarca"
   },
   "profile": {
     "user": "Kullanıcı",
@@ -89,17 +89,17 @@
     "mediaType": "Medya Türü",
     "image": "Resim",
     "video": "Video",
-    "backgroundManagement":"Arka Plan Yönetimi",
-    "backgroundManagementDescription":"Site arka planını özelleştirin - tema bazlı ayarlar",
-    "usageGuidelines":"Kullanım Önerileri",
-    "usageGuidelines.image":"Resim:",
-    "usageGuidelines.imageDescription":"Maksimum 5MB, 1920x1080+ çözünürlük önerilir",
-    "usageGuidelines.video":"Video:",
-    "usageGuidelines.videoDescription":"Maksimum 50MB, MP4 formatı önerilir, kısa döngüler tercih edilir",
-    "usageGuidelines.backgroundMediaImpact":"Arka plan medyaları site performansını etkileyebilir",
-    "usageGuidelines.themeImages":"Açık ve koyu tema için farklı resim/video yükleyebilirsiniz",
-    "usageGuidelines.videoPlayback":"Video arka planlar otomatik olarak sessiz ve döngülü oynatılır",
-    "usageGuidelines.defaultBackground":"Medya kaldırıldığında varsayılan grid arka plan gösterilir",
+    "backgroundManagement": "Arka Plan Yönetimi",
+    "backgroundManagementDescription": "Site arka planını özelleştirin - tema bazlı ayarlar",
+    "usageGuidelines": "Kullanım Önerileri",
+    "usageGuidelines.image": "Resim:",
+    "usageGuidelines.imageDescription": "Maksimum 5MB, 1920x1080+ çözünürlük önerilir",
+    "usageGuidelines.video": "Video:",
+    "usageGuidelines.videoDescription": "Maksimum 50MB, MP4 formatı önerilir, kısa döngüler tercih edilir",
+    "usageGuidelines.backgroundMediaImpact": "Arka plan medyaları site performansını etkileyebilir",
+    "usageGuidelines.themeImages": "Açık ve koyu tema için farklı resim/video yükleyebilirsiniz",
+    "usageGuidelines.videoPlayback": "Video arka planlar otomatik olarak sessiz ve döngülü oynatılır",
+    "usageGuidelines.defaultBackground": "Medya kaldırıldığında varsayılan grid arka plan gösterilir",
     "adminPanel": "Admin Paneli",
     "saveChanges": "Değişiklikleri Kaydet",
     "whiskyManagement": "Viski Yönetimi",
@@ -125,7 +125,7 @@
     "addAdmin": "Admin Ekle",
     "editUser": "Kullanıcı Düzenle",
     "deleteUser": "Kullanıcı Sil",
-    "refresh":"Yenile",
+    "refresh": "Yenile",
     "fullName": "Ad Soyad",
     "role": "Rol",
     "registrationDate": "Kayıt Tarihi",
@@ -249,7 +249,7 @@
     "csvExampleNote": "Macallan 18\",\"Single Malt\",\"İskoçya\",\"Speyside\",43.0,\"Altın\",\"Vanilya\",\"Bal\",\"Uzun\",\"Premium viski",
     "scotlandPlaceholder": "Örn. İskoçya, ABD, Japonya",
     "lightTheme": "Açık Tema",
-    "darkTheme": "Koyu Tema", 
+    "darkTheme": "Koyu Tema",
     "lightThemeBackground": "Açık Tema Arka Planı",
     "darkThemeBackground": "Koyu Tema Arka Planı",
     "statistics": "İstatistikler",
@@ -279,7 +279,7 @@
   "forms": {
     "whiskyNameRequired": "Viski adı gereklidir",
     "complete": "Tam",
-    "partial": "Kısmi", 
+    "partial": "Kısmi",
     "missing": "Eksik",
     "translationStatus": "Çeviri Durumu",
     "enterWhiskyName": "Viski adını girin...",
@@ -949,7 +949,7 @@
         "public": "Herkese Açık",
         "membersOnly": "Sadece Üyeler",
         "private": "Özel",
-         "competition": "Yarışma"
+        "competition": "Yarışma"
       }
     },
     "eventManagement": {
@@ -977,10 +977,10 @@
         "actions": "İşlemler",
         "eventType": "Etkinlik Tipi",
         "virtualLink": "Sanal Etkinlik Linki",
-        "endDate":"Bitiş Tarihi",
-        "startDate":"Başlangıç Tarihi"
+        "endDate": "Bitiş Tarihi",
+        "startDate": "Başlangıç Tarihi"
       },
-      "placeholders":{
+      "placeholders": {
         "eventTypes": "Etkinlik Tipi Seçin",
         "selectGroup": "Grup Seçin",
         "eventTitle": "Örn: Scotch Whisky Tadım Gecesi",
@@ -993,7 +993,7 @@
       "buttons": {
         "createEvent": "Yeni Etkinlik Oluştur"
       },
-      "options":{
+      "options": {
         "tasting": "Tadım",
         "workshop": "Workshop",
         "meetup": "Buluşma",
@@ -1006,7 +1006,7 @@
       }
     },
     "userManagement": {
-       "placeholders":{
+      "placeholders": {
         "userName": "Kullanıcı Adı",
         "email": "E-posta",
         "password": "Şifre",
@@ -1015,7 +1015,7 @@
         "role": "Rol",
         "defaultPassword": "Varsayılan şifre 'password123' ile oluşturulur"
       },
-      "labels":{
+      "labels": {
         "adminUser": "Admin Kullanıcı Adı",
         "userName": "Kullanıcı Adı",
         "email": "E-posta",
@@ -1025,7 +1025,7 @@
         "confirmPassword": "Şifreyi Onayla",
         "passwordOptional": "Şifre (Değiştirmek istemiyorsanız boş bırakın)"
       },
-      "options":{
+      "options": {
         "turkish": "Türkçe",
         "english": "English",
         "russian": "Русский",
@@ -1035,15 +1035,14 @@
         "standard": "Standart",
         "user": "Kullanıcı"
       },
-      "titles":{
+      "titles": {
         "addUser": "Kullanıcı Ekle",
         "editUser": "Kullanıcıyı Düzenle",
         "addAdmin": "Admin Kullanıcı Ekle"
       }
-     
     },
     "whiskyForm": {
-      "labels":{
+      "labels": {
         "whiskyName": "Viski Adı",
         "type": "Tip",
         "country": "Ülke",
@@ -1051,8 +1050,8 @@
         "alcoholPercentage": "Alkol Oranı %",
         "age": "Yaş (Yıl)",
         "color": "Renk",
-        "aroma": "Aroma"
-        ,"taste": "Tat",
+        "aroma": "Aroma",
+        "taste": "Tat",
         "finish": "Bitiş",
         "description": "Açıklama",
         "imageUpload": "Resim Yükleme",
@@ -1064,10 +1063,10 @@
         "imageUrl": "Resim URL'si",
         "translationManagement": "Çeviri Yönetimi",
         "manageTranslations": "Çevirileri Yönet (TR/EN/RU/BG)",
-        "score":"Puan",
+        "score": "Puan",
         "currentImage": "Mevcut Resim"
       },
-      "placeholders":{
+      "placeholders": {
         "name": "Viski adını girin...",
         "type": "Örn: Single Malt, Blended...",
         "color": "Örn: Koyu kehribar...",
@@ -1078,20 +1077,20 @@
         "userName": "Kullanıcı Adı",
         "password": "Şifre",
         "confirmPassword": "Şifreyi Onayla",
-        "whiskyName":"Viski Adı",
-        "region":"Bölge",
-        "age":"Yaş (Yıl)",
-        "score":"Puan",
-        "description":"Genel Açıklama"
+        "whiskyName": "Viski Adı",
+        "region": "Bölge",
+        "age": "Yaş (Yıl)",
+        "score": "Puan",
+        "description": "Genel Açıklama"
       },
-      "options":{
+      "options": {
         "turkish": "Türkçe",
         "english": "English",
         "selectCountry": "Ülke Seçin",
         "selectType": "Tip Seçin",
         "selectLanguage": "Dil Seçin"
       },
-      "buttons":{
+      "buttons": {
         "cancel": "İptal",
         "updating": "Güncelleniyor...",
         "update": "Güncelle",
@@ -1138,31 +1137,31 @@
     },
     "whiskyDetails": {
       "title": "Viski Detayları",
-      "labels":{
+      "labels": {
         "tastingNotes": "Tadım Notları",
-        "aroma":"Aroma",
-        "taste":"Damak Tadı",
-        "finish":"Bitiş",
-        "createdDate":"Oluşturma Tarihi",
-        "lastUpdated":"Son Güncelleme",
-        "close":"Kapat",
+        "aroma": "Aroma",
+        "taste": "Damak Tadı",
+        "finish": "Bitiş",
+        "createdDate": "Oluşturma Tarihi",
+        "lastUpdated": "Son Güncelleme",
+        "close": "Kapat",
         "metadata": "Meta Veriler",
         "country": "Ülke",
         "region": "Bölge"
-      }, 
-      "buttons":{
-          "edit":"Düzenle",
-          "close":"Kapat"
-        }
       },
-    "whiskyManagement":{
+      "buttons": {
+        "edit": "Düzenle",
+        "close": "Kapat"
+      }
+    },
+    "whiskyManagement": {
       "refreshAll": "Tümünü Yenile",
       "loading": "Viskiler yükleniyor...",
       "error": "Hata Oluştu",
       "tryAgain": "Yeniden Dene",
       "noWhiskies": "Henüz viski yok",
       "firstWhiskyMessage": "İlk viskinizi eklemek için 'Yeni Viski Ekle' butonuna tıklayın",
-      "filters":{
+      "filters": {
         "alphabetical": "Alfabetik",
         "all": "Tümü",
         "country": "Ülke",
@@ -1191,18 +1190,18 @@
         "changeSearchCriteria": "Arama kriterlerinizi değiştirerek tekrar deneyin",
         "importWhiskies": "Viski Import Et",
         "totalLoaded": "Toplam Yüklenen",
-       "showing": "gösteriliyor",
-       "whiskiesFound": "viski bulundu"
+        "showing": "gösteriliyor",
+        "whiskiesFound": "viski bulundu"
       },
-      "tableHeaders":{
-        "name":"İsim",
-        "type":"Tip",
-        "country":"Ülke",
-        "age":"Yaş",
-        "alcoholPercentage":"Alkol %",
-        "actions":"İşlemler",
-        "creation":"Oluşturma Tarihi",
-        "lastUpdated":"Son Güncelleme"
+      "tableHeaders": {
+        "name": "İsim",
+        "type": "Tip",
+        "country": "Ülke",
+        "age": "Yaş",
+        "alcoholPercentage": "Alkol %",
+        "actions": "İşlemler",
+        "creation": "Oluşturma Tarihi",
+        "lastUpdated": "Son Güncelleme"
       },
       "emptyStates": {
         "noMatchingWhiskies": "Arama kriterlerinize uygun viski bulunamadı",
@@ -1211,37 +1210,37 @@
       },
       "viewDetails": "Detayları Görüntüle",
       "previousPage": "Önceki sayfa",
-     "importSection": {
-      "requiredColumns": "Gerekli Sütunlar: name, type, country, alcohol_percentage",
-      "optionalColumns": "Opsiyonel Sütunlar: imageUrl",
-      "csvFile": "CSV Dosyası",
-      "downloadTemplate": "Şablon İndir"
-     }
+      "importSection": {
+        "requiredColumns": "Gerekli Sütunlar: name, type, country, alcohol_percentage",
+        "optionalColumns": "Opsiyonel Sütunlar: imageUrl",
+        "csvFile": "CSV Dosyası",
+        "downloadTemplate": "Şablon İndir"
+      }
     },
-      "country": "Ülke",
-      "region": "Bölge",
-      "tastingNotes": "Tadım Notları",
-      "aroma": "Aroma",
-      "taste": "Damak Tadı",
-      "finish": "Bitiş",
-      "noTastingNotes": "Henüz tadım notu eklenmemiş",
-      "createdDate": "Oluşturma Tarihi",
-      "lastUpdated": "Son Güncelleme",
-      "close": "Kapat"
-    },
+    "country": "Ülke",
+    "region": "Bölge",
+    "tastingNotes": "Tadım Notları",
+    "aroma": "Aroma",
+    "taste": "Damak Tadı",
+    "finish": "Bitiş",
+    "noTastingNotes": "Henüz tadım notu eklenmemiş",
+    "createdDate": "Oluşturma Tarihi",
+    "lastUpdated": "Son Güncelleme",
+    "close": "Kapat"
+  },
   "toasts": {
-      "whiskiesLoadError": "Viskiler yüklenemedi",
-      "nameRequired": "İsim alanı boş bırakılamaz",
-      "deleteConfirm": "viskisini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
-      "multipleDeleteConfirm": "adet viskiyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
-      "whiskyInCollections": "Bu viski bazı kullanıcıların koleksiyonunda bulunuyor. Silmeye devam ederseniz, kullanıcı koleksiyonlarından da kaldırılacak. Devam etmek istediğinizden emin misiniz?",
-      "whiskyNotFound": "Güncellenecek viski bulunamadı",
-      "csvColumnsError": "Gerekli sütunlar eksik",
-      "csvInvalidAlcohol": "Geçersiz alkol oranı",
-      "csvDataError": "Veri formatı hatası",
-      "csvNoValidWhiskies": "Import edilecek geçerli viski bulunamadı",
-      "csvImportConfirm": "adet viski import edilecek. hata göz ardı edilecek. Devam etmek istiyor musunuz?"
-    },
+    "whiskiesLoadError": "Viskiler yüklenemedi",
+    "nameRequired": "İsim alanı boş bırakılamaz",
+    "deleteConfirm": "viskisini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+    "multipleDeleteConfirm": "adet viskiyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+    "whiskyInCollections": "Bu viski bazı kullanıcıların koleksiyonunda bulunuyor. Silmeye devam ederseniz, kullanıcı koleksiyonlarından da kaldırılacak. Devam etmek istediğinizden emin misiniz?",
+    "whiskyNotFound": "Güncellenecek viski bulunamadı",
+    "csvColumnsError": "Gerekli sütunlar eksik",
+    "csvInvalidAlcohol": "Geçersiz alkol oranı",
+    "csvDataError": "Veri formatı hatası",
+    "csvNoValidWhiskies": "Import edilecek geçerli viski bulunamadı",
+    "csvImportConfirm": "adet viski import edilecek. hata göz ardı edilecek. Devam etmek istiyor musunuz?"
+  },
   "seo": {
     "default": {
       "title": "WhiskyVerse - Viski Tutkunları Topluluğu",
@@ -1274,11 +1273,36 @@
       "keywords": "profil, kullanıcı, ayarlar, profile"
     }
   },
-  "themeVideoBackground":"Tema Video Arka Planı",
-  "usingDefaultBackground":"Varsayılan Arka Plan Kullanılıyor",
-  "upgradeToVip":"VIP Üyeliğe Yükselt",
-  "downgradeToStandard":"Standart Üyeliğe Düşür",
+  "themeVideoBackground": "Tema Video Arka Planı",
+  "usingDefaultBackground": "Varsayılan Arka Plan Kullanılıyor",
+  "upgradeToVip": "VIP Üyeliğe Yükselt",
+  "downgradeToStandard": "Standart Üyeliğe Düşür",
   "signUp": "Üye Ol",
-  "whiskies": "Viskiler"
-
+  "whiskies": "Viskiler",
+  "achievements": {
+    "title": "Başarımlar",
+    "badges": "rozet",
+    "level": "Seviye",
+    "points": "puan",
+    "completed": "Tamamlanan",
+    "progress": "İlerleme",
+    "levelProgress": "Seviye {{current}} → {{next}}",
+    "unlockedAt": "{{date}} tarihinde kazanıldı",
+    "categories": {
+      "all": "Tümü",
+      "collection": "Koleksiyon",
+      "photography": "Fotoğraf",
+      "social": "Sosyal",
+      "exploration": "Keşif",
+      "expertise": "Uzmanlık",
+      "milestone": "Kilometre Taşı"
+    },
+    "rarity": {
+      "common": "SİRDAN",
+      "uncommon": "NADİR",
+      "rare": "SEÇKİN",
+      "epic": "DESTANI",
+      "legendary": "EFSANEVİ"
+    }
+  }
 }
