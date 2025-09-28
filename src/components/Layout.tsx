@@ -1,32 +1,48 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { Navigation } from './Navigation'
 import { ScrollToTop } from './ScrollToTop'
 import { useBackgroundManagement } from '@/hooks/useBackgroundManagement'
+import { useNetworkStatus } from '@/hooks/useNetworkStatus'
 import { MobileNavigation } from './mobile/MobileNavigation'
 import { PWAInstallPrompt } from './mobile/PWAInstallPrompt'
 import { Toaster } from 'react-hot-toast'
+import toast from 'react-hot-toast'
 
 export function Layout() {
   const { getCurrentBackgroundUrl, getCurrentBackgroundVideoUrl, isVideoBackground, settings } = useBackgroundManagement()
   const [isDark, setIsDark] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+  const { isOnline, lastChange } = useNetworkStatus()
+  const offlineToastIdRef = useRef<string | null>(null)
+  const isFirstRender = useRef(true)
 
   // Detect theme changes
   useEffect(() => {
     const checkTheme = () => {
       setIsDark(document.documentElement.classList.contains('dark'))
+      setIsMobile(window.matchMedia('(max-width: 640px)').matches)
     }
 
     checkTheme()
 
     // Listen for theme changes
     const observer = new MutationObserver(checkTheme)
-    observer.observe(document.documentElement, { 
-      attributes: true, 
-      attributeFilter: ['class'] 
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
     })
 
-    return () => observer.disconnect()
+    const mediaQuery = window.matchMedia('(max-width: 640px)')
+    const handleMediaChange = (event: MediaQueryListEvent) => {
+      setIsMobile(event.matches)
+    }
+    mediaQuery.addEventListener('change', handleMediaChange)
+
+    return () => {
+      observer.disconnect()
+      mediaQuery.removeEventListener('change', handleMediaChange)
+    }
   }, [])
 
   const backgroundUrl = getCurrentBackgroundUrl(isDark)
@@ -34,24 +50,60 @@ export function Layout() {
   const isVideo = isVideoBackground()
   
   // Debug logging
-  console.log('Layout background debug:', {
-    isDark,
-    backgroundUrl,
-    backgroundVideoUrl,
-    isVideo,
-    settings
-  })
+  if (import.meta.env.DEV) {
+    console.log('Layout background debug:', {
+      isDark,
+      backgroundUrl,
+      backgroundVideoUrl,
+      isVideo,
+      settings
+    })
+  }
+
+  const backgroundStyle = useMemo(() => {
+    if (!backgroundUrl || isVideo) return {}
+
+    return {
+      backgroundImage: `url(${backgroundUrl})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundAttachment: isMobile ? 'scroll' : 'fixed',
+      backgroundRepeat: 'no-repeat'
+    }
+  }, [backgroundUrl, isVideo, isMobile])
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      if (isOnline) {
+        return
+      }
+    }
+
+    if (!isOnline) {
+      if (!offlineToastIdRef.current) {
+        offlineToastIdRef.current = toast.error('Bağlantı kayboldu. Yeniden bağlanmaya çalışılıyor…', {
+          id: 'network-status-offline'
+        })
+      }
+    } else {
+      if (offlineToastIdRef.current) {
+        toast.dismiss(offlineToastIdRef.current)
+        offlineToastIdRef.current = null
+      }
+
+      const timeSinceChange = Date.now() - lastChange
+      if (timeSinceChange < 2000) {
+        toast.success('Bağlantı geri geldi', {
+          id: 'network-status-online'
+        })
+      }
+    }
+  }, [isOnline, lastChange])
   
-  // Dynamic style for background image (only used when not video)
-  const backgroundStyle = backgroundUrl && !isVideo ? {
-    backgroundImage: `url(${backgroundUrl})`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundAttachment: 'fixed',
-    backgroundRepeat: 'no-repeat'
-  } : {}
-  
-  console.log('Background style:', backgroundStyle)
+  if (import.meta.env.DEV) {
+    console.log('Background style:', backgroundStyle)
+  }
 
   return (
     <div 

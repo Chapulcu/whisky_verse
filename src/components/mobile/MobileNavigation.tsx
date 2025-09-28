@@ -52,6 +52,9 @@ export function MobileNavigation() {
   const hiddenPaths = ['/admin', '/login', '/register', '/onboarding']
   const shouldHide = hiddenPaths.some(path => location.pathname.startsWith(path))
 
+  // Hide mobile navigation since it's now integrated into hamburger menu
+  return null
+
   if (shouldHide) return null
 
   return (

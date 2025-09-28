@@ -16,14 +16,12 @@ export function useHapticFeedback() {
     }
 
     try {
-      // Convert single number to array for consistency
       const vibratePattern = typeof pattern === 'number' ? [pattern] : pattern
-
-      // Vibrate with the pattern
-      const success = navigator.vibrate(vibratePattern)
-      return success
+      return navigator.vibrate(vibratePattern)
     } catch (error) {
-      console.error('Vibration failed:', error)
+      if (import.meta.env.DEV) {
+        console.error('Vibration failed:', error)
+      }
       return false
     }
   }, [isSupported])
@@ -34,10 +32,12 @@ export function useHapticFeedback() {
     }
 
     try {
-      navigator.vibrate(0) // Stop vibration
+      navigator.vibrate(0)
       return true
     } catch (error) {
-      console.error('Stop vibration failed:', error)
+      if (import.meta.env.DEV) {
+        console.error('Stop vibration failed:', error)
+      }
       return false
     }
   }, [isSupported])

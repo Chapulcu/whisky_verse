@@ -1,6 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import toast from 'react-hot-toast'
+import { createWhiskyCacheKey, getWhiskiesFromCache, setWhiskiesCache } from '@/lib/cache/whiskyCache'
+
+const debugLog = (...args: any[]) => {
+  if (import.meta.env.DEV) {
+    console.log(...args)
+  }
+}
 
 export type AppLanguage = 'tr' | 'en' | 'ru' | 'bg'
 
@@ -102,6 +109,27 @@ export function useWhiskiesMultilingual() {
   ) => {
     const includeUnpublished = options?.includeUnpublished ?? false
     const currentRequestId = ++requestIdRef.current
+
+    const cacheKey = includeUnpublished
+      ? null
+      : createWhiskyCacheKey({
+          lang,
+          limit,
+          offset,
+          searchTerm,
+          countryFilter,
+          typeFilter
+        })
+
+    let cached: { whiskies: MultilingualWhisky[]; totalCount: number } | null = null
+    if (cacheKey) {
+      cached = await getWhiskiesFromCache(cacheKey)
+      if (cached && currentRequestId === requestIdRef.current) {
+        setWhiskies(cached.whiskies)
+        setTotalCount(cached.totalCount)
+        setLoading(false)
+      }
+    }
     lastArgsRef.current = {
       lang,
       limit,
@@ -112,7 +140,7 @@ export function useWhiskiesMultilingual() {
       includeUnpublished
     }
     try {
-      if (whiskies.length === 0) {
+      if (whiskies.length === 0 && !cached) {
         setLoading(true)
       } else {
         setIsRefetching(true)
@@ -120,10 +148,8 @@ export function useWhiskiesMultilingual() {
       setError(null)
 
       // Base query: select base fields + joined translations
-      console.log(`🌍 Loading whiskies for language: ${lang}`)
-
-      // Debug: Raw query URL to check what's being requested
-      console.log('🔗 Full query will include whisky_translations join')
+      debugLog(`🌍 Loading whiskies for language: ${lang}`)
+      debugLog('🔗 Full query will include whisky_translations join')
 
       let query = supabase
         .from('whiskies')
@@ -143,6 +169,7 @@ export function useWhiskiesMultilingual() {
           finish,
           color,
           created_at,
+          is_published,
           whisky_translations:whisky_translations (
             language_code,
             name,
@@ -159,9 +186,10 @@ export function useWhiskiesMultilingual() {
         `, { count: 'exact' })
         .order('created_at', { ascending: false })
 
-      if (!includeUnpublished) {
-        query = query.or('is_published.eq.true,is_published.is.null')
-      }
+      // Temporarily disabled for testing - will re-enable after database is updated
+      // if (!includeUnpublished) {
+      //   query = query.or('is_published.eq.true,is_published.is.null')
+      // }
 
       // Filters on base table (server-side)
       if (countryFilter) {
@@ -186,6 +214,8 @@ export function useWhiskiesMultilingual() {
 
       if (currentRequestId !== requestIdRef.current) return
 
+      console.log('🔍 Query result:', { data: data?.length, count, error: fetchError })
+
       if (fetchError) {
         // If translations table does not exist yet (migration not applied), fallback to base-only query
         const msg = String(fetchError.message || '')
@@ -197,7 +227,7 @@ export function useWhiskiesMultilingual() {
             .from('whiskies')
             .select('*', { count: 'exact' })
             .order('created_at', { ascending: false })
-          if (!includeUnpublished) baseQuery = baseQuery.or('is_published.eq.true,is_published.is.null')
+          // if (!includeUnpublished) baseQuery = baseQuery.or('is_published.eq.true,is_published.is.null')
           if (countryFilter) baseQuery = baseQuery.eq('country', countryFilter)
           if (typeFilter) baseQuery = baseQuery.eq('type', typeFilter)
           if (searchTerm && searchTerm.trim().length >= 3) {
@@ -234,6 +264,17 @@ export function useWhiskiesMultilingual() {
 
           setWhiskies(mapped)
           setTotalCount(baseCount || 0)
+
+          if (cacheKey) {
+            setWhiskiesCache(cacheKey, {
+              whiskies: mapped,
+              totalCount: baseCount ?? mapped.length
+            }).catch(err => {
+              if (import.meta.env.DEV) {
+                console.warn('Failed to cache whiskies data (fallback):', err)
+              }
+            })
+          }
           return
         } else {
           console.error('Error loading multilingual whiskies:', fetchError)
@@ -244,10 +285,8 @@ export function useWhiskiesMultilingual() {
       }
 
       const rows = (data || []) as MultilingualWhiskyRow[]
-      console.log(`📊 Received ${rows.length} whiskies from database`)
-
-      // Debug: Check raw data structure
-      console.log('🔬 Raw data sample:', rows.slice(0, 2).map(r => ({
+      debugLog(`📊 Received ${rows.length} whiskies from database`)
+      debugLog('🔬 Raw data sample:', rows.slice(0, 2).map(r => ({
         id: r.id,
         name: (r as any).name,
         translations: r.whisky_translations
@@ -258,7 +297,7 @@ export function useWhiskiesMultilingual() {
         const t = picked?.t as (MultilingualWhiskyRow['whisky_translations'] extends Array<infer U> ? U : any) | undefined
 
         // Debug all whiskies for translation status
-        console.log(`🔍 Whisky ${row.id} (${(row as any).name}):`, {
+        debugLog(`🔍 Whisky ${row.id} (${(row as any).name}):`, {
           requestedLang: lang,
           availableTranslations: row.whisky_translations?.map(t => t.language_code) || [],
           translationCount: row.whisky_translations?.length || 0,
@@ -293,6 +332,17 @@ export function useWhiskiesMultilingual() {
 
       setWhiskies(mapped)
       setTotalCount(count || 0)
+
+      if (cacheKey) {
+        setWhiskiesCache(cacheKey, {
+          whiskies: mapped,
+          totalCount: count ?? mapped.length
+        }).catch(err => {
+          if (import.meta.env.DEV) {
+            console.warn('Failed to cache whiskies data:', err)
+          }
+        })
+      }
     } catch (err: any) {
       if (currentRequestId === requestIdRef.current) {
         console.error('Unexpected error loading multilingual whiskies:', err)

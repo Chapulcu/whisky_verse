@@ -15,6 +15,8 @@ if (!supabaseAnonKey) {
 
 console.log(`🌐 Using Supabase at: ${supabaseUrl}`)
 
+const REQUEST_TIMEOUT = Number(import.meta.env.VITE_SUPABASE_TIMEOUT ?? 20000)
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
@@ -31,7 +33,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     fetch: (url, options = {}) => {
       // Add AbortController for timeout
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT)
 
       const enhancedOptions = {
         ...options,
@@ -48,7 +50,10 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
         })
         .catch(error => {
           clearTimeout(timeoutId)
-          console.log(`❌ Supabase error: ${error.message}`)
+          const message = error?.name === 'AbortError'
+            ? `Request aborted after ${REQUEST_TIMEOUT}ms`
+            : error?.message
+          console.log(`❌ Supabase error: ${message}`)
           throw error
         })
     }

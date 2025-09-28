@@ -1,8 +1,9 @@
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { supabase } from '@/lib/supabase'
 import { X, Upload, Save } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { useDirectWhiskyUpload } from '@/hooks/useDirectWhiskyUpload'
+import toast from 'react-hot-toast'
 
 interface AddWhiskyModalProps {
   isOpen: boolean
@@ -27,6 +28,7 @@ export function AddWhiskyModal({ isOpen, onClose, onSuccess }: AddWhiskyModalPro
   })
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
+  const { createWhiskyWithImage, isUploading } = useDirectWhiskyUpload()
 
   const whiskyTypes = [
     'Single Malt',
@@ -48,157 +50,34 @@ export function AddWhiskyModal({ isOpen, onClose, onSuccess }: AddWhiskyModalPro
     }
   }
 
-  const uploadImage = async (file: File): Promise<string | null> => {
-    try {
-      console.log('🚀 Image upload başlatıldı:', {
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type
-      })
-
-      // Check file size (5MB limit)
-      if (file.size > 5242880) {
-        console.error('❌ Dosya boyutu çok büyük:', file.size)
-        alert('Dosya boyutu 5MB\'dan küçük olmalıdır.')
-        return null
-      }
-
-      // Check file type
-      if (!file.type.startsWith('image/')) {
-        console.error('❌ Geçersiz dosya tipi:', file.type)
-        alert('Lütfen geçerli bir resim dosyası seçin.')
-        return null
-      }
-
-      console.log('📁 Edge Function ile upload yapılacak')
-
-      // Convert file to base64
-      const fileReader = new FileReader()
-      const base64Promise = new Promise<string>((resolve, reject) => {
-        fileReader.onload = () => resolve(fileReader.result as string)
-        fileReader.onerror = reject
-        fileReader.readAsDataURL(file)
-      })
-
-      const base64Data = await base64Promise
-      console.log('✅ Dosya base64\'e çevrildi')
-
-      // Get current user session for auth
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
-        alert('Yükleme için giriş yapmalısınız.')
-        return null
-      }
-
-      // Call edge function for upload
-      const { data: uploadResult, error: uploadError } = await supabase.functions.invoke('whisky-image-upload', {
-        body: {
-          imageData: base64Data,
-          fileName: file.name
-        }
-      })
-
-      if (uploadError || !uploadResult?.data?.publicUrl) {
-        console.error('❌ Edge function upload hatası:', uploadError)
-        
-        let errorMessage = 'Resim yükleme hatası: '
-        if (uploadError?.message?.includes('not allowed')) {
-          errorMessage += 'Bu dosya türü desteklenmiyor.'
-        } else if (uploadError?.message?.includes('size')) {
-          errorMessage += 'Dosya boyutu çok büyük (maksimum 5MB).'
-        } else if (uploadError?.message?.includes('auth')) {
-          errorMessage += 'Yükleme yetkiniz yok. Tekrar giriş yapın.'
-        } else {
-          errorMessage += uploadError?.message || 'Bilinmeyen hata'
-        }
-        
-        alert(errorMessage)
-        return null
-      }
-
-      console.log('✅ Upload başarılı:', uploadResult.data.publicUrl)
-      return uploadResult.data.publicUrl
-      
-    } catch (error: any) {
-      console.error('❌ Upload fonksiyonunda genel hata:', error)
-      
-      let userMessage = 'Beklenmeyen hata: '
-      if (error.message?.includes('timeout')) {
-        userMessage += 'İşlem zaman aşımına uğradı. Lütfen tekrar deneyin.'
-      } else if (error.message?.includes('network')) {
-        userMessage += 'Ağ bağlantısı hatası. İnternet bağlantınızı kontrol edin.'
-      } else {
-        userMessage += error.message || 'Bilinmeyen hata'
-      }
-      
-      alert(userMessage)
-      return null
-    }
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
     try {
-      console.log('🗄 Form gönderilmeye başlandı:', { formData, hasImage: !!imageFile })
-
-      let imageUrl = null
-      
-      // Upload image if provided
-      if (imageFile) {
-        console.log('🖼 Resim yükleniyor...')
-        imageUrl = await uploadImage(imageFile)
-        if (!imageUrl) {
-          console.error('❌ Resim yükleme başarısız')
-          alert('Resim yükleme başarısız oldu. Lütfen tekrar deneyin.')
-          setLoading(false)
-          return
-        }
-        console.log('✅ Resim başarıyla yüklendi:', imageUrl)
-      } else {
-        console.log('ℹ Resim seçilmedi, resim olmadan devam ediliyor')
-      }
-
-      // Prepare whisky data
       const whiskyData = {
-        ...formData,
-        image_url: imageUrl,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        name: formData.name.trim(),
+        type: formData.type.trim(),
+        country: formData.country.trim(),
+        region: formData.region.trim() || undefined,
+        alcohol_percentage: Number(formData.alcohol_percentage) || 40,
+        color: formData.color.trim() || undefined,
+        aroma: formData.aroma.trim() || undefined,
+        taste: formData.taste.trim() || undefined,
+        finish: formData.finish.trim() || undefined,
+        description: formData.description.trim() || undefined,
+        is_published: formData.is_published
       }
 
-      console.log('📁 Veritabanına kaydedilecek veri:', whiskyData)
+      const result = await createWhiskyWithImage(whiskyData, imageFile || undefined)
 
-      // Insert whisky data
-      const { data: insertedData, error } = await supabase
-        .from('whiskies')
-        .insert(whiskyData)
-        .select()
-
-      if (error) {
-        console.error('❌ Veritabanı kaydetme hatası:', error)
-        let errorMessage = 'Viski eklenirken hata oluştu: '
-        
-        if (error.code === '23505') {
-          errorMessage += 'Bu viski adı zaten mevcut.'
-        } else if (error.code === '23502') {
-          errorMessage += 'Zorunlu alanlar eksik.'
-        } else {
-          errorMessage += error.message
-        }
-        
-        alert(errorMessage)
-        setLoading(false)
-        return
+      if (result?.whisky) {
+        toast.success(t('adminPage.toasts.whiskyAdded') || 'Viski başarıyla eklendi!')
       }
 
-      console.log('✅ Viski başarıyla kaydedildi:', insertedData)
-      alert('Viski başarıyla eklendi!')
       onSuccess()
       onClose()
-      
-      // Reset form
+
       setFormData({
         name: '',
         type: 'Single Malt',
@@ -213,10 +92,10 @@ export function AddWhiskyModal({ isOpen, onClose, onSuccess }: AddWhiskyModalPro
         is_published: true
       })
       setImageFile(null)
-      
+
     } catch (error: any) {
       console.error('❌ HandleSubmit genel hata:', error)
-      alert(`Beklenmeyen hata oluştu: ${error.message || 'Bilinmeyen hata'}`)
+      toast.error(error.message || t('adminPage.toasts.whiskyAddFailed'))
     } finally {
       setLoading(false)
     }
@@ -412,6 +291,11 @@ export function AddWhiskyModal({ isOpen, onClose, onSuccess }: AddWhiskyModalPro
                 </span>
               </label>
             </div>
+            {imageFile && (
+              <p className="text-sm text-gray-500 mt-2">
+                {(imageFile.size / 1024 / 1024).toFixed(2)} MB · {imageFile.type}
+              </p>
+            )}
           </div>
 
           {/* Publication Status */}
@@ -441,16 +325,16 @@ export function AddWhiskyModal({ isOpen, onClose, onSuccess }: AddWhiskyModalPro
               type="button"
               onClick={onClose}
               className="btn-glass px-6 py-3 rounded-xl"
-              disabled={loading}
+              disabled={loading || isUploading}
             >
               [{t('admin.whiskyClose')}]
             </button>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || isUploading}
               className="btn-primary px-6 py-3 rounded-xl flex items-center gap-2"
             >
-              {loading ? (
+              {loading || isUploading ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                   [{t('admin.whiskyAdding')}]

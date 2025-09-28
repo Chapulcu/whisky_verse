@@ -32,6 +32,97 @@ import { PullToRefreshIndicator } from '@/components/mobile/PullToRefreshIndicat
 import { WhiskyErrorBoundary } from '@/components/WhiskyErrorBoundary'
 import { WhiskySkeleton, WhiskySkeletonMini } from '@/components/WhiskySkeleton'
 
+// Country flag mapping function using flag-icons
+const getCountryFlag = (country: string): { flagClass: string; fallbackEmoji: string } => {
+  const flagMap: Record<string, { code: string; emoji: string }> = {
+    'İskoçya': { code: 'gb-sct', emoji: '🏴󠁧󠁢󠁳󠁣󠁴󠁿' },
+    'Scotland': { code: 'gb-sct', emoji: '🏴󠁧󠁢󠁳󠁣󠁴󠁿' },
+    'İrlanda': { code: 'ie', emoji: '🇮🇪' },
+    'Ireland': { code: 'ie', emoji: '🇮🇪' },
+    'Amerika': { code: 'us', emoji: '🇺🇸' },
+    'ABD': { code: 'us', emoji: '🇺🇸' },
+    'United States': { code: 'us', emoji: '🇺🇸' },
+    'USA': { code: 'us', emoji: '🇺🇸' },
+    'Japonya': { code: 'jp', emoji: '🇯🇵' },
+    'Japan': { code: 'jp', emoji: '🇯🇵' },
+    'Kanada': { code: 'ca', emoji: '🇨🇦' },
+    'Canada': { code: 'ca', emoji: '🇨🇦' },
+    'Hindistan': { code: 'in', emoji: '🇮🇳' },
+    'India': { code: 'in', emoji: '🇮🇳' },
+    'Fransa': { code: 'fr', emoji: '🇫🇷' },
+    'France': { code: 'fr', emoji: '🇫🇷' },
+    'Almanya': { code: 'de', emoji: '🇩🇪' },
+    'Germany': { code: 'de', emoji: '🇩🇪' },
+    'İsveç': { code: 'se', emoji: '🇸🇪' },
+    'Sweden': { code: 'se', emoji: '🇸🇪' },
+    'Norveç': { code: 'no', emoji: '🇳🇴' },
+    'Norway': { code: 'no', emoji: '🇳🇴' },
+    'Danimarka': { code: 'dk', emoji: '🇩🇰' },
+    'Denmark': { code: 'dk', emoji: '🇩🇰' },
+    'Finlandiya': { code: 'fi', emoji: '🇫🇮' },
+    'Finland': { code: 'fi', emoji: '🇫🇮' },
+    'Avustralya': { code: 'au', emoji: '🇦🇺' },
+    'Australia': { code: 'au', emoji: '🇦🇺' },
+    'Yeni Zelanda': { code: 'nz', emoji: '🇳🇿' },
+    'New Zealand': { code: 'nz', emoji: '🇳🇿' },
+    'Tayvan': { code: 'tw', emoji: '🇹🇼' },
+    'Taiwan': { code: 'tw', emoji: '🇹🇼' },
+    'Güney Afrika': { code: 'za', emoji: '🇿🇦' },
+    'South Africa': { code: 'za', emoji: '🇿🇦' },
+    'Brezilya': { code: 'br', emoji: '🇧🇷' },
+    'Brazil': { code: 'br', emoji: '🇧🇷' },
+    'Meksika': { code: 'mx', emoji: '🇲🇽' },
+    'Mexico': { code: 'mx', emoji: '🇲🇽' },
+    'İspanya': { code: 'es', emoji: '🇪🇸' },
+    'Spain': { code: 'es', emoji: '🇪🇸' },
+    'İtalya': { code: 'it', emoji: '🇮🇹' },
+    'Italy': { code: 'it', emoji: '🇮🇹' },
+    'Hollanda': { code: 'nl', emoji: '🇳🇱' },
+    'Netherlands': { code: 'nl', emoji: '🇳🇱' },
+    'Belçika': { code: 'be', emoji: '🇧🇪' },
+    'Belgium': { code: 'be', emoji: '🇧🇪' },
+    'İsviçre': { code: 'ch', emoji: '🇨🇭' },
+    'Switzerland': { code: 'ch', emoji: '🇨🇭' },
+    'Avusturya': { code: 'at', emoji: '🇦🇹' },
+    'Austria': { code: 'at', emoji: '🇦🇹' },
+    'Türkiye': { code: 'tr', emoji: '🇹🇷' },
+    'Turkey': { code: 'tr', emoji: '🇹🇷' },
+    'Çek Cumhuriyeti': { code: 'cz', emoji: '🇨🇿' },
+    'Czech Republic': { code: 'cz', emoji: '🇨🇿' },
+    'Polonya': { code: 'pl', emoji: '🇵🇱' },
+    'Poland': { code: 'pl', emoji: '🇵🇱' },
+    'Rusya': { code: 'ru', emoji: '🇷🇺' },
+    'Russia': { code: 'ru', emoji: '🇷🇺' },
+    'Çin': { code: 'cn', emoji: '🇨🇳' },
+    'China': { code: 'cn', emoji: '🇨🇳' },
+    'Güney Kore': { code: 'kr', emoji: '🇰🇷' },
+    'South Korea': { code: 'kr', emoji: '🇰🇷' },
+    'Tayland': { code: 'th', emoji: '🇹🇭' },
+    'Thailand': { code: 'th', emoji: '🇹🇭' },
+    'İngiltere': { code: 'gb', emoji: '🇬🇧' },
+    'England': { code: 'gb', emoji: '🇬🇧' },
+    'United Kingdom': { code: 'gb', emoji: '🇬🇧' },
+    'UK': { code: 'gb', emoji: '🇬🇧' },
+    'Galler': { code: 'gb-wls', emoji: '🏴󠁧󠁢󠁷󠁬󠁳󠁿' },
+    'Wales': { code: 'gb-wls', emoji: '🏴󠁧󠁢󠁷󠁬󠁳󠁿' },
+    'Bulgaristan': { code: 'bg', emoji: '🇧🇬' },
+    'Bulgaria': { code: 'bg', emoji: '🇧🇬' }
+  }
+
+  const mapping = flagMap[country]
+  if (mapping) {
+    return {
+      flagClass: `fi fi-${mapping.code}`,
+      fallbackEmoji: mapping.emoji
+    }
+  }
+
+  return {
+    flagClass: '',
+    fallbackEmoji: '🌍'
+  }
+}
+
 interface UserWhisky {
   id: number
   whisky_id: number
@@ -105,6 +196,19 @@ function WhiskiesPageContent() {
   // Local search state to prevent excessive API calls
   const [localSearchTerm, setLocalSearchTerm] = useState('')
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
+
+  useEffect(() => {
+    const updateGridColumns = () => {
+      const width = window.innerWidth
+      const nextGridColumns: 2 | 3 | 4 | 5 | 6 = width < 640 ? 2 : width < 1024 ? 3 : 4
+      setGridColumns(prev => (prev === nextGridColumns ? prev : nextGridColumns))
+    }
+
+    updateGridColumns()
+    window.addEventListener('resize', updateGridColumns)
+
+    return () => window.removeEventListener('resize', updateGridColumns)
+  }, [])
 
   // Pull-to-refresh functionality
   const executeRefresh = useCallback(async ({ silent = false } = {}) => {
@@ -1087,8 +1191,8 @@ function WhiskiesPageContent() {
             {viewMode === 'grid' ? (
               // Grid View
               <>
-                {/* Enhanced Image with Glassmorphism */}
-                <div className="relative h-80 md:h-96 lg:h-[420px] mb-6 rounded-2xl overflow-hidden bg-gradient-to-br from-amber-100/80 to-orange-100/80 dark:from-amber-900/40 dark:to-orange-900/40 shadow-2xl ring-1 ring-white/20 backdrop-blur-sm group-hover:ring-amber-400/40 transition-all duration-500">
+                {/* Enhanced Image with Floating Action Buttons */}
+                <div className="relative h-64 md:h-72 lg:h-80 mb-4 rounded-2xl overflow-hidden bg-gradient-to-br from-amber-100/80 to-orange-100/80 dark:from-amber-900/40 dark:to-orange-900/40 shadow-2xl ring-1 ring-white/20 backdrop-blur-sm group-hover:ring-amber-400/40 transition-all duration-500">
                   <button
                     onClick={() => handleViewWhisky(whisky)}
                     className="w-full h-full block cursor-pointer group"
@@ -1098,6 +1202,8 @@ function WhiskiesPageContent() {
                       <img
                         src={whisky.image_url}
                         alt={whisky.name}
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover transition-all duration-500 group-hover:scale-110 group-hover:brightness-125 shadow-inner"
                         onError={(e) => {
                           e.currentTarget.style.display = 'none'
@@ -1109,51 +1215,85 @@ function WhiskiesPageContent() {
                       </div>
                     )}
                   </button>
-                  
-                  {/* Enhanced Quick Actions */}
-                  <div className="absolute top-3 right-3 flex gap-2 opacity-90 group-hover:opacity-100 transition-opacity duration-300">
-                    <button
-                      onClick={() => handleViewWhisky(whisky)}
-                      className="p-2 rounded-full bg-amber-600/20 hover:bg-amber-500/30 text-amber-100 hover:text-white backdrop-blur-md border border-amber-400/20 hover:border-amber-300/30 transition-all duration-300 shadow-lg hover:shadow-amber-500/25"
-                      title={t('whiskiesPage.viewDetails')}
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
-                    
-                    
-                    {user && (
-                      <>
-                        <button
-                          onClick={() => addToCollection(whisky.id)}
-                          disabled={isInCollection(whisky.id)}
-                          className={`p-2 rounded-full backdrop-blur-md border transition-all duration-300 shadow-lg ${
-                            isInCollection(whisky.id)
-                              ? 'bg-emerald-600/25 hover:bg-emerald-500/35 text-emerald-100 border-emerald-400/30 shadow-emerald-500/25'
-                              : 'bg-orange-600/20 hover:bg-orange-500/30 text-orange-100 hover:text-white border-orange-400/20 hover:border-orange-300/30 shadow-orange-500/25'
-                          }`}
-                          title={isInCollection(whisky.id) ? t('whiskiesPage.inCollection') : t('whisky.addToCollection')}
-                        >
-                          {isInCollection(whisky.id) ? (
-                            <Heart className="w-4 h-4 fill-current" />
-                          ) : (
-                            <Plus className="w-4 h-4" />
-                          )}
-                        </button>
-                        
-                        <button
-                          onClick={() => markAsTasted(whisky.id)}
-                          className={`p-2 rounded-full backdrop-blur-md border transition-all duration-300 shadow-lg ${
-                            isTasted(whisky.id)
-                              ? 'bg-yellow-600/25 hover:bg-yellow-500/35 text-yellow-100 border-yellow-400/30 shadow-yellow-500/25'
-                              : 'bg-amber-700/20 hover:bg-amber-600/30 text-amber-100 hover:text-white border-amber-500/20 hover:border-amber-400/30 shadow-amber-600/25'
-                          }`}
-                          title={isTasted(whisky.id) ? t('whiskiesPage.tasted') : t('whiskiesPage.markTasted')}
-                        >
-                          <Star className={`w-4 h-4 ${isTasted(whisky.id) ? 'fill-current' : ''}`} />
-                        </button>
-                      </>
-                    )}
+
+                  {/* Whisky Type - Top Left Corner */}
+                  <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform -translate-x-2 group-hover:translate-x-0">
+                    <div className="bg-white/20 dark:bg-amber-800/90 backdrop-blur-md border border-white/30 dark:border-amber-700/60 rounded-full px-3 py-2 shadow-lg">
+                      <span className="text-white text-sm font-semibold">
+                        {whisky.type}
+                      </span>
+                    </div>
                   </div>
+
+                  {/* Country Flag and Region - Bottom Left */}
+                  <div className="absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform -translate-x-2 group-hover:translate-x-0">
+                    <div className="flex items-center gap-2 bg-white/20 dark:bg-amber-800/90 backdrop-blur-md border border-white/30 dark:border-amber-700/60 rounded-full px-3 py-2 shadow-lg">
+                      {(() => {
+                        const flag = getCountryFlag(whisky.country)
+                        return flag.flagClass ? (
+                          <span className={`${flag.flagClass}`} title={whisky.country} style={{ fontSize: '1.2em' }} />
+                        ) : (
+                          <span className="text-lg" title={whisky.country}>
+                            {flag.fallbackEmoji}
+                          </span>
+                        )
+                      })()}
+                      {whisky.region && (
+                        <span className="text-white text-sm font-medium truncate max-w-24">
+                          {whisky.region}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Alcohol Percentage - Bottom Right Corner */}
+                  <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
+                    <div className="flex items-center gap-1 bg-white/20 dark:bg-amber-800/90 backdrop-blur-md border border-white/30 dark:border-amber-700/60 rounded-full px-3 py-2 shadow-lg">
+                      <span className="text-white text-sm font-semibold">
+                        {whisky.alcohol_percentage}%
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Floating Action Buttons - Bottom Right (above alcohol percentage) */}
+                  {user && (
+                    <div className="absolute bottom-16 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          addToCollection(whisky.id)
+                        }}
+                        disabled={isInCollection(whisky.id)}
+                        className={`w-10 h-10 rounded-full backdrop-blur-md border transition-all duration-300 flex items-center justify-center group/btn ${
+                          isInCollection(whisky.id)
+                            ? 'bg-emerald-500/80 border-emerald-400/60 text-white shadow-lg shadow-emerald-500/25'
+                            : 'bg-white/20 dark:bg-amber-800/90 border-white/30 dark:border-amber-700/60 text-white hover:bg-orange-500/80 hover:border-orange-400/60 hover:shadow-lg hover:shadow-orange-500/25'
+                        }`}
+                        title={isInCollection(whisky.id) ? t('whiskiesPage.inCollection') : t('whisky.addToCollection')}
+                      >
+                        {isInCollection(whisky.id) ? (
+                          <Heart className="w-5 h-5 fill-current" />
+                        ) : (
+                          <Plus className="w-5 h-5 group-hover/btn:scale-110 transition-transform" />
+                        )}
+                      </button>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          markAsTasted(whisky.id)
+                        }}
+                        className={`w-10 h-10 rounded-full backdrop-blur-md border transition-all duration-300 flex items-center justify-center group/btn ${
+                          isTasted(whisky.id)
+                            ? 'bg-yellow-500/80 border-yellow-400/60 text-white shadow-lg shadow-yellow-500/25'
+                            : 'bg-white/20 dark:bg-amber-800/90 border-white/30 dark:border-amber-700/60 text-white hover:bg-amber-500/80 hover:border-amber-400/60 hover:shadow-lg hover:shadow-amber-500/25'
+                        }`}
+                        title={isTasted(whisky.id) ? t('whiskiesPage.tasted') : t('whiskiesPage.markTasted')}
+                      >
+                        <Star className={`w-5 h-5 ${isTasted(whisky.id) ? 'fill-current' : ''} group-hover/btn:scale-110 transition-transform`} />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Enhanced Content */}
@@ -1164,38 +1304,19 @@ function WhiskiesPageContent() {
                       className="text-left hover:text-amber-600 dark:hover:text-amber-400 transition-colors w-full"
                       title={t('whiskiesPage.viewDetails')}
                     >
-                      <h3 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-2 leading-tight">
+                      <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-2 leading-tight line-clamp-2 min-h-[3.5rem]">
                         {whisky.name}
                       </h3>
                     </button>
-                    <p className="text-base text-primary-600 dark:text-primary-400 font-semibold bg-gradient-to-r from-primary-50/60 to-primary-100/60 dark:from-primary-900/30 dark:to-primary-800/30 backdrop-blur-sm px-4 py-2 rounded-full inline-block border border-primary-200/30 dark:border-primary-700/30 shadow-lg">
-                      {whisky.type}
-                    </p>
+
+                    {whisky.rating && (
+                      <div className="flex items-center gap-2 bg-yellow-100/70 dark:bg-yellow-900/20 px-3 py-2 rounded-lg w-fit">
+                        <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                        <span className="font-semibold text-yellow-700 dark:text-yellow-300">{whisky.rating}/100</span>
+                      </div>
+                    )}
                   </div>
 
-                  <div className="flex items-center gap-4 text-base text-slate-600 dark:text-slate-300 font-medium">
-                    <div className="flex items-center gap-2 bg-slate-100/70 dark:bg-slate-800/50 px-3 py-2 rounded-lg">
-                      <MapPin className="w-5 h-5 text-amber-500" />
-                      <span>{whisky.country}</span>
-                      {whisky.region && <span className="text-slate-500 dark:text-slate-400">/ {whisky.region}</span>}
-                    </div>
-                    <div className="flex items-center gap-2 bg-amber-100/70 dark:bg-amber-900/20 px-3 py-2 rounded-lg">
-                      <Percent className="w-5 h-5 text-amber-600" />
-                      <span className="font-semibold">
-                        {whisky.alcohol_percentage && typeof whisky.alcohol_percentage === 'string' && whisky.alcohol_percentage.includes('%')
-                          ? whisky.alcohol_percentage
-                          : `${whisky.alcohol_percentage || 0}`}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Rating display if available */}
-                  {whisky.rating && (
-                    <div className="flex items-center gap-2 bg-yellow-100/70 dark:bg-yellow-900/20 px-3 py-2 rounded-lg w-fit">
-                      <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                      <span className="font-semibold text-yellow-700 dark:text-yellow-300">{whisky.rating}/100</span>
-                    </div>
-                  )}
                 </div>
               </>
             ) : (
@@ -1212,6 +1333,8 @@ function WhiskiesPageContent() {
                       <img
                         src={whisky.image_url}
                         alt={whisky.name}
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover transition-all duration-300 group-hover:scale-110 group-hover:brightness-110"
                         onError={(e) => {
                           e.currentTarget.style.display = 'none'
@@ -1243,17 +1366,23 @@ function WhiskiesPageContent() {
                   </div>
 
                   <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-slate-300">
-                    <div className="flex items-center gap-1">
-                      <MapPin className="w-4 h-4" />
-                      <span>{whisky.country}</span>
-                      {whisky.region && <span>/ {whisky.region}</span>}
+                    <div className="flex items-center gap-2">
+                      {(() => {
+                        const flag = getCountryFlag(whisky.country)
+                        return flag.flagClass ? (
+                          <span className={flag.flagClass} title={whisky.country} style={{ fontSize: '1em' }} />
+                        ) : (
+                          <span className="text-base" title={whisky.country}>
+                            {flag.fallbackEmoji}
+                          </span>
+                        )
+                      })()}
+                      {whisky.region && <span>{whisky.region}</span>}
                     </div>
                     <div className="flex items-center gap-1">
                       <Percent className="w-4 h-4" />
                       <span>
-                        {whisky.alcohol_percentage && typeof whisky.alcohol_percentage === 'string' && whisky.alcohol_percentage.includes('%')
-                          ? whisky.alcohol_percentage
-                          : `${whisky.alcohol_percentage || 0}`}
+                        {whisky.alcohol_percentage}%
                       </span>
                     </div>
                   </div>
@@ -1266,45 +1395,51 @@ function WhiskiesPageContent() {
                 </div>
 
                 {/* Enhanced Actions */}
-                <div className="flex flex-col gap-2 flex-shrink-0 opacity-90 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="flex flex-col gap-2 flex-shrink-0">
                   <button
                     onClick={() => handleViewWhisky(whisky)}
-                    className="p-2 rounded-lg bg-amber-600/20 hover:bg-amber-500/30 text-amber-100 hover:text-white backdrop-blur-md border border-amber-400/20 hover:border-amber-300/30 transition-all duration-300 shadow-lg hover:shadow-amber-500/25 min-w-[44px] min-h-[44px] flex items-center justify-center"
-                    title="Detayları Görüntüle"
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg border border-slate-200 dark:border-slate-600 transition-all duration-300 shadow-sm hover:shadow-md min-h-[44px] touch-manipulation group"
+                    title={t('whiskiesPage.viewDetails')}
                   >
-                    <Eye className="w-4 h-4" />
+                    <Eye className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
+                    <span className="text-xs font-medium">Detaylar</span>
                   </button>
-                  
-                  
+
                   {user && (
                     <>
                       <button
                         onClick={() => addToCollection(whisky.id)}
                         disabled={isInCollection(whisky.id)}
-                        className={`p-2 rounded-lg backdrop-blur-md border transition-all duration-300 shadow-lg min-w-[44px] min-h-[44px] flex items-center justify-center ${
+                        className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border transition-all duration-300 shadow-sm hover:shadow-md min-h-[44px] touch-manipulation group ${
                           isInCollection(whisky.id)
-                            ? 'bg-emerald-600/25 hover:bg-emerald-500/35 text-emerald-100 border-emerald-400/30 shadow-emerald-500/25'
-                            : 'bg-orange-600/20 hover:bg-orange-500/30 text-orange-100 hover:text-white border-orange-400/20 hover:border-orange-300/30 shadow-orange-500/25'
+                            ? 'bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-700 cursor-default'
+                            : 'bg-orange-100 hover:bg-orange-200 dark:bg-orange-900/30 dark:hover:bg-orange-900/50 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-700'
                         }`}
-                        title={isInCollection(whisky.id) ? 'Koleksiyonda' : 'Koleksiyona Ekle'}
+                        title={isInCollection(whisky.id) ? t('whiskiesPage.inCollection') : t('whisky.addToCollection')}
                       >
                         {isInCollection(whisky.id) ? (
-                          <Heart className="w-4 h-4 fill-current" />
+                          <Heart className="w-4 h-4 fill-current group-hover:scale-110 transition-transform duration-200" />
                         ) : (
-                          <Plus className="w-4 h-4" />
+                          <Plus className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
                         )}
+                        <span className="text-xs font-medium">
+                          {isInCollection(whisky.id) ? 'Koleksiyonda' : 'Ekle'}
+                        </span>
                       </button>
-                      
+
                       <button
                         onClick={() => markAsTasted(whisky.id)}
-                        className={`p-2 rounded-lg backdrop-blur-md border transition-all duration-300 shadow-lg min-w-[44px] min-h-[44px] flex items-center justify-center ${
+                        className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border transition-all duration-300 shadow-sm hover:shadow-md min-h-[44px] touch-manipulation group ${
                           isTasted(whisky.id)
-                            ? 'bg-yellow-600/25 hover:bg-yellow-500/35 text-yellow-100 border-yellow-400/30 shadow-yellow-500/25'
-                            : 'bg-amber-700/20 hover:bg-amber-600/30 text-amber-100 hover:text-white border-amber-500/20 hover:border-amber-400/30 shadow-amber-600/25'
+                            ? 'bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-900/30 dark:hover:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700'
+                            : 'bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/30 dark:hover:bg-amber-900/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-700'
                         }`}
-                        title={isTasted(whisky.id) ? 'Tadıldı' : 'Tadıldı Olarak İşaretle'}
+                        title={isTasted(whisky.id) ? t('whiskiesPage.tasted') : t('whiskiesPage.markTasted')}
                       >
-                        <Star className={`w-4 h-4 ${isTasted(whisky.id) ? 'fill-current' : ''}`} />
+                        <Star className={`w-4 h-4 ${isTasted(whisky.id) ? 'fill-current' : ''} group-hover/btn:scale-110 transition-transform duration-200`} />
+                        <span className="text-xs font-medium">
+                          {isTasted(whisky.id) ? 'Tadıldı' : 'Tadım'}
+                        </span>
                       </button>
                     </>
                   )}
@@ -1367,6 +1502,8 @@ function WhiskiesPageContent() {
                       <img
                         src={viewingWhisky.image_url}
                         alt={viewingWhisky.name}
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover shadow-lg transition-all duration-300 group-hover:scale-105"
                       />
                     </button>
@@ -1441,41 +1578,41 @@ function WhiskiesPageContent() {
 
                 {/* Collection Status */}
                 {user && (
-                  <div className="modal-bg-section rounded-xl p-4">
-                    <h4 className="text-lg font-semibold modal-text-primary mb-3">{t('whiskiesPage.collectionStatus')}</h4>
-                    <div className="flex items-center gap-4">
+                  <div className="modal-bg-section rounded-xl p-4 sm:p-6">
+                    <h4 className="text-lg font-semibold modal-text-primary mb-4">{t('whiskiesPage.collectionStatus')}</h4>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
                       <button
                         onClick={() => addToCollection(viewingWhisky.id)}
                         disabled={isInCollection(viewingWhisky.id)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-md border transition-all duration-300 shadow-lg ${
+                        className={`flex items-center justify-center gap-3 px-4 sm:px-6 py-3 sm:py-4 min-h-[48px] sm:min-h-[52px] rounded-2xl backdrop-blur-xl border transition-all duration-300 shadow-xl hover:shadow-2xl group/btn touch-manipulation ${
                           isInCollection(viewingWhisky.id)
-                            ? 'bg-emerald-600/25 text-emerald-200 border-emerald-400/30 cursor-default shadow-emerald-500/25'
-                            : 'bg-orange-600/20 hover:bg-orange-500/30 text-orange-200 hover:text-orange-100 border-orange-400/20 hover:border-orange-300/30 shadow-orange-500/25'
+                            ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/30 cursor-default shadow-emerald-500/25'
+                            : 'bg-orange-500/20 hover:bg-orange-500/30 text-orange-200 hover:text-orange-100 border-orange-400/30 hover:border-orange-300/40 shadow-orange-500/25 hover:shadow-orange-500/40'
                         }`}
                       >
                         {isInCollection(viewingWhisky.id) ? (
                           <>
-                            <Heart className="w-4 h-4 fill-current" />
-                            {t('whiskiesPage.inCollection')}
+                            <Heart className="w-4 h-4 sm:w-5 sm:h-5 fill-current group-hover/btn:scale-110 transition-transform duration-200" />
+                            <span className="font-medium text-sm sm:text-base">{t('whiskiesPage.inCollection')}</span>
                           </>
                         ) : (
                           <>
-                            <Plus className="w-4 h-4" />
-                            {t('whisky.addToCollection')}
+                            <Plus className="w-4 h-4 sm:w-5 sm:h-5 group-hover/btn:scale-110 transition-transform duration-200" />
+                            <span className="font-medium text-sm sm:text-base">{t('whisky.addToCollection')}</span>
                           </>
                         )}
                       </button>
-                      
+
                       <button
                         onClick={() => markAsTasted(viewingWhisky.id)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg backdrop-blur-md border transition-all duration-300 shadow-lg ${
+                        className={`flex items-center justify-center gap-3 px-4 sm:px-6 py-3 sm:py-4 min-h-[48px] sm:min-h-[52px] rounded-2xl backdrop-blur-xl border transition-all duration-300 shadow-xl hover:shadow-2xl group/btn touch-manipulation ${
                           isTasted(viewingWhisky.id)
-                            ? 'bg-yellow-600/25 text-yellow-200 border-yellow-400/30 shadow-yellow-500/25'
-                            : 'bg-amber-700/20 hover:bg-amber-600/30 text-amber-200 hover:text-amber-100 border-amber-500/20 hover:border-amber-400/30 shadow-amber-600/25'
+                            ? 'bg-yellow-500/20 text-yellow-200 border-yellow-400/30 shadow-yellow-500/25'
+                            : 'bg-amber-600/20 hover:bg-amber-600/30 text-amber-200 hover:text-amber-100 border-amber-500/30 hover:border-amber-400/40 shadow-amber-600/25 hover:shadow-amber-600/40'
                         }`}
                       >
-                        <Star className={`w-4 h-4 ${isTasted(viewingWhisky.id) ? 'fill-current' : ''}`} />
-                        {isTasted(viewingWhisky.id) ? t('whiskiesPage.tasted') : t('whiskiesPage.markTasted')}
+                        <Star className={`w-4 h-4 sm:w-5 sm:h-5 ${isTasted(viewingWhisky.id) ? 'fill-current' : ''} group-hover/btn:scale-110 transition-transform duration-200`} />
+                        <span className="font-medium text-sm sm:text-base">{isTasted(viewingWhisky.id) ? t('whiskiesPage.tasted') : t('whiskiesPage.markTasted')}</span>
                       </button>
                     </div>
                   </div>
@@ -1591,6 +1728,8 @@ function WhiskiesPageContent() {
               <img
                 src={viewingImage.url}
                 alt={viewingImage.name}
+                loading="lazy"
+                decoding="async"
                 className="max-w-full max-h-[80vh] object-contain"
                 style={{ minWidth: '300px', minHeight: '300px' }}
               />

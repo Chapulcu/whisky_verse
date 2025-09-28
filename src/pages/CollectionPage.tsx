@@ -690,6 +690,8 @@ export function CollectionPage() {
                     <img
                       src={item.whisky.image_url}
                       alt={item.whisky.name}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   ) : (
@@ -963,6 +965,8 @@ export function CollectionPage() {
                       <img
                         src={selectedWhisky.image_url}
                         alt={selectedWhisky.name}
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover"
                       />
                     ) : (

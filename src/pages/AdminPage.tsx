@@ -819,9 +819,9 @@ export function AdminPage() {
     }
 
     setIsWhiskyLoading(true)
+    let updateSucceeded = false
 
     try {
-      // Prepare update data
       const whiskyData = {
         name: whiskyForm.name.trim(),
         type: whiskyForm.type.trim(),
@@ -841,7 +841,6 @@ export function AdminPage() {
       console.log('🔄 Updating whisky:', editingWhisky.id, whiskyData)
       console.log('📁 New image file:', whiskyForm.selectedImageFile?.name || 'none')
 
-      // Use API-based update (no more timeout issues!)
       const result = await updateWhisky(
         editingWhisky.id,
         whiskyData,
@@ -850,7 +849,6 @@ export function AdminPage() {
 
       console.log('✅ Whisky updated successfully:', result)
 
-      // Update the whisky in current state immediately
       if (result.whisky) {
         setWhiskies(prevWhiskies =>
           prevWhiskies.map(w =>
@@ -860,54 +858,36 @@ export function AdminPage() {
         console.log('🔄 Updated whisky in state:', result.whisky.id)
       }
 
-      // Reset editing state and form
-      setEditingWhisky(null)
-      setWhiskyForm({
-        name: '',
-        type: '',
-        country: '',
-        region: '',
-        alcohol_percentage: 40,
-        rating: null,
-        age_years: null,
-        color: '',
-        aroma: '',
-        taste: '',
-        finish: '',
-        description: '',
-        image_url: '',
-        selectedImageFile: null,
-        is_published: true
+      loadWhiskies().catch(err => {
+        console.error('AdminPage: Background refresh failed after update:', err)
       })
-
-      // Also reload whiskies list as backup
-      await loadWhiskies()
+      updateSucceeded = true
 
     } catch (error: any) {
       console.error('❌ Error updating whisky:', error)
       toast.error('Viski güncelleme hatası: ' + (error.message || 'Bilinmeyen hata'))
-
-      // Ensure modal closes even on error
-      setEditingWhisky(null)
-      setWhiskyForm({
-        name: '',
-        type: '',
-        country: '',
-        region: '',
-        alcohol_percentage: 40,
-        rating: null,
-        age_years: null,
-        color: '',
-        aroma: '',
-        taste: '',
-        finish: '',
-        description: '',
-        image_url: '',
-        selectedImageFile: null,
-        is_published: true
-      })
     } finally {
       setIsWhiskyLoading(false)
+      if (updateSucceeded) {
+        setEditingWhisky(null)
+        setWhiskyForm({
+          name: '',
+          type: '',
+          country: '',
+          region: '',
+          alcohol_percentage: 40,
+          rating: null,
+          age_years: null,
+          color: '',
+          aroma: '',
+          taste: '',
+          finish: '',
+          description: '',
+          image_url: '',
+          selectedImageFile: null,
+          is_published: true
+        })
+      }
     }
   }
 
@@ -2510,6 +2490,8 @@ export function AdminPage() {
                                 <img
                                   src={whisky.image_url}
                                   alt={whisky.name}
+                                  loading="lazy"
+                                  decoding="async"
                                   className="w-10 h-10 rounded-lg object-cover group-hover:scale-105 transition-transform"
                                 />
                               ) : (

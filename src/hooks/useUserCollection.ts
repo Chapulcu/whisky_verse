@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import toast from 'react-hot-toast'
 import { requestCache } from '@/utils/requestCache'
+import { getCollectionFromCache, invalidateCollectionCache, setCollectionCache } from '@/lib/cache/collectionCache'
 
 // Retry configuration
 const RETRY_DELAYS = [300, 800, 1500] // Exponential backoff in milliseconds
@@ -42,6 +43,7 @@ export function useUserCollection() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const requestIdRef = useRef(0)
+  const previousUserIdRef = useRef<string | null>(null)
 
   // Retry helper function
   const retryWithBackoff = async (
@@ -88,15 +90,33 @@ export function useUserCollection() {
     if (!user) {
       setCollection([])
       setLoading(false)
+      if (previousUserIdRef.current) {
+        invalidateCollectionCache(previousUserIdRef.current).catch(() => {})
+        previousUserIdRef.current = null
+      }
       return
     }
+
+    previousUserIdRef.current = user.id
 
     // Race condition guard: increment request ID and capture current request
     const currentRequestId = ++requestIdRef.current
 
     try {
-      setLoading(true)
       setError(null)
+
+      let cached: UserWhiskyDB[] | null = null
+      if (user) {
+        cached = await getCollectionFromCache(user.id)
+        if (cached && currentRequestId === requestIdRef.current) {
+          setCollection(cached)
+          setLoading(false)
+        }
+      }
+
+      if (collection.length === 0 && !cached) {
+        setLoading(true)
+      }
 
       // Create cache key for deduplication
       const cacheKey = {
@@ -141,7 +161,21 @@ export function useUserCollection() {
         return
       }
 
-      setCollection(data || [])
+      if (data) {
+        setCollection(data)
+        if (user) {
+          setCollectionCache(user.id, data).catch(err => {
+            if (import.meta.env.DEV) {
+              console.warn('Failed to cache user collection:', err)
+            }
+          })
+        }
+      } else {
+        setCollection([])
+        if (user) {
+          invalidateCollectionCache(user.id).catch(() => {})
+        }
+      }
     } catch (err: any) {
       // Check if this is still the latest request before updating error state
       if (currentRequestId === requestIdRef.current) {
@@ -187,7 +221,17 @@ export function useUserCollection() {
         throw insertError
       }
 
-      setCollection(prev => [data, ...prev])
+      setCollection(prev => {
+        const next = [data, ...prev]
+        if (user) {
+          setCollectionCache(user.id, next).catch(err => {
+            if (import.meta.env.DEV) {
+              console.warn('Failed to update cached collection:', err)
+            }
+          })
+        }
+        return next
+      })
 
       // Invalidate user collection cache
       requestCache.invalidate({ type: 'user_collection', userId: user.id })
@@ -222,12 +266,18 @@ export function useUserCollection() {
         throw updateError
       }
 
-      setCollection(prev => prev.map(item => item.id === id ? data : item))
-
-      // Invalidate user collection cache
-      if (user) {
-        requestCache.invalidate({ type: 'user_collection', userId: user.id })
-      }
+      setCollection(prev => {
+        const next = prev.map(item => item.id === id ? data : item)
+        if (user) {
+          requestCache.invalidate({ type: 'user_collection', userId: user.id })
+          setCollectionCache(user.id, next).catch(err => {
+            if (import.meta.env.DEV) {
+              console.warn('Failed to update cached collection:', err)
+            }
+          })
+        }
+        return next
+      })
 
       return { data, error: null }
     } catch (err: any) {
@@ -247,12 +297,18 @@ export function useUserCollection() {
         throw deleteError
       }
 
-      setCollection(prev => prev.filter(item => item.id !== id))
-
-      // Invalidate user collection cache
-      if (user) {
-        requestCache.invalidate({ type: 'user_collection', userId: user.id })
-      }
+      setCollection(prev => {
+        const next = prev.filter(item => item.id !== id)
+        if (user) {
+          requestCache.invalidate({ type: 'user_collection', userId: user.id })
+          setCollectionCache(user.id, next).catch(err => {
+            if (import.meta.env.DEV) {
+              console.warn('Failed to update cached collection:', err)
+            }
+          })
+        }
+        return next
+      })
 
       return { error: null }
     } catch (err: any) {

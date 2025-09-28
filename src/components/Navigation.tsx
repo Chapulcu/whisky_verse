@@ -3,17 +3,21 @@ import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
 import { ThemeToggle, LanguageToggle, UserMenu } from './ui/Controls'
-import { 
-  Home, 
-  Wine, 
-  BookOpen, 
-  Users, 
-  Calendar, 
+import {
+  Home,
+  Wine,
+  BookOpen,
+  Users,
+  Calendar,
   User,
   Crown,
   Menu,
   X,
-  Settings
+  Settings,
+  Search,
+  Camera,
+  MapPin,
+  Heart
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ErrorBoundary } from './ErrorBoundary'
@@ -24,8 +28,8 @@ export function Navigation() {
   const location = useLocation()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
-  // CRITICAL FIX: Always stable navigation items - no conditional hooks
-  const navigationItems = useMemo(() => {
+  // Desktop navigation items (limited for space)
+  const desktopNavigationItems = useMemo(() => {
     const baseItems = [
       { path: '/', label: t('navigation.home'), icon: Home },
       { path: '/whiskies', label: t('navigation.whiskies'), icon: Wine },
@@ -50,7 +54,37 @@ export function Navigation() {
     ] : []
 
     return [...baseItems, ...userItems, ...vipItems, ...adminItems]
-  }, [t, user, profile?.role, i18n.language]) // Include language for re-rendering
+  }, [t, user, profile?.role, i18n.language])
+
+  // Mobile navigation items (includes all mobile menu items)
+  const mobileNavigationItems = useMemo(() => {
+    const baseItems = [
+      { path: '/', label: t('navigation.home'), icon: Home },
+      { path: '/whiskies', label: t('navigation.whiskies'), icon: Search },
+      { path: '/nearby', label: t('navigation.nearby') || 'Yakınımda', icon: MapPin },
+    ]
+
+    if (!user) {
+      return baseItems
+    }
+
+    const userItems = [
+      { path: '/camera', label: t('navigation.camera') || 'Kamera', icon: Camera },
+      { path: '/collection', label: t('navigation.myCollection'), icon: Heart },
+      { path: '/profile', label: t('navigation.profile'), icon: User },
+    ]
+
+    const vipItems = (profile?.role === 'vip' || profile?.role === 'admin') ? [
+      { path: '/groups', label: t('navigation.groups'), icon: Users },
+      { path: '/events', label: t('navigation.events'), icon: Calendar },
+    ] : []
+
+    const adminItems = (profile?.role === 'admin') ? [
+      { path: '/admin', label: 'Admin Panel', icon: Settings },
+    ] : []
+
+    return [...baseItems, ...userItems, ...vipItems, ...adminItems]
+  }, [t, user, profile?.role, i18n.language])
 
   // CRITICAL FIX: Memoized handlers to prevent re-renders
   const isActive = useCallback((path: string) => {
@@ -89,7 +123,7 @@ export function Navigation() {
           
           {/* Navigation Items */}
           <div className="flex items-center gap-1 flex-1 justify-center min-w-0">
-            {navigationItems.map(({ path, label, icon: Icon }) => (
+            {desktopNavigationItems.map(({ path, label, icon: Icon }) => (
               <Link
                 key={path}
                 to={path}
@@ -141,7 +175,7 @@ export function Navigation() {
 
           {/* Navigation Items - Icon only for tablet */}
           <div className="flex items-center gap-1 flex-1 justify-center min-w-0">
-            {navigationItems.map(({ path, label, icon: Icon }) => (
+            {desktopNavigationItems.map(({ path, label, icon: Icon }) => (
               <Link
                 key={path}
                 to={path}
@@ -227,9 +261,9 @@ export function Navigation() {
               exit={{ opacity: 0, y: -20 }}
               className="fixed top-14 landscape:top-12 left-0 right-0 z-[9998] glass-panel mx-3 landscape:mx-2 p-4 landscape:p-3 max-h-[calc(100vh-4rem)] landscape:max-h-[calc(100vh-3rem)] overflow-y-auto"
             >
-              {/* Landscape: Horizontal layout for navigation items */}
+              {/* Portrait: Vertical layout for navigation items */}
               <div className="landscape:hidden space-y-2">
-                {navigationItems.map(({ path, label, icon: Icon }) => (
+                {mobileNavigationItems.map(({ path, label, icon: Icon }) => (
                   <Link
                     key={path}
                     to={path}
@@ -274,7 +308,7 @@ export function Navigation() {
               {/* Landscape: Compact horizontal layout */}
               <div className="hidden landscape:block">
                 <div className="grid grid-cols-3 gap-2 mb-3">
-                  {navigationItems.map(({ path, label, icon: Icon }) => (
+                  {mobileNavigationItems.map(({ path, label, icon: Icon }) => (
                     <Link
                       key={path}
                       to={path}

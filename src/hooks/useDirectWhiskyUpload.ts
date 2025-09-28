@@ -16,6 +16,7 @@ export interface WhiskyData {
   taste?: string
   finish?: string
   description?: string
+  is_published?: boolean
 }
 
 export function useDirectWhiskyUpload() {
@@ -44,8 +45,8 @@ export function useDirectWhiskyUpload() {
     const randomId = Math.random().toString(36).substring(2)
     const fileExt = file.name.split('.').pop()
     // Use admin user ID for upload path
-    const adminUserId = 'c29b22cf-f7bd-46d8-bef3-3e42265017f9'
-    const fileName = `${adminUserId}/${timestamp}_${randomId}.${fileExt}`
+    const ownerId = user.id
+    const fileName = `${ownerId}/${timestamp}_${randomId}.${fileExt}`
 
     console.log('📁 Upload path:', fileName)
 
@@ -58,7 +59,7 @@ export function useDirectWhiskyUpload() {
         .upload(fileName, file, {
           contentType: file.type || 'image/jpeg',
           cacheControl: '3600',
-          upsert: true
+          upsert: false
         })
 
       if (error) {
@@ -96,22 +97,10 @@ export function useDirectWhiskyUpload() {
     try {
       let imageUrl: string | null = null
 
-      // Upload image if provided with timeout
       if (imageFile) {
         console.log('📤 Starting image upload...')
-        try {
-          // Add 2 second timeout for quick response
-          const uploadPromise = uploadImageDirect(imageFile)
-          const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Image upload timeout - continuing without image')), 2000)
-          )
-
-          imageUrl = await Promise.race([uploadPromise, timeoutPromise])
-          console.log('🔗 Image uploaded successfully:', imageUrl)
-        } catch (uploadError) {
-          console.log('⚠️ Image upload failed, continuing without image:', uploadError.message)
-          imageUrl = null
-        }
+        imageUrl = await uploadImageDirect(imageFile)
+        console.log('🔗 Image uploaded successfully:', imageUrl)
       }
 
       // Prepare whisky data
@@ -129,7 +118,8 @@ export function useDirectWhiskyUpload() {
         finish: whiskyData.finish?.trim() || null,
         description: whiskyData.description?.trim() || null,
         image_url: imageUrl,
-        created_by: user.id
+        created_by: user.id,
+        is_published: whiskyData.is_published ?? true
       }
 
       console.log('📊 Inserting whisky data:', insertData)
@@ -191,22 +181,10 @@ export function useDirectWhiskyUpload() {
     try {
       let imageUrl: string | null = null
 
-      // Upload image if provided for update with timeout
       if (imageFile) {
         console.log('📤 Starting image upload for update...')
-        try {
-          // Add 2 second timeout for quick response
-          const uploadPromise = uploadImageDirect(imageFile)
-          const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Image upload timeout - continuing without image')), 2000)
-          )
-
-          imageUrl = await Promise.race([uploadPromise, timeoutPromise])
-          console.log('🔗 Image uploaded for update:', imageUrl)
-        } catch (uploadError) {
-          console.log('⚠️ Image upload failed, continuing update without image:', uploadError.message)
-          imageUrl = null
-        }
+        imageUrl = await uploadImageDirect(imageFile)
+        console.log('🔗 Image uploaded for update:', imageUrl)
       }
 
       // Prepare update data
@@ -225,6 +203,7 @@ export function useDirectWhiskyUpload() {
       if (whiskyData.taste !== undefined) updateData.taste = whiskyData.taste?.trim() || null
       if (whiskyData.finish !== undefined) updateData.finish = whiskyData.finish?.trim() || null
       if (whiskyData.description !== undefined) updateData.description = whiskyData.description?.trim() || null
+      if (whiskyData.is_published !== undefined) updateData.is_published = whiskyData.is_published
       if (imageUrl) updateData.image_url = imageUrl
 
       // Add updated timestamp

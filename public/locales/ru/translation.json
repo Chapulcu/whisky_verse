@@ -5,7 +5,9 @@
     "myCollection": "Моя коллекция",
     "groups": "Группы",
     "events": "События",
-    "profile": "Профиль"
+    "profile": "Профиль",
+    "nearby": "Рядом",
+    "camera": "Камера"
   },
   "auth": {
     "signIn": "Войти",

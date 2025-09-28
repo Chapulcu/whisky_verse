@@ -3,7 +3,7 @@ import fs from "fs"
 import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
 import sourceIdentifierPlugin from 'vite-plugin-source-info'
-// import { VitePWA } from 'vite-plugin-pwa' // Temporarily disabled
+import { VitePWA } from 'vite-plugin-pwa'
 
 const isProd = process.env.BUILD_MODE === 'prod'
 export default defineConfig({
@@ -14,13 +14,49 @@ export default defineConfig({
       attributePrefix: 'data-matrix',
       includeProps: true,
     }),
-// PWA temporarily disabled for development
-    // VitePWA({
-    //   registerType: 'autoUpdate',
-    //   devOptions: {
-    //     enabled: false
-    //   }
-    // })
+    VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['favicon.svg', 'robots.txt', 'icons/apple-touch-icon.svg'],
+      devOptions: {
+        enabled: false
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,avif}'],
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024
+      },
+      manifest: {
+        name: 'WhiskyVerse',
+        short_name: 'WhiskyVerse',
+        start_url: '/',
+        display: 'standalone',
+        background_color: '#0f172a',
+        theme_color: '#0f172a',
+        icons: [
+          {
+            src: '/icons/icon-192x192.svg',
+            sizes: '192x192',
+            type: 'image/svg+xml'
+          },
+          {
+            src: '/icons/icon-192x192-maskable.svg',
+            sizes: '192x192',
+            type: 'image/svg+xml',
+            purpose: 'maskable'
+          },
+          {
+            src: '/icons/icon-512x512.svg',
+            sizes: '512x512',
+            type: 'image/svg+xml'
+          },
+          {
+            src: '/icons/icon-512x512-maskable.svg',
+            sizes: '512x512',
+            type: 'image/svg+xml',
+            purpose: 'maskable'
+          }
+        ]
+      }
+    })
   ],
   resolve: {
     alias: {
@@ -54,4 +90,3 @@ export default defineConfig({
     sourcemap: false // Disable sourcemaps in production for smaller build
   }
 })
-

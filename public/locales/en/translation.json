@@ -5,7 +5,9 @@
     "myCollection": "My Collection",
     "groups": "Groups",
     "events": "Events",
-    "profile": "Profile"
+    "profile": "Profile",
+    "nearby": "Nearby",
+    "camera": "Camera"
   },
   "auth": {
     "signIn": "Sign In",

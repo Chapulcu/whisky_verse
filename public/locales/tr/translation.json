@@ -5,7 +5,9 @@
     "myCollection": "Koleksiyonum",
     "groups": "Gruplar",
     "events": "Etkinlikler",
-    "profile": "Profil"
+    "profile": "Profil",
+    "nearby": "Yakınımda",
+    "camera": "Kamera"
   },
   "auth": {
     "signIn": "Giriş Yap",
