@@ -8,7 +8,6 @@ import { supabase } from '@/lib/supabase'
 import {
   Users,
   Settings,
-  Shield,
   Edit2,
   Trash2,
   UserPlus,
