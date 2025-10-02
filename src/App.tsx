@@ -22,6 +22,7 @@ import { CameraPage } from '@/pages/CameraPage'
 import { NearbyPage } from '@/pages/NearbyPage'
 import '@/lib/i18n'
 import './index.css'
+import { useAppSettings } from '@/hooks/useAppSettings'
 
 // CRITICAL FIX: Safe page wrapper to prevent hooks violations
 function SafePage({ children }: { children: React.ReactNode }) {
@@ -48,6 +49,32 @@ function SafePage({ children }: { children: React.ReactNode }) {
   )
 }
 
+function DefaultLanguageInitializer() {
+  const { data } = useAppSettings()
+  const { i18n } = useTranslation()
+
+  React.useEffect(() => {
+    document.documentElement.lang = i18n.language
+  }, [i18n.language])
+
+  React.useEffect(() => {
+    if (!data || typeof window === 'undefined') return
+
+    try {
+      window.localStorage.setItem('app-default-language', data.default_language)
+    } catch (storageError) {
+      console.warn('⚠️ Unable to cache default language:', storageError)
+    }
+
+    const storedLanguage = window.localStorage.getItem('i18nextLng')
+    if (!storedLanguage && i18n.language !== data.default_language) {
+      i18n.changeLanguage(data.default_language)
+    }
+  }, [data, i18n])
+
+  return null
+}
+
 function App() {
   const [isAgeVerified, setIsAgeVerified] = useState(false)
 
@@ -63,6 +90,7 @@ function App() {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
+        <DefaultLanguageInitializer />
         <AuthProvider>
           <Router>
           <Routes>

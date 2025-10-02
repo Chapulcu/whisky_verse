@@ -1043,6 +1043,19 @@
         "addAdmin": "Add Admin User"
       }
     },
+    "settings": {
+      "defaultLanguage": {
+        "title": "Default Application Language",
+        "description": "New visitors start with this language; users can switch at any time.",
+        "label": "Default language",
+        "info": "Note: when a user changes their language the choice is saved for that device and overrides this default.",
+        "success": "Default language updated to {{language}}.",
+        "error": "Failed to update default language.",
+        "loadError": "Unable to load application settings.",
+        "permissionsError": "You do not have permission to change this setting.",
+        "onlyAdmins": "Only admin users can change the default language."
+      }
+    },
     "whiskyForm": {
       "labels": {
         "whiskyName": "Whisky Name",

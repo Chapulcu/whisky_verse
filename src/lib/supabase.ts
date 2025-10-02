@@ -71,6 +71,26 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 export type Database = {
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          id: number
+          default_language: 'tr' | 'en' | 'ru' | 'bg'
+          updated_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          default_language: 'tr' | 'en' | 'ru' | 'bg'
+          updated_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          default_language?: 'tr' | 'en' | 'ru' | 'bg'
+          updated_by?: string | null
+          updated_at?: string
+        }
+      }
       profiles: {
         Row: {
           id: string

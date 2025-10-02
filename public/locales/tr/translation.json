@@ -1043,6 +1043,19 @@
         "addAdmin": "Admin Kullanıcı Ekle"
       }
     },
+    "settings": {
+      "defaultLanguage": {
+        "title": "Varsayılan Uygulama Dili",
+        "description": "Yeni ziyaretçiler bu dilde başlayacak, kullanıcılar istedikleri zaman kendi tercihlerine geçebilir.",
+        "label": "Varsayılan dil",
+        "info": "Not: Kullanıcı kendi dilini seçtiğinde bu ayar değişmez, sadece yeni oturumlar için başlangıç dilini belirler.",
+        "success": "Varsayılan dil {{language}} olarak güncellendi.",
+        "error": "Varsayılan dil güncellenirken bir hata oluştu.",
+        "loadError": "Uygulama ayarları yüklenirken bir sorun oluştu.",
+        "permissionsError": "Bu ayarı değiştirme yetkiniz yok.",
+        "onlyAdmins": "Sadece admin kullanıcılar varsayılan dili değiştirebilir."
+      }
+    },
     "whiskyForm": {
       "labels": {
         "whiskyName": "Viski Adı",

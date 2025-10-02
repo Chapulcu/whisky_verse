@@ -41,6 +41,7 @@ import toast from 'react-hot-toast'
 import { BackgroundManager } from '@/components/admin/BackgroundManager'
 import { AnalyticsDashboard } from '@/components/analytics/AnalyticsDashboard'
 import { TranslationManagement } from '@/components/admin/TranslationManagement'
+import { DefaultLanguageSettings } from '@/components/admin/DefaultLanguageSettings'
 
 interface User {
   id: string
@@ -4554,6 +4555,7 @@ export function AdminPage() {
             animate={{ opacity: 1, y: 0 }}
             className="space-y-6"
           >
+            <DefaultLanguageSettings />
             <TranslationManagement />
           </motion.div>
         )}
