@@ -73,6 +73,22 @@ temp/
 .branches
 .temp
 
+# SSL Certificates and Private Keys - CRITICAL SECURITY
+.ssl/
+*.pem
+*.key
+*.crt
+*.cert
+*.p12
+*.pfx
+*.jks
+*.keystore
+
+# API Keys and Secrets
+*secret*
+*private*
+credentials.json
+service-account*.json
 
 #Ignore vscode AI rules
 .github/instructions/codacy.instructions.md
