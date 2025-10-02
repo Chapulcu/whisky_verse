@@ -90,5 +90,9 @@ temp/
 credentials.json
 service-account*.json
 
+# Test files with hardcoded credentials - SECURITY CRITICAL
+tests/
+supabase-local/
+
 #Ignore vscode AI rules
 .github/instructions/codacy.instructions.md
