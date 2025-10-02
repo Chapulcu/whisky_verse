@@ -93,6 +93,8 @@ service-account*.json
 # Test files with hardcoded credentials - SECURITY CRITICAL
 tests/
 supabase-local/
+check_admin_users.js
+emergency_add_whisky.html
 
 #Ignore vscode AI rules
 .github/instructions/codacy.instructions.md
