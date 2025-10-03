@@ -34,7 +34,8 @@ import {
   MapPin as LocationIcon,
   Globe,
   Lock,
-  Languages
+  Languages,
+  Shield
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'

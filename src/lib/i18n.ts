@@ -1,7 +1,6 @@
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import Backend from 'i18next-http-backend'
-import LanguageDetector from 'i18next-browser-languagedetector'
 import { getTranslationFromCache, setTranslationCache } from '@/lib/cache/translationCache'
 
 async function fetchTranslation(url: string, headers?: HeadersInit) {
@@ -27,17 +26,19 @@ function extractLangNamespace(url: string): { lang: string; namespace: string } 
 
 i18n
   .use(Backend)
-  .use(LanguageDetector)
   .use(initReactI18next)
   .init({
-    lng: 'tr', // default language
+    // Note: lng and LanguageDetector intentionally omitted
+    // DefaultLanguageInitializer in App.tsx will set the language based on app_settings
+    // We read from localStorage manually to preserve user choice
+    lng: typeof window !== 'undefined' ? localStorage.getItem('i18nextLng') || undefined : undefined,
     fallbackLng: 'en',
     debug: false,
-    
+
     interpolation: {
       escapeValue: false, // React already escapes
     },
-    
+
     backend: {
       loadPath: '/locales/{{lng}}/{{ns}}.json',
       request: async (options, url, _payload, callback) => {
@@ -80,11 +81,6 @@ i18n
           })
         }
       }
-    },
-    
-    detection: {
-      order: ['localStorage', 'navigator', 'htmlTag'],
-      caches: ['localStorage'],
     },
     
     // Supported languages

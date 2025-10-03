@@ -66,9 +66,14 @@ function DefaultLanguageInitializer() {
       console.warn('⚠️ Unable to cache default language:', storageError)
     }
 
-    const storedLanguage = window.localStorage.getItem('i18nextLng')
-    if (!storedLanguage && i18n.language !== data.default_language) {
+    const storedUserLanguage = window.localStorage.getItem('i18nextLng')
+
+    // If user has no language preference, apply the global default
+    if (!storedUserLanguage) {
+      console.log('🌍 No user preference found, applying default language:', data.default_language)
       i18n.changeLanguage(data.default_language)
+    } else {
+      console.log('✅ User has language preference:', storedUserLanguage)
     }
   }, [data, i18n])
 
